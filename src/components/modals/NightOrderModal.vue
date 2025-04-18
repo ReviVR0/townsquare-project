@@ -44,7 +44,7 @@
               backgroundImage: `url(${
                 role.image && grimoire.isImageOptIn
                   ? role.image
-                  : require('../../assets/icons/' +
+                  : require('../../assets/icons/Reminder/' +
                       (role.imageAlt || role.id) +
                       '.png')
               })`
@@ -69,7 +69,7 @@
               backgroundImage: `url(${
                 role.image && grimoire.isImageOptIn
                   ? role.image
-                  : require('../../assets/icons/' +
+                  : require('../../assets/icons/Reminder/' +
                       (role.imageAlt || role.id) +
                       '.png')
               })`

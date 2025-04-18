@@ -188,7 +188,7 @@
             backgroundImage: `url(${
               reminder.image && grimoire.isImageOptIn
                 ? reminder.image
-                : require('../assets/icons/' +
+                : require('../assets/icons/Reminder/' +
                     (reminder.imageAlt || reminder.role) +
                     '.png')
             })`

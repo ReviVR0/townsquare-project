@@ -27,7 +27,32 @@
       >
         <Token :role="role" />
       </li>
+    </ul>     //TO DO Setrole, and color
+    <ul class="tokens" v-if="tab === 'GoodRoles' || !otherTravelers.size">
+      <li
+        v-for="role in availableRoles"
+        class=townsfolk
+        :key="role.id"
+        @click="setRole(role)"
+      >
+        <Token :role="role" />
+      </li>
     </ul>
+
+    <ul class="tokens" v-if="tab === 'EvilRoles' || !otherTravelers.size">
+      <li
+        v-for="role in availableRoles"
+        class=demon
+        :key="role.id"
+        @click="setRole(role)"
+      >
+        <Token :role="role" />
+      </li>
+    </ul>
+
+
+
+
     <div
       class="button-group"
       v-if="playerIndex >= 0 && otherTravelers.size && !session.isSpectator"
@@ -44,6 +69,18 @@
         @click="tab = 'otherTravelers'"
         >Other Travelers</span
       >
+        <span
+        class="button"
+        :class="{ townsfolk: tab === 'GoodRoles' }"
+        @click="tab = 'GoodRoles'"
+        >GoodRoles</span
+      >
+        <span
+        class="button"
+        :class="{ townsfolk: tab === 'EvilRoles' }"
+        @click="tab = 'EvilRoles'"
+        >EvilRoles</span
+      >
     </div>
   </Modal>
 </template>
@@ -53,7 +90,7 @@ import { mapMutations, mapState } from "vuex";
 import Modal from "./Modal";
 import Token from "../Token";
 
-export default {
+export default { // Maybe here!!!!!!!!!!!!!!!!!!
   components: { Token, Modal },
   props: ["playerIndex"],
   computed: {

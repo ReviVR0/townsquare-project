@@ -1,3 +1,14 @@
+methods: {
+  ...mapMutations(['toggleModal']),
+  addReminder(reminder) {
+    // your existing logic
+  },
+  getRoleTeam(roleId) {
+    const role = this.$store.getters.rolesJSONbyId.get(roleId);
+    return role?.team || 'custom';
+  }
+}
+
 <template>
   <Modal
     v-if="modals.reminder && availableReminders.length && players[playerIndex]"
@@ -18,7 +29,7 @@
             backgroundImage: `url(${
               reminder.image && grimoire.isImageOptIn
                 ? reminder.image
-                : require('../../assets/icons/' +
+                : require('../../assets/icons/Reminder/' +
                     (reminder.imageAlt || reminder.role) +
                     '.png')
             })`
@@ -39,6 +50,15 @@ import { mapMutations, mapState } from "vuex";
  * @param role The role for which the reminder should be generated
  * @return {function(*): {image: string|string[]|string|*, role: *, name: *, imageAlt: string|*}}
  */
+
+
+
+
+
+
+
+
+ //TESTS ^^^
 const mapReminder = ({ id, image, imageAlt }) => name => ({
   role: id,
   image,

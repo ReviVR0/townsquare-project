@@ -10,7 +10,6 @@ import fabledJSON from "../fabled.json";
 import jinxesJSON from "../hatred.json";
 
 Vue.use(Vuex);
-
 // helper functions
 const getRolesByEdition = (edition = editionJSON[0]) => {
   return new Map(
@@ -125,6 +124,7 @@ export default new Vuex.Store({
     fabled,
     jinxes
   },
+
   getters: {
     /**
      * Return all custom roles, with default values and non-essential data stripped.
@@ -249,8 +249,8 @@ export default new Vuex.Store({
         rolesJSON
           .filter(r => r.team === "traveler" && !roles.some(i => i.id === r.id))
           .map(role => [role.id, role])
-      );
-    },
+        );
+      },
     setEdition(state, edition) {
       if (editionJSONbyId.has(edition.id)) {
         state.edition = editionJSONbyId.get(edition.id);
@@ -262,5 +262,7 @@ export default new Vuex.Store({
       state.modals.edition = false;
     }
   },
-  plugins: [persistence, socket]
+  plugins: [persistence, socket],
+
+    
 });
