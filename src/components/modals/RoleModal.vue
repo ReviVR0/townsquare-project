@@ -100,12 +100,24 @@ export default { // Maybe here!!!!!!!!!!!!!!!!!!
       this.$store.state.roles.forEach(role => {
         // don't show bluff roles that are already assigned to players
         if (
-          this.playerIndex >= 0 ||
+          ((this.playerIndex >= 0 && this.tab === "editionRoles") || ((this.tab === "GoodRoles" || this.tab === "EvilRoles") && !(role.team === "traveler"))) ||
           (this.playerIndex < 0 &&
-            !players.some(player => player.role.id === role.id))
+            !players.some(player => player.role.id === role.id) 
+            )
         ) {
-          availableRoles.push(role);
+
+var role_r = structuredClone(role);
+
+
+        if (this.tab === "GoodRoles"){
+          role_r.team = "townsfolk";
+          } //THIS add relation
+        if (this.tab === 'EvilRoles'){
+          role_r.team = "minion"; //THIS add relation
         }
+        availableRoles.push(role_r);
+        }
+
       });
       availableRoles.push({});
       return availableRoles;
@@ -120,7 +132,7 @@ export default { // Maybe here!!!!!!!!!!!!!!!!!!
     };
   },
   methods: {
-    setRole(role) {
+    setRole(role) {  
       if (this.playerIndex < 0) {
         // assign to bluff slot (index < 0)
         this.$store.commit("players/setBluff", {
@@ -131,10 +143,24 @@ export default { // Maybe here!!!!!!!!!!!!!!!!!!
         if (this.session.isSpectator && role.team === "traveler") return;
         // assign to player
         const player = this.$store.state.players.players[this.playerIndex];
-        this.$store.commit("players/update", {
+
+var role_r = structuredClone(role);
+
+
+        if (this.tab === "GoodRoles"){
+          role_r.team = "townsfolk";
+          } //THIS add relation
+        if (this.tab === 'EvilRoles'){
+          role_r.team = "minion"; //THIS add relation
+        }
+        console.log(role.team);
+        console.log(role_r.team);
+
+        this.$store.commit("players/update", { 
           player,
           property: "role",
-          value: role
+          value: role,
+          team: role_r.team
         });
       }
       this.tab = "editionRoles";

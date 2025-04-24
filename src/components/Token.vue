@@ -10,9 +10,9 @@
             : require('../assets/icons/' + (role.imageAlt || role.id) + 
             ((role.team === 'townsfolk' || role.team === 'outsider') ? '_g' : '')+
             ((role.team === 'demon' || role.team === 'minion') ? '_e' : '')
-
             + '.png')
         })`
+
       }"
     ></span>
     <span
@@ -39,7 +39,7 @@
         :font-size="role.name | nameToFontSize"
       >
         <textPath xlink:href="#curve">
-          {{ role.name }}
+          {{ role.name }} 
         </textPath>
       </text>
     </svg>
