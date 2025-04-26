@@ -1,3 +1,4 @@
+console.log("ENV:", process.env.NODE_ENV);
 const fs = require("fs");
 const https = require("https");
 const WebSocket = require("ws");
@@ -9,6 +10,8 @@ const register = new client.Registry();
 register.setDefaultLabels({
   app: "clocktower-online"
 });
+process.env.NODE_ENV = "development";
+
 const WebSocket2 = require('ws');
 const wss2 = new WebSocket2.Server({ port: 8082 });
 wss2.on('connection', (ws) => {

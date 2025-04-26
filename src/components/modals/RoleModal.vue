@@ -27,10 +27,23 @@
       >
         <Token :role="role" />
       </li>
+<<<<<<< Updated upstream
+=======
+    </ul>
+    <ul class="tokens" v-if="tab === 'GoodRoles' || !otherTravelers.size">
+      <li
+        v-for="role in availableRoles"
+        class=townsfolk
+        :key="role.id"
+        @click="setRole(role)"
+      >
+        <Token :role="role" />
+      </li>
+>>>>>>> Stashed changes
     </ul>
     <div
       class="button-group"
-      v-if="playerIndex >= 0 && otherTravelers.size && !session.isSpectator"
+      v-if="playerIndex >= 0 && otherTravelers.size"
     >
       <span
         class="button"
@@ -38,12 +51,27 @@
         @click="tab = 'editionRoles'"
         >Edition Roles</span
       >
-      <span
+      <span  v-if="!session.isSpectator"
         class="button"
         :class="{ townsfolk: tab === 'otherTravelers' }"
         @click="tab = 'otherTravelers'"
-        >Other Travelers</span
+        >Other Travelers</span 
       >
+<<<<<<< Updated upstream
+=======
+        <span
+        class="button"
+        :class="{ townsfolk: tab === 'GoodRoles' }"
+        @click="tab = 'GoodRoles'"
+        >Good Roles</span
+      >
+        <span
+        class="button"
+        :class="{ townsfolk: tab === 'EvilRoles' }"
+        @click="tab = 'EvilRoles'"
+        >Evil Roles</span
+      >
+>>>>>>> Stashed changes
     </div>
   </Modal>
 </template>
@@ -94,7 +122,22 @@ export default {
         if (this.session.isSpectator && role.team === "traveler") return;
         // assign to player
         const player = this.$store.state.players.players[this.playerIndex];
+<<<<<<< Updated upstream
         this.$store.commit("players/update", {
+=======
+
+var role_r = structuredClone(role);
+
+
+        if (this.tab === "GoodRoles"){
+          role_r.team = "townsfolk";
+          } //THIS add relation
+        if (this.tab === 'EvilRoles'){
+          role_r.team = "minion"; //THIS add relation
+        }
+
+        this.$store.commit("players/update", { 
+>>>>>>> Stashed changes
           player,
           property: "role",
           value: role

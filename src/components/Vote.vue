@@ -227,16 +227,31 @@ export default {
       this.$store.commit("session/lockVote", 0);
     },
     finish() {
+      for(let i = 0; i<this.players.length; i++){
+          if(this.session.votes[i]===true && this.players[i].isDead){
+            console.log("Voting");
+          this.$store.commit("players/update", { 
+          player: this.players[i],
+          property: "isVoteless",
+          value: true
+          });
+          }
+      
+      
+      }
       clearInterval(this.voteTimer);
       this.$store.commit("session/addHistory", this.players);
-      this.$store.commit("session/nomination");
+      this.$store.commit("session/nomination");   
     },
     vote(vote) {
       if (!this.canVote) return false;
       const index = this.players.findIndex(p => p.id === this.session.playerId);
       if (index >= 0 && !!this.session.votes[index] !== vote) {
         this.$store.commit("session/voteSync", [index, vote]);
+
       }
+
+
     },
     setVotingSpeed(diff) {
       const speed = Math.round(this.session.votingSpeed + diff);
