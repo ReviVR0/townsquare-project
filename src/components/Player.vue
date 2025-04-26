@@ -15,7 +15,12 @@
         player.role.team
       ]"
     >
-      <div class="shroud" @click="toggleStatus()"></div>
+      
+      
+      <div class="shroud"       
+      @click="toggleStatus()"></div>
+      
+      
       <div class="life" @click="toggleStatus()"></div>
 
       <div
@@ -89,6 +94,12 @@
         class="seat"
         :class="{ highlight: session.isRolesDistributed }"
       />
+        <font-awesome-icon
+        icon="chair"
+        v-if="player.id && session.sessionId"
+        class="seat"
+        :class="{ highlight: session.isRolesDistributed }"
+      />
 
       <!-- Ghost vote icon -->
       <font-awesome-icon
@@ -142,6 +153,16 @@
               <font-awesome-icon icon="times-circle" />
               Remove
             </li>
+      <!-- Invite to chat -->
+
+            <li
+              @click="updatePlayer('id', '', true)"
+              v-if="player.id && session.sessionId"
+            >
+              <font-awesome-icon icon="user" />
+              Invite to chat 
+            </li>
+
             <li
               @click="updatePlayer('id', '', true)"
               v-if="player.id && session.sessionId"
@@ -165,11 +186,33 @@
             <template v-if="!player.id">
               Claim seat
             </template>
+
             <template v-else-if="player.id === session.playerId">
               Vacate seat
             </template>
             <template v-else> Seat occupied</template>
           </li>
+          <li>
+
+      <!-- Invite to chat?!! -->
+          <li
+            @click="claimSeat"
+            v-if="session.isSpectator"
+            :class="{ disabled: !player.id && player.id !== session.playerId || (player.id && player.id === session.playerId)}"
+          >
+            <font-awesome-icon icon="chair" />
+            <template v-if="player.id">
+              Invite to chat
+            </template>
+            <template v-else-if="!player.id ">
+              No Player
+            </template>
+            <template v-else> Seat occupied</template>
+          </li>
+
+
+
+
         </ul>
       </transition>
     </div>
@@ -249,7 +292,10 @@ export default {
   data() {
     return {
       isMenuOpen: false,
-      isSwap: false
+      isSwap: false,
+      VoteUsed: "../assets/shroud.png",
+      VoteNotUsed: "../assets/shroud.png"
+
     };
   },
   methods: {
@@ -267,7 +313,7 @@ export default {
         if (!this.player.isDead) {
           this.updatePlayer("isDead", true);
           if (this.player.isMarked) {
-            this.updatePlayer("isMarked", false);
+            this.updatePlayer("isMarked", false); // Should work?
           }
         } else if (this.player.isVoteless) {
           this.updatePlayer("isVoteless", false);
@@ -388,7 +434,9 @@ export default {
 
     &:before {
       content: " ";
-      background: url("../assets/shroud.png") center -10px no-repeat;
+      background: url("../assets/shroud.png");
+      background-repeat: no-repeat;
+      background-position: center -10px;
       background-size: auto 110%;
       position: absolute;
       margin-left: -50%;
@@ -402,7 +450,6 @@ export default {
       transition: all 200ms;
       pointer-events: none;
     }
-
     #townsquare.spectator & {
       pointer-events: none;
     }
@@ -608,7 +655,7 @@ li.move:not(.from) .player .overlay svg.move {
 .has-vote {
   position: absolute;
   margin-top: -15%;
-  right: 2px;
+  right: 0px;
 }
 
 /****** Session seat glow *****/

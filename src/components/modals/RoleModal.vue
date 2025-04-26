@@ -28,6 +28,7 @@
         <Token :role="role" />
       </li>
     </ul>     //TO DO Setrole, and color
+    </ul>
     <ul class="tokens" v-if="tab === 'GoodRoles' || !otherTravelers.size">
       <li
         v-for="role in availableRoles"
@@ -55,7 +56,7 @@
 
     <div
       class="button-group"
-      v-if="playerIndex >= 0 && otherTravelers.size && !session.isSpectator"
+      v-if="playerIndex >= 0 && otherTravelers.size"
     >
       <span
         class="button"
@@ -63,23 +64,26 @@
         @click="tab = 'editionRoles'"
         >Edition Roles</span
       >
-      <span
+      <span  v-if="!session.isSpectator"
         class="button"
         :class="{ townsfolk: tab === 'otherTravelers' }"
         @click="tab = 'otherTravelers'"
-        >Other Travelers</span
+        >Other Travelers</span 
       >
         <span
         class="button"
         :class="{ townsfolk: tab === 'GoodRoles' }"
         @click="tab = 'GoodRoles'"
         >GoodRoles</span
+        >Good Roles</span
       >
         <span
         class="button"
         :class="{ townsfolk: tab === 'EvilRoles' }"
         @click="tab = 'EvilRoles'"
         >EvilRoles</span
+      >
+        >Evil Roles</span
       >
     </div>
   </Modal>
@@ -143,7 +147,7 @@ var role_r = structuredClone(role);
         if (this.session.isSpectator && role.team === "traveler") return;
         // assign to player
         const player = this.$store.state.players.players[this.playerIndex];
-
+        this.$store.commit("players/update", {
 var role_r = structuredClone(role);
 
 
@@ -155,6 +159,8 @@ var role_r = structuredClone(role);
         }
         console.log(role.team);
         console.log(role_r.team);
+
+        this.$store.commit("players/update", { 
 
         this.$store.commit("players/update", { 
           player,
