@@ -34,6 +34,7 @@
     <ReferenceModal />
     <NightOrderModal />
     <VoteHistoryModal />
+    <TimerModal/>
     <GameStateModal />
     <Gradients />
     <span id="version">v{{ version }}</span>
@@ -55,12 +56,15 @@ import Gradients from "./components/Gradients";
 import NightOrderModal from "./components/modals/NightOrderModal";
 import FabledModal from "@/components/modals/FabledModal";
 import VoteHistoryModal from "@/components/modals/VoteHistoryModal";
+import TimerModal from "@/components/modals/TimerModal";
+
 import GameStateModal from "@/components/modals/GameStateModal";
 
 export default {
   components: {
     GameStateModal,
     VoteHistoryModal,
+    TimerModal,
     FabledModal,
     NightOrderModal,
     Vote,
@@ -117,6 +121,9 @@ export default {
             this.$store.commit("toggleModal", "voteHistory");
           }
           break;
+        case "t":
+          this.$store.commit("toggleModal", "timer");
+          break;
         case "s":
           if (this.session.isSpectator) return;
           this.$refs.menu.toggleNight();
@@ -153,7 +160,7 @@ html,
 body {
   font-size: 1.2em;
   line-height: 1.4;
-  background: url("assets/background.jpg") center center;
+  background: url("assets/background.gif") center center;
   background-size: cover;
   color: white;
   height: 100%;

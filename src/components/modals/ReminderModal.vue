@@ -17,11 +17,12 @@ methods: {
     <h3>Choose a reminder token:</h3>
     <ul class="reminders">
       <li
-        v-for="reminder in availableReminders"
+        v-for="reminder in visibleReminders"
         class="reminder"
         :class="[reminder.role]"
         :key="reminder.role + ' ' + reminder.name"
         @click="addReminder(reminder)"
+        :style="visibleReminders.length >= 10 ? visibleReminders.length > 15?{ width: '8vh', height: '8vh' }:{ width: '10vh', height: '10vh' } : {}"
       >
         <span
           class="icon"
@@ -38,6 +39,22 @@ methods: {
         <span class="text">{{ reminder.name }}</span>
       </li>
     </ul>
+
+    <div
+      class="button-group"
+    >
+        <span
+        class="button"
+        @click="tab = 'inPlay'"
+        >In play</span
+      >
+        <span
+        class="button"
+        @click="tab = 'notInPlay'"
+        >Not in play</span
+      >
+    </div>
+
   </Modal>
 </template>
 
@@ -94,22 +111,41 @@ export default {
       this.$store.state.players.fabled.forEach(role => {
         reminders = [...reminders, ...role.reminders.map(mapReminder(role))];
       });
-
       // add out of script traveler reminders
       this.$store.state.otherTravelers.forEach(role => {
         if (players.some(p => p.role.id === role.id)) {
           reminders = [...reminders, ...role.reminders.map(mapReminder(role))];
         }
       });
-
       reminders.push({ role: "good", name: "Good" });
       reminders.push({ role: "evil", name: "Evil" });
       reminders.push({ role: "custom", name: "Custom note" });
       return reminders;
     },
+      visibleReminders() {
+    return this.tab === 'inPlay'
+      ? this.availableReminders
+      : this.notAvailableReminders;
+  },
+
+    notAvailableReminders() {
+      let reminders = [];
+      const { players } = this.$store.state.players;
+      this.$store.state.roles.forEach(role => {
+        if (players.some(p => p.role.id === role.id) || role.team=="traveler") return;
+        reminders = [...reminders, ...role.reminders.map(mapReminder(role))];
+        });
+      return reminders;
+    },
+
     ...mapState(["modals", "grimoire"]),
     ...mapState("players", ["players"])
   },
+  data() {
+  return {
+    tab: 'inPlay', // or 'notInPlay'
+  };
+},
   methods: {
     addReminder(reminder) {
       const player = this.$store.state.players.players[this.playerIndex];

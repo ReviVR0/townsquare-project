@@ -1,4 +1,5 @@
 <template>
+<div class="wrapper">
   <ul class="info">
     <li
       class="edition"
@@ -69,6 +70,15 @@
       </span>
     </li>
   </ul>
+    <div  class="timer" v-if="session.timer!=0"  :style="{ top: position.y + 'px', left: position.x + 'px' }"
+    @mousedown="startDrag"
+    :class="{ blinking: session.timer > 0 && session.timer < 10 }">
+  {{ Math.floor(session.timer / 60) }}:{{ String(session.timer % 60).padStart(2, '0') }}
+  </div>
+<audio ref="countdownSound" src="../assets/sounds/countdown.mp3"></audio>
+
+</div>
+  
 </template>
 
 <script>
@@ -76,6 +86,13 @@ import gameJSON from "./../game";
 import { mapState } from "vuex";
 
 export default {
+  data() {
+    return {
+      position: { x: 100, y: 100 },
+      isDragging: false,
+      offset: { x: 0, y: 0 },
+    };
+  },
   computed: {
     teams: function() {
       const { players } = this.$store.state.players;
@@ -93,14 +110,113 @@ export default {
       };
     },
     ...mapState(["edition", "grimoire"]),
-    ...mapState("players", ["players"])
+    ...mapState("players", ["players"]),
+    ...mapState(["grimoire", "session", "edition"]),
+  },
+  methods: {
+    startDrag(event) {
+      this.isDragging = true;
+      this.offset = {
+        x: event.clientX - this.position.x,
+        y: event.clientY - this.position.y,
+      };
+      document.addEventListener("mousemove", this.onDrag);
+      document.addEventListener("mouseup", this.stopDrag);
+    },
+onDrag(event) {
+  if (this.isDragging) {
+    const buffer = 25; // minimum distance from screen edge in px
+
+    const x = event.clientX - this.offset.x;
+    const y = event.clientY - this.offset.y;
+
+    const maxX = window.innerWidth*0.5 - buffer*4;
+    const maxY = window.innerHeight*0.5 - buffer*1.7;
+    const minX = buffer*4-window.innerWidth*0.5;
+    const minY = -window.innerHeight*0.5;
+
+    this.position.x = Math.min(Math.max(x, minX), maxX);
+    this.position.y = Math.min(Math.max(y, minY), maxY);
   }
+},
+
+    stopDrag() {
+      this.isDragging = false;
+      document.removeEventListener("mousemove", this.onDrag);
+      document.removeEventListener("mouseup", this.stopDrag);
+    },
+
+
+    startTimer() {
+  this.timerInterval = setInterval(() => {
+    if (this.session.timer > 0) {
+      this.session.timer--;
+    } else {
+      clearInterval(this.timerInterval);
+      this.timerInterval = null;
+      if (!this.grimoire.isMuted && this.$refs.countdownSound) {
+        this.$refs.countdownSound.play().catch(err => {
+          console.warn("Sound failed to play:", err);
+        });
+      }
+    }
+  }, 1000);
+},
+
+    handleResize() {
+  if(this.position.x>window.innerWidth/2 || -this.position.x>window.innerWidth/2 || this.position.y>window.innerHeight/2 || -this.position.y>window.innerHeight/2){
+    this.position.x=0;
+    this.position.y=0;
+  }
+  },
+  },
+mounted() {
+  window.addEventListener('resize', this.handleResize);
+  this.handleResize(); // ensure correct position on mount
+  const unlock = () => {
+    const audio = this.$refs.countdownSound;
+    if (audio) {
+      // Try to play and immediately pause just to unlock it
+      audio.play().then(() => audio.pause()).catch(() => {});
+    }
+    document.removeEventListener("click", unlock);
+  };
+  document.addEventListener("click", unlock);
+},
+  beforeDestroy() {
+    // Clear the interval when the component is destroyed (cleanup)
+    if (this.timerInterval) {
+      clearInterval(this.timerInterval);
+          this.timerInterval = null; 
+    }
+    window.removeEventListener('resize', this.handleResize);
+  },
+  watch: {
+  'session.timer'(newVal) {
+    if (newVal > 0 && !this.timerInterval) {
+      this.startTimer();
+    }
+  }
+}
 };
+
+
 </script>
 
 <style lang="scss" scoped>
 @import "../vars.scss";
 
+.wrapper {
+  position: absolute;
+  display: flex;
+  width: 100%;
+  height: 100%;
+  padding: 50px 0 15px;
+  align-items: center;
+  align-content: center;
+  justify-content: center;
+
+}
 .info {
   position: absolute;
   display: flex;
@@ -115,6 +231,7 @@ export default {
   background-size: auto 100%;
 
   li {
+
     font-weight: bold;
     width: 100%;
     filter: drop-shadow(0 0 2px rgba(0, 0, 0, 0.7));
@@ -176,5 +293,34 @@ export default {
     position: absolute;
     top: -25%;
   }
+}
+div.timer {
+    font-weight: bold;
+  cursor: grab;
+  display: flex;
+  justify-content: center;
+  padding: 4px 10px;
+  width: 150px;
+  bottom: 20px;
+  right: 20px;
+
+  background-color: rgba(0, 0, 0, 0.75);
+  border-radius: 12px;
+  border: 3px solid $townsfolk;
+
+  white-space: nowrap;
+  z-index: 10;
+  user-select: none;
+
+}
+
+
+.blinking {
+  animation: blink-red-white 1s infinite;
+}
+@keyframes blink-red-white {
+  0% { color: red; border-color: red}
+  50% { color: white; border-color: $townsfolk}
+  100% { color: red; border-color: red}
 }
 </style>

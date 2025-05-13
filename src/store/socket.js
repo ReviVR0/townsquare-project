@@ -205,6 +205,14 @@ class LiveSession {
       case "pronouns":
         this._updatePlayerPronouns(params);
         break;
+      case "timer":
+        if (!this._isSpectator) return;
+        this._store.commit("session/timer", params);
+        break;
+      case "inviteChat":
+        if (this._isSpectator) return;
+        this._store.commit("session/inviteChat", params);
+        break;
     }
   }
 
@@ -659,7 +667,7 @@ class LiveSession {
       if (player.id && player.role) {
         message[player.id] = [
           "player",
-          { index, property: "role", value: player.role.id }
+          { index, property: "role", value: player.role.id}
         ];
       }
     });
@@ -686,6 +694,7 @@ class LiveSession {
       this._send("nomination", nomination);
     }
   }
+
 
   /**
    * Set the isVoteInProgress status. ST only
@@ -834,6 +843,18 @@ class LiveSession {
     if (this._isSpectator) return;
     this._send("remove", payload);
   }
+  timer(payload){
+    this._send("timer", payload);
+  }
+  inviteChat(payload){
+    this._send("inviteChat", payload);
+    if(payload[0] == "ST")
+      console.log(`ST, ${payload[1]}`);
+    else if(payload[1] == "ST")
+      console.log(`${payload[0]}, ST`);
+    else
+      console.log(`${payload[0]}, ${payload[1]}`);
+  }
 }
 
 export default store => {
@@ -913,6 +934,12 @@ export default store => {
         } else {
           session.sendPlayer(payload);
         }
+        break;
+      case "session/timer":
+        session.timer(payload);
+        break;
+      case "session/inviteChat":
+        session.inviteChat(payload);
         break;
     }
   });

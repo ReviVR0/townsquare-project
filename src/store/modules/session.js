@@ -27,7 +27,8 @@ const state = () => ({
   voteHistory: [],
   markedPlayer: -1,
   isVoteHistoryAllowed: true,
-  isRolesDistributed: false
+  isRolesDistributed: false,
+  timer: 0
 });
 
 const getters = {};
@@ -52,6 +53,7 @@ const mutations = {
   setVoteHistoryAllowed: set("isVoteHistoryAllowed"),
   claimSeat: set("claimedSeat"),
   distributeRoles: set("isRolesDistributed"),
+  timer: set("timer"),
   setSessionId(state, sessionId) {
     state.sessionId = sessionId
       .toLocaleLowerCase()
@@ -104,7 +106,9 @@ const mutations = {
   voteSync: handleVote,
   lockVote(state, lock) {
     state.lockedVote = lock !== undefined ? lock : state.lockedVote + 1;
-  }
+  },
+  inviteChat(){}
+
 };
 
 export default {

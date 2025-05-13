@@ -251,7 +251,11 @@ export default {
       this.move = -1;
       this.swap = -1;
       this.nominate = -1;
-    }
+    },
+  inviteChat(from, to){
+    if (!this.session.isSpectator) return;
+    this.$store.commit("session/inviteChat", to);
+  }
   }
 };
 </script>
@@ -382,8 +386,10 @@ export default {
       } @else {
         .player {
           margin-bottom: -10% + 20% * math.div($x % $q, $q);
+
         }
       }
+
     }
     $rot: $rot + $angle;
   }
@@ -402,15 +408,16 @@ export default {
   &.bluffs {
     bottom: 10px;
   }
-  &.fabled {
-    top: 10px;
-  }
   left: 10px;
   background: rgba(0, 0, 0, 0.5);
   border-radius: 10px;
   border: 3px solid black;
   filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.5));
   transform-origin: bottom left;
+  &.fabled {
+    top: 10px;
+    transform-origin: top left;
+  }
   transform: scale(1);
   opacity: 1;
   transition: all 200ms ease-in-out;

@@ -134,6 +134,12 @@
               Copy player link
               <em><font-awesome-icon icon="copy"/></em>
             </li>
+
+            <li @click="InviteST" v-if="session.isSpectator && isSeated">
+              Invite Storyteller
+              <em><font-awesome-icon icon="copy"/></em>
+            </li>
+
             <li v-if="!session.isSpectator" @click="distributeRoles">
               Send Characters
               <em><font-awesome-icon icon="theater-masks"/></em>
@@ -143,6 +149,11 @@
               @click="toggleModal('voteHistory')"
             >
               Vote history<em>[V]</em>
+            </li>
+
+           <li @click="toggleModal('timer')"  v-if="!session.isSpectator"
+            >
+              Timer<em>[T]</em>
             </li>
             <li @click="leaveSession">
               Leave Session
@@ -236,7 +247,10 @@ import { mapMutations, mapState } from "vuex";
 export default {
   computed: {
     ...mapState(["grimoire", "session", "edition"]),
-    ...mapState("players", ["players"])
+    ...mapState("players", ["players"]),
+    isSeated() {
+      return this.players.some(player => player.id === this.session.playerId);
+    }
   },
   data() {
     return {
@@ -244,6 +258,8 @@ export default {
     };
   },
   methods: {
+
+
     setBackground() {
       const background = prompt("Enter custom background URL");
       if (background || background === "") {
@@ -354,9 +370,25 @@ export default {
       "toggleStatic",
       "setZoom",
       "toggleModal"
-    ])
-  }
-};
+    ]),
+    InviteST(){
+      const chat = [];
+      const playerChat = [];
+      this.players.forEach(player => {
+        if (player.id == this.session.playerId) {
+          playerChat.push(player.name);
+          playerChat.push(player.id);
+          chat.push(playerChat);
+
+        }
+      });
+      chat.push("ST");
+      this.$store.commit("session/inviteChat", chat);
+    }
+  },
+
+}
+
 </script>
 
 <style scoped lang="scss">
@@ -390,7 +422,7 @@ export default {
   }
 
   > span {
-    display: inline-block;
+    play: inline-block;
     cursor: pointer;
     z-index: 5;
     margin-top: 7px;

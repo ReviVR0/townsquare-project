@@ -60,7 +60,7 @@
           <span
             class="icon"
             :style="{
-              backgroundImage: `url(${require('../../assets/icons/' +
+              backgroundImage: `url(${require('../../assets/icons/Reminder/' +
                 jinx.first.id +
                 '.png')})`
             }"
@@ -68,7 +68,7 @@
           <span
             class="icon"
             :style="{
-              backgroundImage: `url(${require('../../assets/icons/' +
+              backgroundImage: `url(${require('../../assets/icons/Reminder/' +
                 jinx.second.id +
                 '.png')})`
             }"

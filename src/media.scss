@@ -1,9 +1,16 @@
 /*** Media queries ***/
+body { // Find in code where
+  font-size: 1em;
+}
+.night-order em {
+  width: 30px;
+  height: 30px;
+}
 // Large devices (desktops, less than 1200px)
 @media screen and (max-width: 1199.98px) {
   html,
   body {
-    font-size: 1.1em;
+    font-size: 1em;
   }
   .night-order em {
     width: 30px;
@@ -24,15 +31,24 @@
     font-size: 20px;
   }
   .night-order em {
-    width: 20px;
-    height: 20px;
+    width: 25px;
+    height: 25px;
   }
   .fabled .night-order.first span {
     left: 20px;
   }
   #townsquare {
-    padding: 10px;
+    padding: 30px;
   }
+  #townsquare > .bluffs,
+  #townsquare > .fabled {
+
+    &.fabled {
+      //top: -5%;
+      position: absolute;
+      }
+    transform: scale(0.8);
+}
 }
 
 // Small devices (landscape phones, less than 768px)
@@ -50,6 +66,13 @@
       bottom: 0;
     }
   }
+  #townsquare {
+    padding: 60px;
+  }
+  .night-order em {
+    width: 22px;
+    height: 22px;
+  }
 }
 
 // Old phones
@@ -57,6 +80,9 @@
   html,
   body {
     font-size: 0.8em;
+  }
+  #townsquare {
+    padding: 120px;
   }
 }
 

@@ -27,7 +27,6 @@
       >
         <Token :role="role" />
       </li>
-    </ul>     //TO DO Setrole, and color
     </ul>
     <ul class="tokens" v-if="tab === 'GoodRoles' || !otherTravelers.size">
       <li
@@ -74,15 +73,12 @@
         class="button"
         :class="{ townsfolk: tab === 'GoodRoles' }"
         @click="tab = 'GoodRoles'"
-        >GoodRoles</span
         >Good Roles</span
       >
         <span
         class="button"
         :class="{ townsfolk: tab === 'EvilRoles' }"
         @click="tab = 'EvilRoles'"
-        >EvilRoles</span
-      >
         >Evil Roles</span
       >
     </div>
@@ -146,22 +142,14 @@ var role_r = structuredClone(role);
       } else {
         if (this.session.isSpectator && role.team === "traveler") return;
         // assign to player
-        const player = this.$store.state.players.players[this.playerIndex];
-        this.$store.commit("players/update", {
-var role_r = structuredClone(role);
-
-
+        const player = this.$store.state.players.players[this.playerIndex];          
+        var role_r = structuredClone(role);
         if (this.tab === "GoodRoles"){
           role_r.team = "townsfolk";
           } //THIS add relation
         if (this.tab === 'EvilRoles'){
           role_r.team = "minion"; //THIS add relation
         }
-        console.log(role.team);
-        console.log(role_r.team);
-
-        this.$store.commit("players/update", { 
-
         this.$store.commit("players/update", { 
           player,
           property: "role",

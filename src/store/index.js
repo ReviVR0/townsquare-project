@@ -7,7 +7,7 @@ import session from "./modules/session";
 import editionJSON from "../editions.json";
 import rolesJSON from "../roles.json";
 import fabledJSON from "../fabled.json";
-import jinxesJSON from "../hatred.json";
+import jinxesJSON from "../jinx.json";
 
 Vue.use(Vuex);
 // helper functions
@@ -62,9 +62,9 @@ try {
   //   .then(res => res.json())
   //   .then(jinxesJSON => {
   jinxes = new Map(
-    jinxesJSON.map(({ id, hatred }) => [
+    jinxesJSON.map(({ id, jinx }) => [
       clean(id),
-      new Map(hatred.map(({ id, reason }) => [clean(id), reason]))
+      new Map(jinx.map(({ id, reason }) => [clean(id), reason]))
     ])
   );
   // });
@@ -116,7 +116,8 @@ export default new Vuex.Store({
       reminder: false,
       role: false,
       roles: false,
-      voteHistory: false
+      voteHistory: false,
+      timer: false
     },
     edition: editionJSONbyId.get("tb"),
     roles: getRolesByEdition(),

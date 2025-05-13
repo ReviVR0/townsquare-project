@@ -153,16 +153,6 @@
               <font-awesome-icon icon="times-circle" />
               Remove
             </li>
-      <!-- Invite to chat -->
-
-            <li
-              @click="updatePlayer('id', '', true)"
-              v-if="player.id && session.sessionId"
-            >
-              <font-awesome-icon icon="user" />
-              Invite to chat 
-            </li>
-
             <li
               @click="updatePlayer('id', '', true)"
               v-if="player.id && session.sessionId"
@@ -192,23 +182,27 @@
             </template>
             <template v-else> Seat occupied</template>
           </li>
-          <li>
 
       <!-- Invite to chat?!! -->
           <li
-            @click="claimSeat"
-            v-if="session.isSpectator"
+            @click="InvitePlayer"
+            v-if=" session.isSpectator && this.player.name!='' "
             :class="{ disabled: !player.id && player.id !== session.playerId || (player.id && player.id === session.playerId)}"
           >
-            <font-awesome-icon icon="chair" />
-            <template v-if="player.id">
+            <template v-if="player.id && !(player.id === session.playerId) && isSeated">
+              <font-awesome-icon icon="user" />
               Invite to chat
             </template>
-            <template v-else-if="!player.id ">
+            </li>
+            <li
+            :class="{ disabled: !player.id && player.id !== session.playerId || (player.id && player.id === session.playerId)}"
+            >
+            <template v-if="(!player.id && player.id !== session.playerId)">
+              <font-awesome-icon icon="user" />
               No Player
             </template>
-            <template v-else> Seat occupied</template>
           </li>
+
 
 
 
@@ -221,9 +215,16 @@
       <div
         class="reminder"
         :key="reminder.role + ' ' + reminder.name"
-        v-for="reminder in player.reminders"
+        v-for="(reminder, index) in player.reminders"
         :class="[reminder.role]"
         @click="removeReminder(reminder)"
+
+        @mouseenter="hoveredReminderGroup = 1"
+        @mouseleave="hoveredReminderGroup = null"
+        :style="{ marginTop: 
+        hoveredReminderGroup==1?'0px':(player.reminders.length > 2 ?
+        ((index==0)?0:(player.reminders.length<5?player.reminders.length * -10:-40)) + 'px' : '0px' )
+        }"
       >
         <span
           class="icon"
@@ -241,9 +242,20 @@
       </div>
     </template>
     <div class="reminder add" @click="$emit('trigger', ['openReminderModal'])">
-      <span class="icon"></span>
+      <span class="icon"
+        @mouseenter="hoveredReminderGroup = 1"
+        @mouseleave="hoveredReminderGroup = null"
+      ></span>
+        <div class="reminderHoverZone"></div>
     </div>
-    <div class="reminderHoverTarget"></div>
+    <div class="reminderHoverTarget"
+        @mouseenter="hoveredReminderGroup = 1"
+        @mouseleave="hoveredReminderGroup = null"
+        :style="{height: player.reminders.length>=2?(player.reminders.length*75+5)+'px':'0px',
+          zindex: hoveredReminderGroup==1?-2:-1,
+          marginTop: player.reminders.length<2?'-25%-33px':(player.reminders.length*-50 - 25) +'%'
+        }"
+    ></div>
   </li>
 </template>
 
@@ -287,6 +299,9 @@ export default {
       } else {
         return { width: 12 + this.grimoire.zoom + unit };
       }
+    },
+    isSeated() {
+      return this.players.some(player => player.id === this.session.playerId);
     }
   },
   data() {
@@ -294,8 +309,8 @@ export default {
       isMenuOpen: false,
       isSwap: false,
       VoteUsed: "../assets/shroud.png",
-      VoteNotUsed: "../assets/shroud.png"
-
+      VoteNotUsed: "../assets/shroud.png",
+      hoveredReminderGroup: null
     };
   },
   methods: {
@@ -380,6 +395,26 @@ export default {
       this.isMenuOpen = false;
       this.$emit("trigger", ["claimSeat"]);
     },
+
+    InvitePlayer(){
+      this.isMenuOpen = false;
+      const chat = [];
+      let playerChat=[];
+      this.players.forEach(player => {
+        if (player.id == this.session.playerId) {
+          playerChat.push(player.name);
+          playerChat.push(player.id);
+          chat.push(playerChat);
+        }
+      });
+      playerChat=[];
+      playerChat.push(this.player.name);
+      playerChat.push(this.player.id);
+      chat.push(playerChat);      
+      if(chat[0] == chat[1]) return;
+      this.$emit("trigger", ["inviteChat", chat]);
+    },
+
     /**
      * Allow the ST to override a locked vote.
      */
@@ -639,7 +674,7 @@ li.move:not(.from) .player .overlay svg.move {
   pointer-events: all;
 }
 
-/****** Vote icon ********/
+/****** Vote icon  To change********/
 .player .has-vote {
   color: #fff;
   filter: drop-shadow(0 0 3px black);
@@ -689,7 +724,7 @@ li.move:not(.from) .player .overlay svg.move {
   animation: townsfolk-glow 5s ease-in-out infinite;
 }
 
-/****** Marked icon ******/
+/****** Marked icon  Maybe change?******/
 .player .marked {
   position: absolute;
   width: 100%;
@@ -899,12 +934,12 @@ li.move:not(.from) .player .overlay svg.move {
   align-items: center;
   justify-content: center;
   margin: 5px 0 0 -25%;
+  transition: margin 0.2s ease;
   border-radius: 50%;
   border: 3px solid black;
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
   transition: all 200ms;
   cursor: pointer;
-
   .text {
     line-height: 90%;
     color: black;
@@ -919,7 +954,6 @@ li.move:not(.from) .player .overlay svg.move {
     text-shadow: 0 1px 1px #f6dfbd, 0 -1px 1px #f6dfbd, 1px 0 1px #f6dfbd,
       -1px 0 1px #f6dfbd;
   }
-
   .icon,
   &:after {
     content: " ";
@@ -975,6 +1009,16 @@ li.move:not(.from) .player .overlay svg.move {
     opacity: 1;
   }
 }
+.circle {
+  &:hover .reminder {
+    margin-top: 10px;
+  }
+
+  .reminder {
+    margin-top: 0;
+    transition: margin 0.4s ease;
+  }
+}
 
 .circle .reminderHoverTarget {
   opacity: 0;
@@ -982,12 +1026,13 @@ li.move:not(.from) .player .overlay svg.move {
   padding-top: calc(50% + 38px);
   margin-top: calc(-25% - 33px);
   margin-left: calc(-25% - 1px);
-  border-radius: 0 0 999px 999px;
+  border-radius: 300px 300px 999px 999px;
   pointer-events: auto;
   transform: none !important;
   z-index: -1;
-}
+  background: white;
 
+}
 .circle li:hover .reminder.add {
   opacity: 1;
   top: 0;
@@ -1000,4 +1045,6 @@ li.move:not(.from) .player .overlay svg.move {
   opacity: 0;
   pointer-events: none;
 }
+
+
 </style>
