@@ -35,6 +35,8 @@
     <NightOrderModal />
     <VoteHistoryModal />
     <TimerModal/>
+    <InvitationModal/>
+    <Canvas/>
     <GameStateModal />
     <Gradients />
     <span id="version">v{{ version }}</span>
@@ -59,9 +61,13 @@ import VoteHistoryModal from "@/components/modals/VoteHistoryModal";
 import TimerModal from "@/components/modals/TimerModal";
 
 import GameStateModal from "@/components/modals/GameStateModal";
+import Canvas from "@/components/modals/Canvas.vue";
+import InvitationModal from "@/components/modals/InvitationModal.vue";
 
 export default {
   components: {
+    InvitationModal,
+    Canvas,
     GameStateModal,
     VoteHistoryModal,
     TimerModal,
@@ -123,6 +129,9 @@ export default {
           break;
         case "t":
           this.$store.commit("toggleModal", "timer");
+          break;
+        case "d":
+          this.$store.commit("toggleModal", "drawingModal");
           break;
         case "s":
           if (this.session.isSpectator) return;

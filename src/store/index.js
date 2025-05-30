@@ -117,7 +117,9 @@ export default new Vuex.Store({
       role: false,
       roles: false,
       voteHistory: false,
-      timer: false
+      drawingModal: false,
+      timer: false,
+      invitation: false
     },
     edition: editionJSONbyId.get("tb"),
     roles: getRolesByEdition(),

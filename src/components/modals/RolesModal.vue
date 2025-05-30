@@ -237,7 +237,7 @@ ul.tokens {
     position: absolute;
     left: 0;
     font-weight: bold;
-    font-size: 75%;
+    font-size: 70%;
     width: 5%;
     display: flex;
     align-items: center;

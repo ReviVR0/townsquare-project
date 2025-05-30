@@ -22,7 +22,6 @@
         }"
       ></Player>
     </ul>
-
     <div
       class="bluffs"
       v-if="players.length"
@@ -45,6 +44,12 @@
         </li>
       </ul>
     </div>
+    <div  class="Invitation" @click="toggleModal('invitation')">
+      <h3>
+        <span>Invitation</span>
+      </h3>
+    </div>
+
 
     <div class="fabled" :class="{ closed: !isFabledOpen }" v-if="fabled.length">
       <h3>
@@ -87,7 +92,7 @@
 </template>
 
 <script>
-import { mapGetters, mapState } from "vuex";
+import {mapGetters, mapMutations, mapState} from "vuex";
 import Player from "./Player";
 import Token from "./Token";
 import ReminderModal from "./modals/ReminderModal";
@@ -103,7 +108,11 @@ export default {
   computed: {
     ...mapGetters({ nightOrder: "players/nightOrder" }),
     ...mapState(["grimoire", "roles", "session"]),
-    ...mapState("players", ["players", "bluffs", "fabled"])
+    ...mapState("players", ["players", "bluffs", "fabled"]),
+    maxNameLength() {
+      if (!this.players || this.players.length === 0) return 10; // default min width
+      return Math.max(...this.players.map(p => p.name.length));
+    }
   },
   data() {
     return {
@@ -113,10 +122,13 @@ export default {
       move: -1,
       nominate: -1,
       isBluffsOpen: true,
-      isFabledOpen: true
+      isFabledOpen: true,
     };
   },
   methods: {
+    ...mapMutations([
+      "toggleModal"
+    ]),
     toggleBluffs() {
       this.isBluffsOpen = !this.isBluffsOpen;
     },
@@ -418,6 +430,7 @@ export default {
     top: 10px;
     transform-origin: top left;
   }
+
   transform: scale(1);
   opacity: 1;
   transition: all 200ms ease-in-out;
@@ -498,14 +511,13 @@ export default {
   transform: scale(0.1);
 }
 
-.fabled ul li .token:before {
+.fabled ul li .token:before{
   content: " ";
   opacity: 0;
   transition: opacity 250ms;
   background-image: url("../assets/icons/x.png");
   z-index: 2;
 }
-
 /**** Night reminders ****/
 .night-order {
   position: absolute;
@@ -652,4 +664,28 @@ export default {
 #townsquare:not(.spectator) .fabled ul li:hover .token:before {
   opacity: 1;
 }
+#townsquare > .Invitation {
+  position: absolute;
+  bottom: 5%;
+  right: 20px;
+  background: rgba(0, 0, 0, 0.5);
+  border-radius: 10px;
+  border: 3px solid black;
+  filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.5));
+  h3 {
+    margin: 5px 1vh 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    span {
+      flex-grow: 1;
+      white-space: nowrap;
+    }
+     :hover{
+      color: red;
+    }
+  }
+}
+
+
 </style>

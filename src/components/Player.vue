@@ -349,6 +349,16 @@ export default {
     changeName() {
       if (this.session.isSpectator) return;
       const name = prompt("Player name", this.player.name) || this.player.name;
+      const isValid =
+      name.length > 0 &&
+      name.length <= 32 &&
+      /^[A-Za-z0-9\s'-]+$/.test(name);
+
+    if (!isValid) {
+      alert("Invalid name. Name must be in range of 1-32 and not contain special characters");
+      return;
+  }
+      
       this.updatePlayer("name", name, true);
     },
     removeReminder(reminder) {

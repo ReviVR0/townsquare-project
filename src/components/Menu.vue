@@ -384,8 +384,16 @@ export default {
       });
       chat.push("ST");
       this.$store.commit("session/inviteChat", chat);
+    },
+    handleResize() {
+      this.setZoom(this.grimoire.zoom+1);
+      this.setZoom(this.grimoire.zoom-1);
     }
   },
+  mounted() {
+    window.addEventListener('resize', this.handleResize)
+    this.handleResize()
+  }
 
 }
 

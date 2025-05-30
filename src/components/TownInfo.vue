@@ -114,6 +114,7 @@ export default {
     ...mapState(["grimoire", "session", "edition"]),
   },
   methods: {
+
     startDrag(event) {
       this.isDragging = true;
       this.offset = {
@@ -168,11 +169,11 @@ onDrag(event) {
     this.position.x=0;
     this.position.y=0;
   }
-  },
+  }
   },
 mounted() {
   window.addEventListener('resize', this.handleResize);
-  this.handleResize(); // ensure correct position on mount
+  this.handleResize();
   const unlock = () => {
     const audio = this.$refs.countdownSound;
     if (audio) {

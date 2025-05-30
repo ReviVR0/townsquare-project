@@ -282,6 +282,7 @@ class LiveSession {
       const { session, grimoire } = this._store.state;
       const { fabled } = this._store.state.players;
       this.sendEdition(playerId);
+      this.timer(session.timer);
       this._sendDirect(playerId, "gs", {
         gamestate: this._gamestate,
         isNight: grimoire.isNight,
@@ -936,6 +937,7 @@ export default store => {
         }
         break;
       case "session/timer":
+        if (session._isSpectator) return;
         session.timer(payload);
         break;
       case "session/inviteChat":
