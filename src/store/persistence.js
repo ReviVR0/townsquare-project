@@ -68,6 +68,9 @@ module.exports = store => {
     store.commit("session/setSpectator", spectator);
     store.commit("session/setSessionId", sessionId);
   }
+  if (!localStorage.invites) {
+    localStorage.invites = "";
+  }
 
   // listen to mutations
   store.subscribe(({ type, payload }, state) => {

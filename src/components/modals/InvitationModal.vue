@@ -19,6 +19,9 @@
         <tr v-for="(player, index) in aviblePlayersList " :key="index">
           <td>{{ index + 1 }}</td>
           <td class="names" @click="inviteChat(player)">{{ player.name }}</td>
+          <td class="Refuse" v-if="invitedByName.includes(player.name)"> <font-awesome-icon icon="plus-circle"/></td>
+          <td class="Accept" v-if="invitedByName.includes(player.name)" @click="removeInviteBySender(player.name)" ><font-awesome-icon icon="times-circle"/></td>
+
         </tr>
         </tbody>
       </table>
@@ -46,30 +49,28 @@ export default {
         list.push({ name: "ST", id: "ST"});
       }
       return list;
+    },
+    invitedByName() {
+      return this.localInvites.map(invite => invite[0][0]);
+
     }
   },
   data() {
     return {
+      localInvites: JSON.parse(localStorage.getItem("invites") || "[]")
     };
+  },
+  mounted() {
+    window.addEventListener("storage", this.handleStorageChange);
+  },
+  beforeDestroy() {
+    window.removeEventListener("storage", this.handleStorageChange);
   },
   methods: {
     ...mapMutations(["toggleModal"]),
-    InviteST(){
-      const chat = [];
-      const playerChat = [];
-      this.players.forEach(player => {
-        if (player.id == this.session.playerId) {
-          playerChat.push(player.name);
-          playerChat.push(player.id);
-          chat.push(playerChat);
-        }
-      });
-      chat.push("ST");
-      this.$store.commit("session/inviteChat", chat);
-    },
     inviteChat(to){
-      if(to=="") return;
-      if (!this.session.isSpectator) to = ["ST", [to.name, to.id]];
+      if(to.id=="") return;
+      if (!this.session.isSpectator) to = [["ST", "ST"], [to.name, to.id]];
       else{
       const playerChat = [];
       this.players.forEach(player => {
@@ -78,12 +79,25 @@ export default {
           playerChat.push(player.id);
         }
       })
-        if (to.id == "ST") to = [playerChat, "ST"];
+        if (to.id == "ST") to = [playerChat, ["ST", "ST"]];
         else to = [playerChat, [to.name, to.id]];}
       this.$store.commit("session/inviteChat", to);
-    }
-
-  }
+    },
+    updateInvitesFromStorage() {
+      this.localInvites = JSON.parse(localStorage.getItem("invites") || "[]");
+    },
+    removeInviteBySender(senderName) {
+      let invites = JSON.parse(localStorage.getItem("invites") || "[]");
+      invites = invites.filter(invite => invite[0][0] !== senderName);
+      localStorage.setItem("invites", JSON.stringify(invites));
+      this.updateInvitesFromStorage(); // refresh localInvites
+    },
+    handleStorageChange(event) {
+      if (!event.key || event.key === "invites") {
+        this.updateInvitesFromStorage();
+      }
+    },
+  },
 };
 </script>
 
@@ -102,17 +116,24 @@ export default {
   align-items: center;
   justify-content: center;
 
-  background-color: rgba(0, 0, 0, 0.5); // semi-transparent dark background
+  background-color: rgba(0, 0, 0, 0.5);
   color: white;
   font-weight: bold;
   text-align: center;
-  z-index: 999; // ensure it appears above everything
+  z-index: 999;
   pointer-events: auto;
 }
- .names :hover{
+  .names:hover{
     color: red;
   }
 .content{
   padding: 10px 100px;
+  .Accept:hover{
+    color: $townsfolk;
+  }
+  .Refuse:hover{
+    color: red;
+  }
+
 }
 </style>

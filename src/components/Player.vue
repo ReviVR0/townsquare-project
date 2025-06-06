@@ -124,6 +124,13 @@
         <div class="pronouns" v-if="player.pronouns">
           <span>{{ player.pronouns }}</span>
         </div>
+
+        <div
+            @click="claimSeat"
+            v-if="session.isSpectator && !player.id ">
+          <font-awesome-icon icon="chair" :class="{ disabled: player.id }"
+          />
+        </div>
       </div>
 
       <transition name="fold">

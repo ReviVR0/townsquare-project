@@ -1,7 +1,7 @@
 class LiveSession {
   constructor(store) {
-    //this._wss = "wss://live.clocktower.online:8080/";
-     this._wss = "ws://localhost:8081/"; // uncomment if using local server with NODE_ENV=development
+    this._wss = "wss://live.clocktower.online:8080/";
+    this._wss = "ws://localhost:8081/"; // uncomment if using local server with NODE_ENV=development
     this._socket = null;
     this._isSpectator = true;
     this._gamestate = [];
@@ -213,7 +213,11 @@ class LiveSession {
         if (this._isSpectator) return;
         this._store.commit("session/inviteChat", params);
         break;
-    }
+      case "ConfirmChat":{
+          this.ConfirmChat(params);
+        break;
+    }}
+
   }
 
   /**
@@ -622,6 +626,7 @@ class LiveSession {
    */
   claimSeat(seat) {
     if (!this._isSpectator) return;
+    localStorage.removeItem("invites");
     const players = this._store.state.players.players;
     if (players.length > seat && (seat < 0 || !players[seat].id)) {
       this._send("claim", [seat, this._store.state.session.playerId]);
@@ -849,15 +854,39 @@ class LiveSession {
   }
   inviteChat(payload){
     this._send("inviteChat", payload);
-    if(payload[0] == "ST")
-      console.log(`ST, ${payload[1]}`);
-    else if(payload[1] == "ST")
-      console.log(`${payload[0]}, ST`);
-    else
       console.log(`${payload[0]}, ${payload[1]}`);
+      if (payload[1][1]=="ST") {
+        this._sendDirect("host", 'ConfirmChat', payload);
+        return;
+      }
+      this._sendDirect(payload[1][1], 'ConfirmChat', payload);
   }
+  ConfirmChat(params){
+    let invites = JSON.parse(localStorage.getItem("invites") || "[]");
+    if (!invites.some(invite => {
+      const [[senderName, senderId], [receiverName, receiverId]] = invite;
+      const [
+        [newSenderName, newSenderId],
+        [newReceiverName, newReceiverId],
+      ] = params;
+      return (
+          senderId === newSenderId &&
+          receiverId === newReceiverId &&
+          senderName === newSenderName &&
+          receiverName === newReceiverName
+      );
+    })) {
+      invites.push(params);
+      localStorage.setItem("invites", JSON.stringify(invites));
+      window.dispatchEvent(new Event("storage"));
+    }
+    for (const invite of invites) {
+      const [[senderName, senderId], [receiverName, receiverId]] = invite;
+      console.log(senderName, senderId, receiverName, receiverId);
+    }
 }
 
+}
 export default store => {
   // setup
   const session = new LiveSession(store);
