@@ -39,6 +39,8 @@
     <Canvas/>
     <GameStateModal />
     <Gradients />
+    <TriviaModal/>
+    <FormModal/>
     <span id="version">v{{ version }}</span>
   </div>
 </template>
@@ -63,9 +65,13 @@ import TimerModal from "@/components/modals/TimerModal";
 import GameStateModal from "@/components/modals/GameStateModal";
 import Canvas from "@/components/modals/Canvas.vue";
 import InvitationModal from "@/components/modals/InvitationModal.vue";
+import TriviaModal from "@/components/modals/TriviaModal.vue";
+import FormModal from "@/components/modals/FormModal.vue";
 
 export default {
   components: {
+    FormModal,
+    TriviaModal,
     InvitationModal,
     Canvas,
     GameStateModal,
@@ -136,6 +142,12 @@ export default {
         case "s":
           if (this.session.isSpectator) return;
           this.$refs.menu.toggleNight();
+          break;
+        case "q":
+          this.$store.commit("toggleModal", "trivia");
+          break;
+        case "f":
+          this.$store.commit("toggleModal", "form");
           break;
         case "escape":
           this.$store.commit("toggleModal");
