@@ -14,12 +14,6 @@ register.setDefaultLabels({
 });
 //process.env.NODE_ENV = "development";
 
-const WebSocket2 = require('ws');
-const wss2 = new WebSocket2.Server({ port: 8082 });
-wss2.on('connection', (ws) => {
-  console.log('Client connected!');
-});
-
 const PING_INTERVAL = 30000; // 30 seconds
 
 const options = {};
@@ -29,7 +23,11 @@ const options = {};
 //   options.key = fs.readFileSync("key.pem");
 // }
 
-const server = http.createServer();
+const server = http.createServer((req, res) => {
+  res.writeHead(200);
+  res.end("OK");
+});
+
 const wss = new WebSocket.Server({
   ...(env === "development" ? { port } : { server }),
   verifyClient: ()=> true //info =>         /^https?:\/\/(localhost|townsquare-project\.onrender\.com)/i
