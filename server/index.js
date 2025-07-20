@@ -1,6 +1,6 @@
 console.log("ENV:", process.env.NODE_ENV);
 const fs = require("fs");
-const https = require("https");
+const http = require("http");
 const WebSocket = require("ws");
 const client = require("prom-client");
 const env = process.env.NODE_ENV || "development";
@@ -24,15 +24,15 @@ const PING_INTERVAL = 30000; // 30 seconds
 
 const options = {};
 
-if (process.env.NODE_ENV !== "development") {
-  options.cert = fs.readFileSync("cert.pem");
-  options.key = fs.readFileSync("key.pem");
-}
+// if (process.env.NODE_ENV !== "development") {
+//   options.cert = fs.readFileSync("cert.pem");
+//   options.key = fs.readFileSync("key.pem");
+// }
 
-const server = https.createServer(options);
+const server = http.createServer();
 const wss = new WebSocket.Server({
   ...(env === "development" ? { port } : { server }),
-  verifyClient: info =>         /^https?:\/\/(localhost|townsquare-project\.onrender\.com)/i
+  verifyClient: ()=> true //info =>         /^https?:\/\/(localhost|townsquare-project\.onrender\.com)/i
 
 });
 
