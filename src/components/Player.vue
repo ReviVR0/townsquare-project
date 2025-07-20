@@ -15,10 +15,17 @@
         player.role.team
       ]"
     >
-      
-      
-      <div class="shroud"       
-      @click="toggleStatus()"></div>
+
+
+      <div
+          class="shroud"
+          :style="{
+              '--before-bg-image': shroudImage
+          }"
+          @click="toggleStatus()"
+      />
+
+
       
       
       <div class="life" @click="toggleStatus()"></div>
@@ -309,7 +316,16 @@ export default {
     },
     isSeated() {
       return this.players.some(player => player.id === this.session.playerId);
-    }
+    },
+    shroudImage() {
+      const img = this.player.isVoteless
+          ? require('../assets/shroud_used_.png')
+          : require('../assets/shroud.png');
+      const url = img.default || img;
+      return `url('${url}')`;
+    },
+
+
   },
   data() {
     return {
@@ -483,11 +499,12 @@ export default {
     transition: transform 200ms ease-in-out;
     z-index: 2;
     filter: drop-shadow(0 0 5px rgba(0, 0, 0, 0.8));
-
+    --before-bg-image: url('../assets/shroud.png');
     &:before {
       content: " ";
-      background: url("../assets/shroud.png");
+      background: var(--before-bg-image);
       background-repeat: no-repeat;
+      background-size: cover;
       background-position: center -10px;
       background-size: auto 110%;
       position: absolute;

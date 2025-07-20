@@ -101,6 +101,10 @@ export default {
   methods: {
     keyup({ key, ctrlKey, metaKey }) {
       if (ctrlKey || metaKey) return;
+      const tag = document.activeElement?.tagName?.toLowerCase();
+      const isFormElementFocused = ["input", "textarea", "select"].includes(tag) ||
+          document.activeElement?.isContentEditable;
+      if (this.$store.state.modals.form || isFormElementFocused) return;
       switch (key.toLocaleLowerCase()) {
         case "g":
           this.$store.commit("toggleGrimoire");
