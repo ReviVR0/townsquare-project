@@ -1,7 +1,7 @@
 console.log("ENV:", process.env.NODE_ENV);
 //const fs = require("fs");
 //const https = require("https");
-const http = require("http");
+const https = require("http");
 const WebSocket = require("ws");
 const client = require("prom-client");
 
