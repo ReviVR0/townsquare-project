@@ -193,5 +193,4 @@ export default {
     pointer-events: none;
   }
 }
->>>>>>> Stashed changes
 </style>
