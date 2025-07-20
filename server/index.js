@@ -24,9 +24,23 @@ const options = {};
 // }
 
 const server = http.createServer((req, res) => {
-  res.writeHead(200);
+  // Serve the Prometheus metrics endpoint
+  if (req.url === "/metrics") {
+    res.setHeader("Content-Type", register.contentType);
+    register.metrics().then(out => {
+      res.end(out);
+    }).catch(err => {
+      res.statusCode = 500;
+      res.end(err.message);
+    });
+    return;
+  }
+
+  // Default response for other requests
+  res.writeHead(200, { "Content-Type": "text/plain" });
   res.end("OK");
 });
+
 
 const wss = new WebSocket.Server({
   ...(env === "development" ? { port } : { server }),
@@ -260,10 +274,7 @@ if (env !== "development") {
   server.listen(port, () => {
     console.log(`Server listening on port ${port}`);
   });
-  server.on("request", (req, res) => {
-    res.setHeader("Content-Type", register.contentType);
-    register.metrics().then(out => res.end(out));
-  });
+
 } else {
   console.log(`WebSocket dev server listening on port ${port}`);
 }
