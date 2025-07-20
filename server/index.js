@@ -3,6 +3,8 @@ const fs = require("fs");
 const https = require("https");
 const WebSocket = require("ws");
 const client = require("prom-client");
+const env = process.env.NODE_ENV || "development";
+const port = process.env.PORT || (env === "development" ? 8081 : 8080);
 
 // Create a Registry which registers the metrics
 const register = new client.Registry();
@@ -10,7 +12,7 @@ const register = new client.Registry();
 register.setDefaultLabels({
   app: "clocktower-online"
 });
-process.env.NODE_ENV = "development";
+//process.env.NODE_ENV = "development";
 
 const WebSocket2 = require('ws');
 const wss2 = new WebSocket2.Server({ port: 8082 });
@@ -29,12 +31,9 @@ if (process.env.NODE_ENV !== "development") {
 
 const server = https.createServer(options);
 const wss = new WebSocket.Server({
-  ...(process.env.NODE_ENV === "development" ? { port: 8081 } : { server }),
-  verifyClient: info =>
-    info.origin &&
-    !!info.origin.match(
-      /^https?:\/\/([^.]+\.github\.io|localhost|clocktower\.online|eddbra1nprivatetownsquare\.xyz)/i
-    )
+  ...(env === "development" ? { port } : { server }),
+  verifyClient: info =>         /^https?:\/\/(localhost|townsquare-project\.onrender\.com)/i
+
 });
 
 function noop() {}
@@ -258,12 +257,15 @@ wss.on("close", function close() {
   clearInterval(interval);
 });
 
-// prod mode with stats API
-if (process.env.NODE_ENV !== "development") {
+if (env !== "development") {
   console.log("server starting");
-  server.listen(8080);
+  server.listen(port, () => {
+    console.log(`Server listening on port ${port}`);
+  });
   server.on("request", (req, res) => {
     res.setHeader("Content-Type", register.contentType);
     register.metrics().then(out => res.end(out));
   });
+} else {
+  console.log(`WebSocket dev server listening on port ${port}`);
 }
