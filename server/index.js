@@ -1,7 +1,6 @@
 console.log("ENV:", process.env.NODE_ENV);
-//const fs = require("fs");
-//const https = require("https");
-const https = require("http");
+const fs = require("fs");
+const https = require("https");
 const WebSocket = require("ws");
 const client = require("prom-client");
 
@@ -21,34 +20,22 @@ wss2.on('connection', (ws) => {
 
 const PING_INTERVAL = 30000; // 30 seconds
 
-// const options = {};
+const options = {};
 
-// if (process.env.NODE_ENV !== "development") {
-//   options.cert = fs.readFileSync("cert.pem");
-//   options.key = fs.readFileSync("key.pem");
-// }
+if (process.env.NODE_ENV !== "development") {
+  options.cert = fs.readFileSync("cert.pem");
+  options.key = fs.readFileSync("key.pem");
+}
 
-//const server = https.createServer(options);
-const server = http.createServer();
-
-// const wss = new WebSocket.Server({
-//   ...(process.env.NODE_ENV === "development" ? { port: 8081 } : { server }),
-//   verifyClient: info =>
-//     info.origin &&
-//     !!info.origin.match(
-//       /^https?:\/\/([^.]+\.github\.io|localhost|clocktower\.online|eddbra1nprivatetownsquare\.xyz)/i
-//     )
-// });
-
+const server = https.createServer(options);
 const wss = new WebSocket.Server({
-  server, // always use HTTP server
+  ...(process.env.NODE_ENV === "development" ? { port: 8081 } : { server }),
   verifyClient: info =>
     info.origin &&
     !!info.origin.match(
-      /^https?:\/\/([^.]+\.github\.io|localhost|clocktower\.online|eddbra1nprivatetownsquare\.xyz|townsquare-project\.onrender\.com)/i
+      /^https?:\/\/([^.]+\.github\.io|localhost|clocktower\.online|eddbra1nprivatetownsquare\.xyz)/i
     )
 });
-
 
 function noop() {}
 
@@ -272,22 +259,11 @@ wss.on("close", function close() {
 });
 
 // prod mode with stats API
-// if (process.env.NODE_ENV !== "development") {
-//   console.log("server starting");
-//   server.listen(8080);
-//   server.on("request", (req, res) => {
-//     res.setHeader("Content-Type", register.contentType);
-//     register.metrics().then(out => res.end(out));
-//   });
-//}
-
-
-const PORT = process.env.PORT || 8080;
-server.listen(PORT, () => {
-  console.log(`WebSocket server running on port ${PORT}`);
-});
-
-server.on("request", (req, res) => {
-  res.setHeader("Content-Type", register.contentType);
-  register.metrics().then(out => res.end(out));
-});
+if (process.env.NODE_ENV !== "development") {
+  console.log("server starting");
+  server.listen(8080);
+  server.on("request", (req, res) => {
+    res.setHeader("Content-Type", register.contentType);
+    register.metrics().then(out => res.end(out));
+  });
+}
