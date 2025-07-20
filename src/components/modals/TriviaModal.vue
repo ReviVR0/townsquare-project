@@ -1,15 +1,8 @@
 <template>
   <Modal
-<<<<<<< Updated upstream
-      v-if="modals.trivia"
-      class="trivia-quiz"
-      @close="toggleModal('trivia')"
-=======
     v-if="modals.trivia"
     class="trivia-quiz"
-    @close="toggleModal('trivia')"
->>>>>>> Stashed changes
-  >
+    @close="toggleModal('trivia')">
     <div class="trivia-container">
       <h2>Trivia Quiz</h2>
       <div v-if="questions.length === 0">
@@ -27,32 +20,18 @@
       <div v-if="questions.length === 0">Loading questions...</div>
       <div v-else class="scroll-area">
         <div
-<<<<<<< Updated upstream
-            v-for="(q, index) in questions"
-            :key="index"
-            class="question-block"
-=======
           v-for="(q, index) in questions"
           :key="index"
           class="question-block"
->>>>>>> Stashed changes
         >
           <p v-html="index + 1 + '. ' + decode(q.question)"></p>
           <ul>
             <li
-<<<<<<< Updated upstream
-                v-for="(option, i) in q.shuffledAnswers"
-                :key="i"
-                @click="selectAnswer(index, option)"
-                :class="{ selected: answers[index] === option }"
-                v-html="decode(option)"
-=======
               v-for="(option, i) in q.shuffledAnswers"
               :key="i"
               @click="selectAnswer(index, option)"
               :class="{ selected: answers[index] === option }"
               v-html="decode(option)"
->>>>>>> Stashed changes
             ></li>
           </ul>
         </div>
@@ -83,11 +62,7 @@ export default {
     ...mapMutations(["toggleModal"]),
     async fetchQuestions() {
       const res = await fetch(
-<<<<<<< Updated upstream
-          `https://opentdb.com/api.php?amount=10&difficulty=${this.difficulty}`
-=======
         `https://opentdb.com/api.php?amount=10&difficulty=${this.difficulty}`,
->>>>>>> Stashed changes
       );
       const data = await res.json();
 
@@ -112,14 +87,9 @@ export default {
       this.$set(this.answers, index, answer);
     },
     checkAnswers() {
-<<<<<<< Updated upstream
-      const score = this.answers.filter(
-          (a, i) => a === this.questions[i].correct_answer
-=======
       //console.log(this.questions);
       const score = this.answers.filter(
         (a, i) => a === this.questions[i].correct_answer,
->>>>>>> Stashed changes
       ).length;
       alert(`You got ${score} out of ${this.questions.length} correct!`);
     },
@@ -127,13 +97,8 @@ export default {
   watch: {
     "modals.trivia"(newVal) {
       if (newVal) {
-<<<<<<< Updated upstream
-        this.difficulty = ""; // reset
-        this.questions = [];  // reset
-=======
         this.difficulty = "";
         this.questions = [];
->>>>>>> Stashed changes
         this.answers = [];
       }
     },

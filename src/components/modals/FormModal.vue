@@ -1,17 +1,4 @@
 <template>
-<<<<<<< Updated upstream
-  <Modal
-      v-if="modals.form"
-      class="form"
-      @close="toggleModal('form')"
-  >
-    <div class="form-container">
-
-    </div>
-  </Modal>
-</template>
-
-=======
   <Modal v-if="modals.form" class="form" @close="toggleModal('form')">
     <div class="form-container">
       <form @submit.prevent="submitForm" class="form-grid">
@@ -92,7 +79,6 @@
     </div>
   </Modal>
 </template>
->>>>>>> Stashed changes
 <script>
 import Modal from "./Modal";
 import { mapMutations, mapState } from "vuex";
@@ -101,24 +87,6 @@ export default {
   components: { Modal },
   data() {
     return {
-<<<<<<< Updated upstream
-      difficulty: "", // New
-      questions: [],
-      answers: [],
-    };
-  },
-
-  computed: {
-    ...mapState(["modals"]),
-  },
-  methods: {
-    ...mapMutations(["toggleModal"]),
-    },
-};
-</script>
-
-<style scoped>
-=======
       form: {
         id: "",
         name: "",
