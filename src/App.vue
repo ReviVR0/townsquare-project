@@ -148,7 +148,6 @@ export default {
           break;
         case " ":
           if (!this.session.isSpectator) return;
-          console.log("Spacebar pressed!");
           EventBus.$emit("spacebar-vote");
           break;
       }

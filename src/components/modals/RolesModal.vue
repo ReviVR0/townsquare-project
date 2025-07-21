@@ -95,31 +95,36 @@ export default {
     ...mapGetters({ nonTravelers: "players/nonTravelers" })
   },
   methods: {
-    selectRandomRoles() {
-      this.roleSelection = {};
-      this.roles.forEach(role => {
-        if (!this.roleSelection[role.team]) {
-          this.$set(this.roleSelection, role.team, []);
+selectRandomRoles() {
+  this.roleSelection = {};
+  this.roles.forEach(role => {
+    if (!this.roleSelection[role.team]) {
+      this.$set(this.roleSelection, role.team, []);
+    }
+    this.roleSelection[role.team].push(role);
+    this.$set(role, "selected", 0);
+  });
+  delete this.roleSelection["traveler"];
+
+  const playerCount = Math.max(5, this.nonTravelers);
+  const composition = this.game[playerCount - 5];
+
+  Object.entries(composition).forEach(([team, count]) => {
+    if (this.roleSelection[team]) {
+      const shuffled = [...this.roleSelection[team]]
+        .map(role => [Math.random(), role])
+        .sort((a, b) => a[0] - b[0])
+        .map(([_, role]) => role);
+
+      for (let i = 0; i < count; i++) {
+        if (shuffled[i]) {
+          shuffled[i].selected = 1;
         }
-        this.roleSelection[role.team].push(role);
-        this.$set(role, "selected", 0);
-      });
-      delete this.roleSelection["traveler"];
-      const playerCount = Math.max(5, this.nonTravelers);
-      const composition = this.game[playerCount - 5];
-      Object.keys(composition).forEach(team => {
-        for (let x = 0; x < composition[team]; x++) {
-          if (this.roleSelection[team]) {
-            const available = this.roleSelection[team].filter(
-              role => !role.selected
-            );
-            if (available.length) {
-              randomElement(available).selected = 1;
-            }
-          }
-        }
-      });
-    },
+      }
+    }
+  });
+},
+
     assignRoles() {
       if (this.selectedRoles <= this.nonTravelers && this.selectedRoles) {
         // generate list of selected roles and randomize it
