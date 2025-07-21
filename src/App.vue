@@ -28,7 +28,6 @@
     </transition>
     <TownSquare></TownSquare>
     <Menu ref="menu"></Menu>
-    <Vote ref="voteRef"></Vote>
     <EditionModal />
     <FabledModal />
     <RolesModal />
@@ -148,7 +147,6 @@ export default {
         case " ":
           if (!this.session.isSpectator) return;
           console.log("Spacebar pressed!");
-          this.$refs.voteRef.vote(true);
           break;
       }
     }
