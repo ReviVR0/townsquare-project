@@ -147,7 +147,6 @@ export default {
         case " ":
         if !(this.session.isSpectator) return;
           console.log("Spacebar pressed!");
-          this.$refs.Vote.vote(true);
           break;
       }
     }

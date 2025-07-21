@@ -1,5 +1,6 @@
 <template>
   <div id="vote">
+    <Vote ref="voteComponent"></Vote>
     <div class="arrows">
       <span class="nominee" :style="nomineeStyle"></span>
       <span class="nominator" :style="nominatorStyle"></span>
