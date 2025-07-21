@@ -39,8 +39,6 @@
     <Canvas/>
     <GameStateModal />
     <Gradients />
-    <TriviaModal/>
-    <FormModal/>
     <span id="version">v{{ version }}</span>
   </div>
 </template>
@@ -146,12 +144,6 @@ export default {
         case "s":
           if (this.session.isSpectator) return;
           this.$refs.menu.toggleNight();
-          break;
-        case "q":
-          this.$store.commit("toggleModal", "trivia");
-          break;
-        case "f":
-          this.$store.commit("toggleModal", "form");
           break;
         case "escape":
           this.$store.commit("toggleModal");
