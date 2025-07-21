@@ -55,6 +55,16 @@
         <font-awesome-icon icon="random" />
         Shuffle characters
       </div>
+      <div
+        class="button"
+        @click="resetRoleOrder"
+        :class="{
+          disabled: selectedRoles > nonTravelers || !selectedRoles
+        }"
+      >
+              <font-awesome-icon icon="times-circle" />
+              Reset Shuffle
+      </div>
     </div>
   </Modal>
 </template>
@@ -92,41 +102,52 @@ export default {
     ...mapGetters({ nonTravelers: "players/nonTravelers" })
   },
   methods: {
-selectRandomRoles() {
-  this.roleSelection = {};
-  this.roles.forEach(role => {
-    if (!this.roleSelection[role.team]) {
-      this.$set(this.roleSelection, role.team, []);
-    }
-    this.roleSelection[role.team].push(role);
-    this.$set(role, "selected", 0);
-  });
-
-  delete this.roleSelection["traveler"];
-
-  // Shuffle each team's roles so their display order is randomized
-  Object.keys(this.roleSelection).forEach(team => {
-    this.roleSelection[team] = this.roleSelection[team]
-      .map(r => [Math.random(), r])
-      .sort((a, b) => a[0] - b[0])
-      .map(pair => pair[1]); // ✅ renamed from ([_, r]) => r
-  });
-
-  // Select the first X roles from each team after shuffle
-  const playerCount = Math.max(5, this.nonTravelers);
-  const composition = this.game[playerCount - 5];
-  Object.keys(composition).forEach(team => {
-    const rolesForTeam = this.roleSelection[team];
-    if (rolesForTeam) {
-      for (let i = 0; i < composition[team]; i++) {
-        if (rolesForTeam[i]) {
-          rolesForTeam[i].selected = 1;
+    selectRandomRoles() {
+      this.roleSelection = {};
+      this.roles.forEach(role => {
+        if (!this.roleSelection[role.team]) {
+          this.$set(this.roleSelection, role.team, []);
         }
-      }
-    }
-  });
-},
+        this.roleSelection[role.team].push(role);
+        this.$set(role, "selected", 0);
+      });
 
+      delete this.roleSelection["traveler"];
+
+      // Shuffle each team's roles so their display order is randomized
+      Object.keys(this.roleSelection).forEach(team => {
+        this.roleSelection[team] = this.roleSelection[team]
+          .map(r => [Math.random(), r])
+          .sort((a, b) => a[0] - b[0])
+          .map(pair => pair[1]);
+      });
+
+      // Select the first X roles from each team after shuffle
+      const playerCount = Math.max(5, this.nonTravelers);
+      const composition = this.game[playerCount - 5];
+      Object.keys(composition).forEach(team => {
+        const rolesForTeam = this.roleSelection[team];
+        if (rolesForTeam) {
+          for (let i = 0; i < composition[team]; i++) {
+            if (rolesForTeam[i]) {
+              rolesForTeam[i].selected = 1;
+            }
+          }
+        }
+      });
+    },
+  resetRoleOrder() {
+    this.roleSelection = {};
+    this.roles.forEach(role => {
+      if (!this.roleSelection[role.team]) {
+        this.$set(this.roleSelection, role.team, []);
+      }
+      this.roleSelection[role.team].push(role);
+      this.$set(role, "selected", 0);
+    });
+
+    delete this.roleSelection["traveler"];
+  },
 
     assignRoles() {
       if (this.selectedRoles <= this.nonTravelers && this.selectedRoles) {
