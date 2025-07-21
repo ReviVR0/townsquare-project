@@ -63,7 +63,6 @@
         }"
       >
               <font-awesome-icon icon="times-circle" />
-              Reset Shuffle
       </div>
     </div>
   </Modal>
@@ -136,18 +135,18 @@ export default {
         }
       });
     },
-  resetRoleOrder() {
-    this.roleSelection = {};
-    this.roles.forEach(role => {
-      if (!this.roleSelection[role.team]) {
-        this.$set(this.roleSelection, role.team, []);
-      }
-      this.roleSelection[role.team].push(role);
-      this.$set(role, "selected", 0);
-    });
+    resetRoleOrder() {
+      const newSelection = {};
+      this.roles.forEach(role => {
+        if (role.team === "traveler") return;
+        if (!newSelection[role.team]) {
+          this.$set(newSelection, role.team, []);
+        }
+        newSelection[role.team].push(role);
+      });
+      this.roleSelection = newSelection;
+    },
 
-    delete this.roleSelection["traveler"];
-  },
 
     assignRoles() {
       if (this.selectedRoles <= this.nonTravelers && this.selectedRoles) {
