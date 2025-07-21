@@ -146,8 +146,7 @@ export default {
           this.$store.commit("toggleModal");
           break;
         case " ":
-        if !(this.session.isSpectator) return;
-          this.$refs.voteRef.vote(true);
+          if (!this.session.isSpectator) return;
           console.log("Spacebar pressed!");
           break;
       }
