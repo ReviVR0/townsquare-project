@@ -116,6 +116,7 @@
 
 <script>
 import { mapGetters, mapState } from "vuex";
+import { EventBus } from "../event-bus.js";
 
 export default {
   computed: {
@@ -250,8 +251,14 @@ export default {
         this.$store.commit("session/voteSync", [index, vote]);
 
       }
-
-
+    },
+    toggleVote() {
+      if (!this.canVote) return;
+      const index = this.players.findIndex(p => p.id === this.session.playerId);
+      if (index >= 0) {
+        const current = !!this.session.votes[index];
+        this.vote(!current); // Switch to opposite
+      }
     },
     setVotingSpeed(diff) {
       const speed = Math.round(this.session.votingSpeed + diff);
@@ -265,6 +272,12 @@ export default {
     removeMarked() {
       this.$store.commit("session/setMarkedPlayer", -1);
     }
+  },
+  mounted() {
+    EventBus.$on("spacebar-vote", this.toggleVote);
+  },
+  beforeDestroy() {
+    EventBus.$off("spacebar-vote", this.toggleVote);
   }
 };
 </script>

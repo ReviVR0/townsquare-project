@@ -64,6 +64,8 @@ import GameStateModal from "@/components/modals/GameStateModal";
 import Canvas from "@/components/modals/Canvas.vue";
 import InvitationModal from "@/components/modals/InvitationModal.vue";
 
+import { EventBus } from "./event-bus.js";
+
 export default {
   components: {
     InvitationModal,
@@ -147,6 +149,7 @@ export default {
         case " ":
           if (!this.session.isSpectator) return;
           console.log("Spacebar pressed!");
+          EventBus.$emit("spacebar-vote");
           break;
       }
     }
