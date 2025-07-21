@@ -63,13 +63,9 @@ import TimerModal from "@/components/modals/TimerModal";
 import GameStateModal from "@/components/modals/GameStateModal";
 import Canvas from "@/components/modals/Canvas.vue";
 import InvitationModal from "@/components/modals/InvitationModal.vue";
-import TriviaModal from "@/components/modals/TriviaModal.vue";
-import FormModal from "@/components/modals/FormModal.vue";
 
 export default {
   components: {
-    FormModal,
-    TriviaModal,
     InvitationModal,
     Canvas,
     GameStateModal,
