@@ -65,7 +65,7 @@ import gameJSON from "./../../game";
 import Token from "./../Token";
 import { mapGetters, mapMutations, mapState } from "vuex";
 
-const randomElement = arr => arr[Math.floor(Math.random() * arr.length)];
+//const randomElement = arr => arr[Math.floor(Math.random() * arr.length)];
 
 export default {
   components: {
