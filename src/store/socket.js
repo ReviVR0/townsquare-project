@@ -981,6 +981,7 @@ export default store => {
         session.inviteChat(payload);
         break;
       case "session/sendGrim":
+        if (session._isSpectator) return;
         session.SendGrim(payload);
         break;
     }
