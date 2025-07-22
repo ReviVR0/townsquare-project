@@ -981,7 +981,7 @@ export default store => {
         break;
       case "session/SendGrim":
         session.SendGrim(payload);
-        console.log("Send Grim", payload);
+        console.log("Send Grim");
         break;
     }
   });
