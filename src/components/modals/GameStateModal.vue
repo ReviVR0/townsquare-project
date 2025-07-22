@@ -113,13 +113,9 @@ export default {
     ...mapMutations(["toggleModal"])
   },
   sendGrimToPlayers() {
-    const grimJson = this.input || this.gamestate;
-    try {
-      this.$store.commit("session/sendGrim", grimJson);
       console.log(grimJson);
-    } catch (err) {
-      alert("Invalid JSON, cannot send Grim.");
-    }
+      this.$store.commit("session/sendGrim", this.gamestate);
+      console.log("cos");
   },
 };
 </script>
