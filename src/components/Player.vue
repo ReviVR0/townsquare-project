@@ -276,6 +276,14 @@ export default {
     }
   },
   computed: {
+    ...mapState({
+  bluffs: state => state.players.bluffs,
+  edition: state => state.edition,
+  roles: state => state.roles,
+  fabled: state => state.players.fabled,
+  playerList: state => state.players.players
+}),
+
     ...mapState("players", ["players"]),
     ...mapState(["grimoire", "session"]),
     ...mapGetters({ nightOrder: "players/nightOrder" }),
@@ -312,19 +320,20 @@ export default {
       const url = img.default || img;
       return `url('${url}')`;
     },
+
     gamestate() {
       return JSON.stringify({
-        bluffs: this.players.bluffs.map(({ id }) => id),
+        bluffs: this.bluffs.map(({ id }) => id),
         edition: this.edition.isOfficial
           ? { id: this.edition.id }
           : this.edition,
         roles: this.edition.isOfficial
           ? ""
           : this.$store.getters.customRolesStripped,
-        fabled: this.players.fabled.map(fabled =>
-          fabled.isCustom ? fabled : { id: fabled.id }
+        fabled: this.fabled.map(f =>
+          f.isCustom ? f : { id: f.id }
         ),
-        players: this.players.players.map(player => ({
+        players: this.playerList.map(player => ({
           ...player,
           role: player.role.id || {}
         }))
@@ -464,7 +473,6 @@ export default {
       ]);
     },
     SendGrim(){
-      console.log(this.players);
       this.$store.commit("session/sendGrim", [this.gamestate, this.playerId]);
     }
   }
