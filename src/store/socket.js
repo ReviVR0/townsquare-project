@@ -903,6 +903,7 @@ export default store => {
 
   // listen to mutations
   store.subscribe(({ type, payload }, state) => {
+    console.log("type");
     switch (type) {
       case "session/setSessionId":
         if (state.session.sessionId) {
@@ -983,7 +984,6 @@ export default store => {
         session.inviteChat(payload);
         break;
       case "session/sendGrim":
-        console.log("Send Grim, session");
         session.SendGrim(payload);
         break;
     }
