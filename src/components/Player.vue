@@ -473,8 +473,7 @@ export default {
       ]);
     },
     SendGrim(){
-      console.log([this.gamestate, this.playerId]);
-      this.$store.commit("session/sendGrim", [this.gamestate, this.playerId]);
+      this.$store.commit("session/sendGrim", [this.gamestate, this.player.id]);
     }
   }
 };
