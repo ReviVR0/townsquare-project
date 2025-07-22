@@ -123,8 +123,6 @@ class LiveSession {
     } catch (err) {
       console.log("unsupported socket message", data);
     }
-    console.log("WS message received:", command, params);
-
     switch (command) {
       case "getGamestate":
         this.sendGamestate(params);
@@ -219,6 +217,7 @@ class LiveSession {
           this.ConfirmChat(params);
         break;
       case "SendGrim":
+        console.log(params);
         this._store.commit("session/sendGrim", params);
       break;
     }
