@@ -109,13 +109,12 @@ export default {
         alert("Unable to parse JSON: " + e);
       }
     },
-    
-    ...mapMutations(["toggleModal"])
-  },
-  sendGrimToPlayers() {
+    sendGrimToPlayers() {
       console.log(this.gamestate);
       this.$store.commit("session/sendGrim", this.gamestate);
       console.log("cos");
+  },
+    ...mapMutations(["toggleModal"])
   },
 };
 </script>
