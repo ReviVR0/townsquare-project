@@ -58,9 +58,6 @@
       <div
         class="button"
         @click="resetRoleOrder"
-        :class="{
-          disabled: selectedRoles > nonTravelers || !selectedRoles
-        }"
       >
               <font-awesome-icon icon="times-circle" />
       </div>

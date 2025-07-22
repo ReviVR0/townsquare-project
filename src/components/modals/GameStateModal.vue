@@ -15,6 +15,9 @@
       <div class="button townsfolk" @click="copy">
         <font-awesome-icon icon="copy" /> Copy JSON
       </div>
+            <div class="button outsider" @click="copy">
+        <font-awesome-icon icon="Users" /> Send Out
+      </div>
       <div class="button demon" @click="load" v-if="!session.isSpectator">
         <font-awesome-icon icon="cog" /> Load State
       </div>
