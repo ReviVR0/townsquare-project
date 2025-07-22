@@ -276,6 +276,7 @@ export default {
     }
   },
   computed: {
+    ...mapState(["modals", "players", "edition", "roles", "session"])
     ...mapState("players", ["players"]),
     ...mapState(["grimoire", "session"]),
     ...mapGetters({ nightOrder: "players/nightOrder" }),
@@ -313,23 +314,23 @@ export default {
       return `url('${url}')`;
     },
     gamestate() {
-    return JSON.stringify({
-      bluffs: this.players.bluffs.map(({ id }) => id),
-      edition: this.edition.isOfficial
-        ? { id: this.edition.id }
-        : this.edition,
-      roles: this.edition.isOfficial
-        ? ""
-        : this.$store.getters.customRolesStripped,
-      fabled: this.players.fabled.map(fabled =>
-        fabled.isCustom ? fabled : { id: fabled.id }
-      ),
-      players: this.players.players.map(player => ({
-        ...player,
-        role: player.role.id || {}
-      }))
-    });
-  }
+      return JSON.stringify({
+        bluffs: this.players.bluffs.map(({ id }) => id),
+        edition: this.edition.isOfficial
+          ? { id: this.edition.id }
+          : this.edition,
+        roles: this.edition.isOfficial
+          ? ""
+          : this.$store.getters.customRolesStripped,
+        fabled: this.players.fabled.map(fabled =>
+          fabled.isCustom ? fabled : { id: fabled.id }
+        ),
+        players: this.players.players.map(player => ({
+          ...player,
+          role: player.role.id || {}
+        }))
+      });
+    }
   },
   data() {
     return {
