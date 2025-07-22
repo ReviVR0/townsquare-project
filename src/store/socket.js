@@ -218,6 +218,7 @@ class LiveSession {
         break;
       case "SendGrim":
         this._store.commit("session/SendGrim", params);
+        console.log("Send Grim", params);
       break;
     }
 
@@ -980,6 +981,7 @@ export default store => {
         break;
       case "session/SendGrim":
         session.SendGrim(payload);
+        console.log("Send Grim", params);
         break;
     }
   });
