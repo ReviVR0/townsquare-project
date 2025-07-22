@@ -109,7 +109,7 @@ const mutations = {
     state.lockedVote = lock !== undefined ? lock : state.lockedVote + 1;
   },
   inviteChat(){},
-  sendGrim (grim){
+  sendGrim (state, grim){
     state.receivedGrim = grim;
   }
 
