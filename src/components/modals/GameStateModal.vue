@@ -113,7 +113,7 @@ export default {
     ...mapMutations(["toggleModal"])
   },
   sendGrimToPlayers() {
-      console.log(grimJson);
+      console.log(this.gamestate);
       this.$store.commit("session/sendGrim", this.gamestate);
       console.log("cos");
   },
