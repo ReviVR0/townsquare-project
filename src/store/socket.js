@@ -123,6 +123,8 @@ class LiveSession {
     } catch (err) {
       console.log("unsupported socket message", data);
     }
+    console.log("WS message received:", command, params);
+
     switch (command) {
       case "getGamestate":
         this.sendGamestate(params);
@@ -888,7 +890,7 @@ class LiveSession {
       const [[senderName, senderId], [receiverName, receiverId]] = invite;
       console.log(senderName, senderId, receiverName, receiverId);
     }
-}
+  }
   SendGrim(params) {
         console.log("SendGrim", params);
         this._send("SendGrim", params);
@@ -981,7 +983,7 @@ export default store => {
         session.inviteChat(payload);
         break;
       case "session/sendGrim":
-        console.log("Send Grim, Session/SendGrim");
+        console.log("Send Grim, session");
         session.SendGrim(payload);
         break;
     }
