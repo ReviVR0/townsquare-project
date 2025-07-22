@@ -217,8 +217,9 @@ class LiveSession {
           this.ConfirmChat(params);
         break;
       case "SendGrim":
-        this._store.commit("session/sendGrim", params);
-      break;
+  console.log("GRIM RECEIVED FROM HOST:", params);
+  this._store.commit("session/sendGrim", params);
+  console.log("STORE AFTER:", this._store.state.session.receivedGrim);      break;
     }
 
   }
