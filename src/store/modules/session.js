@@ -111,7 +111,6 @@ const mutations = {
   inviteChat(){},
   sendGrim (grim){
     state.receivedGrim = grim;
-    console.log(receivedGrim);
   }
 
 

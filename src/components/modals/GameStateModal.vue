@@ -116,10 +116,10 @@ export default {
   },
   watch: {
   'session.receivedGrim'(grim) {
-    if (grim && !this.session.isSpectator) {
+    if (grim && this.session.isSpectator) {
       this.input = grim;
-      this.load(); // Load the received grim JSON
-      this.$store.commit("session/sendGrim", null); // Clear it to prevent re-triggering
+      this.load();
+      this.$store.commit("session/sendGrim", null);
     }
   }
 }
