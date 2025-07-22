@@ -888,6 +888,7 @@ class LiveSession {
     }
   }
   SendGrim(params) {
+      console.log('SendGrim params:', params);
     if (params[1] == "all")
       this._send("SendGrim", params);
     else
