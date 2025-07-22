@@ -118,7 +118,7 @@ export default {
   'session.receivedGrim'(grim) {
     if (grim && this.session.isSpectator) {
       this.input = grim;
-      this.load();
+      this.load(grim);
       this.$store.commit("session/sendGrim", null);
     }
   }
