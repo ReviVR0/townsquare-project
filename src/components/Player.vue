@@ -23,7 +23,7 @@
               '--before-bg-image': shroudImage
           }"
           @click="toggleStatus()"
-      ><div>
+      ></div>
 
 
       
@@ -202,6 +202,7 @@
           >
               <font-awesome-icon icon="theater-masks" />
               Send Grimoire
+            </template>
           </li>
 
 
