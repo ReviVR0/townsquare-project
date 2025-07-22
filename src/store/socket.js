@@ -213,10 +213,13 @@ class LiveSession {
         if (this._isSpectator) return;
         this._store.commit("session/inviteChat", params);
         break;
-      case "ConfirmChat":{
+      case "ConfirmChat":
           this.ConfirmChat(params);
         break;
-    }}
+      case "SendGrim":
+        this._store.commit("session/SendGrim", params);
+      break;
+    }
 
   }
 
@@ -885,6 +888,9 @@ class LiveSession {
       console.log(senderName, senderId, receiverName, receiverId);
     }
 }
+  sendGrimToPlayers(params) {
+    console.log("Send Grim", params);
+  }
 
 }
 export default store => {
@@ -971,6 +977,9 @@ export default store => {
         break;
       case "session/inviteChat":
         session.inviteChat(payload);
+        break;
+      case "session/SendGrim":
+        session.SendGrim(payload);
         break;
     }
   });

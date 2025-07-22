@@ -15,8 +15,8 @@
       <div class="button townsfolk" @click="copy">
         <font-awesome-icon icon="copy" /> Copy JSON
       </div>
-            <div class="button outsider" @click="copy">
-        <font-awesome-icon icon="Users" /> Send Out
+            <div class="button" @click="sendGrimToPlayers" v-if="session.isSpectator">
+        <font-awesome-icon icon="cog" /> Send Out
       </div>
       <div class="button demon" @click="load" v-if="!session.isSpectator">
         <font-awesome-icon icon="cog" /> Load State
@@ -109,8 +109,18 @@ export default {
         alert("Unable to parse JSON: " + e);
       }
     },
+    
     ...mapMutations(["toggleModal"])
-  }
+  },
+  sendGrimToPlayers() {
+    const grimJson = this.input || this.gamestate;
+    try {
+      const params = JSON.parse(grimJson);
+      this.$store.commit("session/sendGrim", params);
+    } catch (err) {
+      alert("Invalid JSON, cannot send Grim.");
+    }
+  },
 };
 </script>
 
