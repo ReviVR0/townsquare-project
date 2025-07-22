@@ -217,7 +217,6 @@ class LiveSession {
           this.ConfirmChat(params);
         break;
       case "SendGrim":
-        console.log(params);
         this._store.commit("session/sendGrim", params);
       break;
     }
