@@ -889,7 +889,7 @@ class LiveSession {
       console.log(senderName, senderId, receiverName, receiverId);
     }
 }
-  sendGrimToPlayers(params) {
+  SendGrim(params) {
         console.log("SendGrim", params);
         this._send("SendGrim", params);
   }
