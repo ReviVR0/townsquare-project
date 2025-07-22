@@ -198,7 +198,7 @@
           </li>
           <li
             @click="SendGrim"
-            v-if=" !session.isSpectator && this.player.name!='' "
+            v-if=" !session.isSpectator && this.player.id!='' "
           >
               <font-awesome-icon icon="theater-masks" />
               Send Grimoire
@@ -473,7 +473,6 @@ export default {
       ]);
     },
     SendGrim(){
-      console.log([this.gamestate, this.player.id]);
       this.$store.commit("session/sendGrim", [this.gamestate, this.player.id]);
     }
   }
