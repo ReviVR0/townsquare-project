@@ -217,8 +217,8 @@ class LiveSession {
           this.ConfirmChat(params);
         break;
       case "SendGrim":
-        this._store.commit("session/SendGrim", params);
         console.log("Send Grim", params);
+        this._store.commit("session/sendGrim", params);
       break;
     }
 
@@ -980,7 +980,7 @@ export default store => {
       case "session/inviteChat":
         session.inviteChat(payload);
         break;
-      case "session/SendGrim":
+      case "session/sendGrim":
         console.log("Send Grim, Session/SendGrim");
         session.SendGrim(payload);
         break;
