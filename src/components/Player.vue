@@ -263,7 +263,7 @@
 
 <script>
 import Token from "./Token";
-import GameState from "./GameStateModal";
+import GameState from "./modals/GameStateModal";
 
 import { mapGetters, mapState } from "vuex";
 
