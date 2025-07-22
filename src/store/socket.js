@@ -890,7 +890,8 @@ class LiveSession {
     }
 }
   sendGrimToPlayers(params) {
-    console.log("Send Grim", params);
+        console.log("SendGrim", params);
+        this._send("SendGrim", params);
   }
 
 }
@@ -980,8 +981,8 @@ export default store => {
         session.inviteChat(payload);
         break;
       case "session/SendGrim":
+        console.log("Send Grim, Session/SendGrim");
         session.SendGrim(payload);
-        console.log("Send Grim");
         break;
     }
   });
