@@ -202,7 +202,6 @@
           >
               <font-awesome-icon icon="theater-masks" />
               Send Grimoire
-            </template>
           </li>
 
 
