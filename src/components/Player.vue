@@ -276,7 +276,6 @@ export default {
     }
   },
   computed: {
-    ...mapState(["modals", "players", "edition", "roles", "session"])
     ...mapState("players", ["players"]),
     ...mapState(["grimoire", "session"]),
     ...mapGetters({ nightOrder: "players/nightOrder" }),
@@ -465,6 +464,7 @@ export default {
       ]);
     },
     SendGrim(){
+      console.log(this.players);
       this.$store.commit("session/sendGrim", [this.gamestate, this.playerId]);
     }
   }
