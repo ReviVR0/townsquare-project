@@ -115,7 +115,6 @@ export default {
   sendGrimToPlayers() {
     const grimJson = this.input || this.gamestate;
     try {
-      const params = JSON.parse(grimJson);
       this.$store.commit("session/sendGrim", grimJson);
       console.log(grimJson);
     } catch (err) {
