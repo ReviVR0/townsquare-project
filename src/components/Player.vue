@@ -196,24 +196,12 @@
             </template>
             <template v-else> Seat occupied</template>
           </li>
-
-      <!-- Invite to chat?!! -->
           <li
-            @click="InvitePlayer"
-            v-if=" session.isSpectator && this.player.name!='' "
-            :class="{ disabled: !player.id && player.id !== session.playerId || (player.id && player.id === session.playerId)}"
+            @click="SendGrim"
+            v-if=" !session.isSpectator && this.player.name!='' "
           >
-            <template v-if="player.id && !(player.id === session.playerId) && isSeated">
-              <font-awesome-icon icon="user" />
-              Invite to chat
-            </template>
-            </li>
-            <li
-            :class="{ disabled: !player.id && player.id !== session.playerId || (player.id && player.id === session.playerId)}"
-            >
-            <template v-if="(!player.id && player.id !== session.playerId)">
-              <font-awesome-icon icon="user" />
-              No Player
+              <font-awesome-icon icon="theater-masks" />
+              Send Grimoire
             </template>
           </li>
 
@@ -275,11 +263,14 @@
 
 <script>
 import Token from "./Token";
+import GameState from "./GameStateModal";
+
 import { mapGetters, mapState } from "vuex";
 
 export default {
   components: {
-    Token
+    Token,
+    GameState
   },
   props: {
     player: {
@@ -458,6 +449,9 @@ export default {
         this.index,
         !this.session.votes[this.index]
       ]);
+    },
+    SendGrim(){
+      this.$store.commit("session/sendGrim", [GameState.gamestate, "all"]);
     }
   }
 };

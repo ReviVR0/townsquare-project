@@ -110,16 +110,14 @@ export default {
       }
     },
     sendGrimToPlayers() {
-      this.$store.commit("session/sendGrim", this.gamestate);
+      this.$store.commit("session/sendGrim", [this.gamestate, "all"]);
   },
     ...mapMutations(["toggleModal"])
   },
   watch: {
   'session.receivedGrim'(grim) {
-    console.log("cos");
     if (grim && this.session.isSpectator) {
       this.input = grim;
-      console.log("cos2");
       this.load(grim);
       this.$store.commit("session/sendGrim", null);
     }
