@@ -28,65 +28,13 @@ const state = () => ({
   markedPlayer: -1,
   isVoteHistoryAllowed: true,
   isRolesDistributed: false,
-  timer: 0
+  timer: 0,
+  receivedGrim: null
 });
 
 const getters = {};
 
-const actions = {
-  loadGameState({ commit, state }, jsonString) {
-    if (state.isSpectator) return;
-    try {
-      const data = JSON.parse(jsonString);
-      const { bluffs = [], edition, roles, fabled = [], players = [] } = data;
-
-      if (roles) {
-        commit("setCustomRoles", roles);
-      }
-      if (edition) {
-        commit("setEdition", edition);
-      }
-      if (bluffs.length) {
-        bluffs.forEach((role, index) => {
-          commit("players/setBluff", {
-            index,
-            role: state.roles.get(role) || {}
-          });
-        });
-      }
-      if (fabled.length) {
-        commit("players/setFabled", {
-          fabled: fabled.map(
-            f =>
-              state.fabled.get(f) ||
-              state.fabled.get(f.id) ||
-              f
-          )
-        });
-      }
-      if (players.length) {
-        commit(
-          "players/set",
-          players.map(player => ({
-            ...player,
-            role:
-              state.roles.get(player.role) ||
-              // Assuming you have a getter `rolesJSONbyId`
-              this.getters["rolesJSONbyId"].get(player.role) ||
-              {}
-          }))
-        );
-      }
-
-      // The toggleModal is a UI thing; handle it in your component after dispatching
-      // For example: this.$store.dispatch('loadGameState', json).then(() => this.toggleModal('gameState'))
-
-    } catch (e) {
-      alert("Unable to parse JSON: " + e);
-    }
-  }
-};
-
+const actions = {};
 
 // mutations helper functions
 const set = key => (state, val) => {
@@ -161,7 +109,10 @@ const mutations = {
     state.lockedVote = lock !== undefined ? lock : state.lockedVote + 1;
   },
   inviteChat(){},
-  sendGrim (){}
+  sendGrim (grim){
+    state.receivedGrim = grim;
+
+  }
 
 
 };

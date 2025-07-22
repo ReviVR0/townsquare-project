@@ -217,9 +217,8 @@ class LiveSession {
           this.ConfirmChat(params);
         break;
       case "SendGrim":
-        if (this._isSpectator) return;
         console.log(params);
-        this._store.dispatch("session/sendGrim", params);
+        this._store.commit("session/sendGrim", params);
       break;
     }
 

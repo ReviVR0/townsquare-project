@@ -114,6 +114,16 @@ export default {
   },
     ...mapMutations(["toggleModal"])
   },
+  watch: {
+  'session.receivedGrim'(grim) {
+    if (grim && !this.session.isSpectator) {
+      this.input = grim;
+      this.load(); // Load the received grim JSON
+      this.$store.commit("session/sendGrim", null); // Clear it to prevent re-triggering
+    }
+  }
+}
+
 };
 </script>
 
