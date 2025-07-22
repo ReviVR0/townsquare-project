@@ -198,7 +198,7 @@
           </li>
           <li
             @click="SendGrim"
-            v-if=" !session.isSpectator && this.player.id!='' "
+            v-if=" !session.isSpectator && player.id"
           >
               <font-awesome-icon icon="theater-masks" />
               Send Grimoire
