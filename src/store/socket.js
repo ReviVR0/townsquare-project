@@ -219,7 +219,6 @@ class LiveSession {
           this.ConfirmChat(params);
         break;
       case "SendGrim":
-        console.log("Send Grim", params);
         this._store.commit("session/sendGrim", params);
       break;
     }
@@ -892,7 +891,6 @@ class LiveSession {
     }
   }
   SendGrim(params) {
-        console.log("SendGrim", params);
         this._send("SendGrim", params);
   }
 
@@ -903,7 +901,6 @@ export default store => {
 
   // listen to mutations
   store.subscribe(({ type, payload }, state) => {
-    console.log("type", payload, state);
     switch (type) {
       case "session/setSessionId":
         if (state.session.sessionId) {
