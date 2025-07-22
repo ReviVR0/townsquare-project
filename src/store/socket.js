@@ -903,7 +903,7 @@ export default store => {
 
   // listen to mutations
   store.subscribe(({ type, payload }, state) => {
-    console.log("type");
+    console.log("type", payload, state);
     switch (type) {
       case "session/setSessionId":
         if (state.session.sessionId) {
