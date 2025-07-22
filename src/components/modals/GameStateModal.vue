@@ -64,7 +64,7 @@ export default {
       navigator.clipboard.writeText(this.input || this.gamestate);
     },
     load: function() {
-      if (this.session.isSpectator) return;
+      //if (this.session.isSpectator) return;
       try {
         const data = JSON.parse(this.input || this.gamestate);
         const { bluffs, edition, roles, fabled, players } = data;
