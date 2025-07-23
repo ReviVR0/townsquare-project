@@ -44,11 +44,19 @@
         </li>
       </ul>
     </div>
-    <div  class="Invitation" @click="toggleModal('invitation')">
-      <h3>
-        <span>Invitation</span>
-      </h3>
-    </div>
+      <div
+        class="Invitation"
+        @click="toggleModal('invitation')"
+        :class="{ active: inviteCount > 0 }"
+      >
+        <h3>
+          <span>
+            Invitation
+            <span v-if="inviteCount > 0">({{ inviteCount }})</span>
+          </span>
+        </h3>
+      </div>
+
 
 
     <div class="fabled" :class="{ closed: !isFabledOpen }" v-if="fabled.length">
@@ -123,6 +131,7 @@ export default {
       nominate: -1,
       isBluffsOpen: true,
       isFabledOpen: true,
+      inviteCount: 0
     };
   },
   methods: {
@@ -264,10 +273,26 @@ export default {
       this.swap = -1;
       this.nominate = -1;
     },
-  inviteChat(from, to){
-    if (!this.session.isSpectator) return;
-    this.$store.commit("session/inviteChat", to);
+    inviteChat(from, to){
+      if (!this.session.isSpectator) return;
+      this.$store.commit("session/inviteChat", to);
+    },
+    updateInviteCount() {
+    try {
+      const invites = JSON.parse(localStorage.getItem("invites")) || [];
+      this.inviteCount = invites.length;
+    } catch (e) {
+      this.inviteCount = 0;
+    }
   }
+  },
+  created() {
+    this.updateInviteCount();
+    this.inviteCheckInterval = setInterval(this.updateInviteCount, 1000);
+  },
+  beforeDestroy() {
+    clearInterval(this.inviteCheckInterval);
+    this.$root.$off("invites-updated", this.updateInviteCount);
   }
 };
 </script>
@@ -685,6 +710,9 @@ export default {
       color: red;
     }
   }
+}
+#townsquare > .Invitation.active h3 span {
+  color: red;
 }
 
 
