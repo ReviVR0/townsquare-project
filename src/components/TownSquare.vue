@@ -44,9 +44,9 @@
         </li>
       </ul>
     </div>
-    <div class="Invitation" @click="toggleModal('invitation')">
+    <div  class="Invitation" @click="toggleModal('invitation')">
       <h3>
-        <span>Invitation</span>
+        <span v-if="player.id">Invitation</span>
       </h3>
     </div>
 
