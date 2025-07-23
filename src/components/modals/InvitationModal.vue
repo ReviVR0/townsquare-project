@@ -90,7 +90,8 @@ export default {
       let invites = JSON.parse(localStorage.getItem("invites") || "[]");
       invites = invites.filter(invite => invite[0][0] !== senderName);
       localStorage.setItem("invites", JSON.stringify(invites));
-      this.updateInvitesFromStorage(); // refresh localInvites
+      this.updateInvitesFromStorage();
+      this.$root.$emit("invites-updated");
     },
     handleStorageChange(event) {
       if (!event.key || event.key === "invites") {
