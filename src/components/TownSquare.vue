@@ -46,10 +46,7 @@
     </div>
     <div v-if="player.id" class="Invitation" @click="toggleModal('invitation')">
       <h3>
-        <span :style="{ color: inviteCount > 0 ? 'red' : 'white' }">
-          Invitation
-          <template v-if="inviteCount > 0"> ({{ inviteCount }})</template>
-        </span>
+        <span>Invitation</span>
       </h3>
     </div>
 
@@ -115,7 +112,7 @@ export default {
     maxNameLength() {
       if (!this.players || this.players.length === 0) return 10; // default min width
       return Math.max(...this.players.map(p => p.name.length));
-    },
+    }
   },
   data() {
     return {
@@ -126,7 +123,6 @@ export default {
       nominate: -1,
       isBluffsOpen: true,
       isFabledOpen: true,
-      invitationCount: 0,
     };
   },
   methods: {
@@ -268,25 +264,10 @@ export default {
       this.swap = -1;
       this.nominate = -1;
     },
-    inviteChat(from, to){
-      if (!this.session.isSpectator) return;
-      this.$store.commit("session/inviteChat", to);
-    },
-     updateInviteCount() {
-    try {
-      const invites = JSON.parse(localStorage.getItem("invites")) || [];
-      this.inviteCount = invites.length;
-    } catch {
-      this.inviteCount = 0;
-    }
+  inviteChat(from, to){
+    if (!this.session.isSpectator) return;
+    this.$store.commit("session/inviteChat", to);
   }
-  },
-  created() {
-    this.updateInviteCount(); // initial load
-    window.addEventListener("storage", this.updateInviteCount);
-  },
-  beforeDestroy() {
-    window.removeEventListener("storage", this.updateInviteCount);
   }
 };
 </script>
