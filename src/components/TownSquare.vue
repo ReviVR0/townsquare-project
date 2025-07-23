@@ -123,6 +123,7 @@ export default {
       return Math.max(...this.players.map(p => p.name.length));
     },
     isSittingPlayer() {
+      if (!this.session.isSpectator) return true;
       const myId = this.session.playerId;
       return this.players.some(p => p.id && p.id === myId);
     }
