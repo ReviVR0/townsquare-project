@@ -44,9 +44,12 @@
         </li>
       </ul>
     </div>
-    <div  class="Invitation" @click="toggleModal('invitation')">
+    <div v-if="!session.isSpectator" class="Invitation" @click="toggleModal('invitation')">
       <h3>
-        <span>Invitation</span>
+        <span :style="{ color: inviteCount > 0 ? 'red' : 'white' }">
+          Invitation
+          <template v-if="inviteCount > 0"> ({{ inviteCount }})</template>
+        </span>
       </h3>
     </div>
 
@@ -112,7 +115,15 @@ export default {
     maxNameLength() {
       if (!this.players || this.players.length === 0) return 10; // default min width
       return Math.max(...this.players.map(p => p.name.length));
+    },
+    inviteCount() {
+    try {
+      const invites = JSON.parse(localStorage.getItem("invites")) || [];
+      return invites.length;
+    } catch (e) {
+      return 0;
     }
+  }
   },
   data() {
     return {
