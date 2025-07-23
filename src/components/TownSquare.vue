@@ -280,7 +280,7 @@ export default {
       this.inviteCount = 0;
     }
   }
-  }
+  },
   created() {
     this.updateInviteCount(); // initial load
     window.addEventListener("storage", this.updateInviteCount);
