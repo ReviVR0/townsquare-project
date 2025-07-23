@@ -47,7 +47,8 @@
       <div
         class="Invitation"
         @click="toggleModal('invitation')"
-        :class="{ active: inviteCount > 0 }"
+        :class="{ active: inviteCount > 0, disabled: !isSittingPlayer }"
+
       >
         <h3>
           <span>
@@ -120,6 +121,10 @@ export default {
     maxNameLength() {
       if (!this.players || this.players.length === 0) return 10; // default min width
       return Math.max(...this.players.map(p => p.name.length));
+    },
+    isSittingPlayer() {
+      const myId = this.session.playerId;
+      return this.players.some(p => p.id && p.id === myId);
     }
   },
   data() {
@@ -713,6 +718,11 @@ export default {
 }
 #townsquare > .Invitation.active h3 span {
   color: red;
+}
+#townsquare > .Invitation.disabled {
+  pointer-events: none;
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 
