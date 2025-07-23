@@ -46,7 +46,7 @@
     </div>
     <div  class="Invitation" @click="toggleModal('invitation')">
       <h3>
-        <span v-if="player.id">Invitation</span>
+        <span>Invitation</span>
       </h3>
     </div>
 
