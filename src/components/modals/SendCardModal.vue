@@ -142,6 +142,9 @@ export default {
       text-align: center;
       cursor: pointer;
       transition: transform 0.2s ease;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
 
       &:hover {
         transform: scale(1.05);
@@ -161,38 +164,51 @@ export default {
   }
 
   // === Option B ===
+  
   .option-b-container {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(70px, 1fr));
-    gap: 12px;
-    justify-items: center;
-    width: 100%;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
+  grid-auto-rows: auto;
+  gap: 10px;
+  justify-items: center;
+  width: 100%;
+  max-height: 2 * (80px + 10px); // approximate height of two rows
+  overflow-y: auto;
 
-    .card-small {
-      background-color: rgba(255, 255, 255, 0.04);
-      border-radius: 8px;
-      padding: 8px;
-      width: 70px;
+  .card-small {
+    background-color: rgba(255, 255, 255, 0.04);
+    border-radius: 8px;
+    padding: 6px;
+    width: 60px;
+    text-align: center;
+    cursor: pointer;
+    transition: transform 0.15s ease;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+
+    &:hover {
+      transform: scale(1.06);
+      background-color: rgba(255, 255, 255, 0.08);
+    }
+
+    img {
+      width: 32px;
+      height: 32px;
+      margin-bottom: 4px;
+    }
+
+    .label {
+      display: block;
+      width: 100%;
+      font-size: 10px;
+      line-height: 1.2;
       text-align: center;
-      cursor: pointer;
-      transition: transform 0.15s ease;
-
-      &:hover {
-        transform: scale(1.06);
-        background-color: rgba(255, 255, 255, 0.08);
-      }
-
-      img {
-        width: 36px;
-        height: 36px;
-        margin-bottom: 4px;
-      }
-
-      .label {
-        font-size: 11px;
-        word-break: break-word;
-      }
+      overflow-wrap: break-word;
+      white-space: normal;
     }
   }
+}
+
 }
 </style>
