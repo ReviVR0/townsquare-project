@@ -170,10 +170,11 @@ export default {
   grid-template-columns: repeat(auto-fit, minmax(70px, 1fr));
   gap: 12px;
   justify-items: center;
-  width: 100%;
+  width: 120%;
+  padding: 5%;
   @media (min-width: 800px) {
     grid-template-columns: repeat(8, 1fr); // force 2 rows of 8
-  }
+  } 
   .card-small {
     background-color: rgba(255, 255, 255, 0.04);
     border-radius: 8px;
