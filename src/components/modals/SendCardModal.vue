@@ -126,42 +126,46 @@ export default {
 
   // === Option A ===
   .option-a-container {
+  display: flex;
+  justify-content: center;
+  flex-wrap: nowrap;
+  gap: 16px;
+  margin-bottom: 30px;
+  overflow-x: auto;
+  padding-bottom: 12px; // add more buffer space
+  @media (max-width: 800px) {
+    grid-template-columns: repeat(4, 1fr); // force 2 rows of 8
+  } 
+  .card-large {
+    background-color: rgba(255, 255, 255, 0.05);
+    border-radius: 10px;
+    padding: 10px;
+    width: 90px;
+    text-align: center;
+    cursor: pointer;
+    transition: transform 0.2s ease;
     display: flex;
-    justify-content: center;
-    flex-wrap: nowrap;
-    gap: 16px;
-    margin-bottom: 30px;
-    overflow-x: auto;
-    padding-bottom: 8px;
+    flex-direction: column;
+    align-items: center;
+    will-change: transform; // hint browser for smoother transform
+    transform-origin: center center; // scale from center
 
-    .card-large {
-      background-color: rgba(255, 255, 255, 0.05);
-      border-radius: 10px;
-      padding: 10px;
-      width: 90px;
-      text-align: center;
-      cursor: pointer;
-      transition: transform 0.2s ease;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
+    &:hover {
+      transform: scale(1.05);
+      background-color: rgba(255, 255, 255, 0.12);
+    }
 
-      &:hover {
-        transform: scale(1.05);
-        background-color: rgba(255, 255, 255, 0.12);
-      }
+    img {
+      width: 50px;
+      height: 50px;
+      margin-bottom: 6px;
+    }
 
-      img {
-        width: 50px;
-        height: 50px;
-        margin-bottom: 6px;
-      }
-
-      .label {
-        font-size: 12px;
-      }
+    .label {
+      font-size: 12px;
     }
   }
+}
 
   // === Option B ===
   
