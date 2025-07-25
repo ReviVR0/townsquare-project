@@ -165,27 +165,23 @@ export default {
 
   // === Option B ===
   
-  .option-b-container {
+.option-b-container {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
-  grid-auto-rows: auto;
-  gap: 10px;
+  grid-template-columns: repeat(auto-fit, minmax(70px, 1fr));
+  gap: 12px;
   justify-items: center;
   width: 100%;
-  max-height: 2 * (80px + 10px); // approximate height of two rows
-  overflow-y: auto;
-
+  @media (min-width: 800px) {
+    grid-template-columns: repeat(8, 1fr); // force 2 rows of 8
+  }
   .card-small {
     background-color: rgba(255, 255, 255, 0.04);
     border-radius: 8px;
-    padding: 6px;
-    width: 60px;
+    padding: 8px;
+    width: 70px;
     text-align: center;
     cursor: pointer;
     transition: transform 0.15s ease;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
 
     &:hover {
       transform: scale(1.06);
@@ -193,22 +189,18 @@ export default {
     }
 
     img {
-      width: 32px;
-      height: 32px;
+      width: 36px;
+      height: 36px;
       margin-bottom: 4px;
     }
 
     .label {
-      display: block;
-      width: 100%;
-      font-size: 10px;
-      line-height: 1.2;
-      text-align: center;
-      overflow-wrap: break-word;
-      white-space: normal;
+      font-size: 11px;
+      word-break: break-word;
     }
   }
 }
+
 
 }
 </style>
