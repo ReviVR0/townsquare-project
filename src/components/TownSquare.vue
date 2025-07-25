@@ -116,7 +116,8 @@ export default {
     Player,
     Token,
     RoleModal,
-    ReminderModal
+    ReminderModal,
+    SendCardModal
   },
   computed: {
     ...mapGetters({ nightOrder: "players/nightOrder" }),
