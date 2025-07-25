@@ -921,6 +921,7 @@ li.move:not(.from) .player .overlay svg.move {
 
 /***** Player menu *****/
 .player > .menu {
+  font-size: 0.8em;
   position: absolute;
   left: 110%;
   bottom: -5px;
