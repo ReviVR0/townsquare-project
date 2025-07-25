@@ -96,7 +96,7 @@ export default {
     padding: 30px;
     border-radius: 12px;
     max-height: 85vh;
-    max-width: 90vw;
+    max-width: 110vw;
     overflow: hidden;
     color: white;
     display: flex;
@@ -170,8 +170,7 @@ export default {
   grid-template-columns: repeat(8-fit, minmax(70px, 1fr));
   gap: 12px;
   justify-items: center;
-  width: 150%;
-  padding: 4px;
+  width: 100%;
   font-size: 50%;
   @media (max-width: 800px) {
     grid-template-columns: repeat(4, 1fr); // force 2 rows of 8
