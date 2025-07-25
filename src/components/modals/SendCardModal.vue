@@ -60,7 +60,7 @@ export default {
 };
 </script>
 
-<style lang="scss" scoped>
+<style lang="scss">
 @import "../../vars.scss";
 
 .send-cards-modal {
@@ -74,11 +74,18 @@ export default {
     margin-bottom: 20px;
   }
 
+  .card-scroll-container {
+    max-height: 70vh;
+    overflow-y: auto;
+    padding-right: 8px;
+  }
+
   .card-grid {
     display: grid;
-    grid-template-columns: repeat(13, 1fr); // <<< 13 items per row
-    gap: 10px;
+    grid-template-columns: repeat(6, 1fr); // << 6 per row
+    gap: 12px;
     justify-items: center;
+    padding: 10px 0;
   }
 
   .card {
@@ -87,7 +94,7 @@ export default {
     padding: 10px;
     cursor: pointer;
     transition: transform 0.2s ease;
-    width: 70px; // << Make sure it's not too wide to fit 13 per row
+    width: 80px;
 
     &:hover {
       transform: scale(1.05);
@@ -109,5 +116,4 @@ export default {
     }
   }
 }
-
 </style>
