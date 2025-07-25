@@ -8,17 +8,29 @@
       <h3>Send Info to Players</h3>
       <p class="subtitle">Click a token to send a message.</p>
 
-      <div class="grid-scroll-container">
-        <div class="grid">
-          <div
-            v-for="(option, index) in allOptions"
-            :key="index"
-            class="grid-item"
-            @click="selectOption(option)"
-          >
-            <img :src="iconSrc" alt="icon" />
-            <span class="label">{{ option.label }}</span>
-          </div>
+      <!-- Option A: Primary Cards -->
+      <div class="option-a-container">
+        <div
+          v-for="(option, index) in optionsA"
+          :key="'a-' + index"
+          class="card-large"
+          @click="selectOption(option)"
+        >
+          <img :src="iconSrc" alt="icon" />
+          <span class="label">{{ option.label }}</span>
+        </div>
+      </div>
+
+      <!-- Option B: Secondary Cards -->
+      <div class="option-b-container">
+        <div
+          v-for="(option, index) in optionsB"
+          :key="'b-' + index"
+          class="card-small"
+          @click="selectOption(option)"
+        >
+          <img :src="iconSrc" alt="icon" />
+          <span class="label">{{ option.label }}</span>
         </div>
       </div>
     </div>
@@ -66,9 +78,6 @@ export default {
   },
   computed: {
     ...mapState(["modals", "session"]),
-    allOptions() {
-      return [...this.optionsA, ...this.optionsB];
-    },
   },
   methods: {
     ...mapMutations(["toggleModal"]),
@@ -81,99 +90,108 @@ export default {
 </script>
 
 <style lang="scss" scoped>
-/* Scoped style with deep selector to override Modal internals */
-
 .send-cards-modal {
-  /* Override modal backdrop */
-  ::v-deep(.modal-backdrop) {
-    background-color: rgba(0, 0, 0, 0.85) !important;
-  }
-
-  /* Override modal container */
   ::v-deep(.modal) {
-    background-color: rgba(0, 0, 0, 0.9) !important;
-    padding: 30px !important;
-    border-radius: 14px !important;
-    max-height: 80vh !important;
-    max-width: 90vw !important;
-    width: auto !important;
-    box-shadow: 0 0 30px 5px rgba(255, 255, 255, 0.1) !important;
-    display: flex !important;
-    flex-direction: column !important;
-    align-items: center !important;
-    text-align: center !important;
-    color: white !important;
-  }
-
-  /* Maximize button styles override if needed */
-  ::v-deep(.top-right-buttons) {
-    top: 20px !important;
-    right: 20px !important;
+    background-color: rgba(0, 0, 0, 0.9);
+    padding: 30px;
+    border-radius: 12px;
+    max-height: 85vh;
+    max-width: 90vw;
+    overflow: hidden;
+    color: white;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
   }
 
   .send-cards-wrapper {
     width: 100%;
-    max-width: 700px;
+    max-width: 750px;
     display: flex;
     flex-direction: column;
-    gap: 12px;
-    user-select: none;
+    align-items: center;
 
     h3 {
-      font-size: 28px;
-      font-weight: 700;
-      margin: 0 0 10px 0;
+      font-size: 24px;
+      margin-bottom: 5px;
       color: #ffd700;
     }
 
     .subtitle {
-      font-size: 16px;
-      color: #eee;
-      margin-bottom: 15px;
+      font-size: 14px;
+      color: #ccc;
+      margin-bottom: 20px;
     }
   }
 
-  .grid-scroll-container {
-    max-height: 65vh;
-    overflow-y: auto;
-    padding-right: 8px;
-    width: 100%;
+  // === Option A ===
+  .option-a-container {
+    display: flex;
+    justify-content: center;
+    flex-wrap: nowrap;
+    gap: 16px;
+    margin-bottom: 30px;
+    overflow-x: auto;
+    padding-bottom: 8px;
+
+    .card-large {
+      background-color: rgba(255, 255, 255, 0.05);
+      border-radius: 10px;
+      padding: 10px;
+      width: 90px;
+      text-align: center;
+      cursor: pointer;
+      transition: transform 0.2s ease;
+
+      &:hover {
+        transform: scale(1.05);
+        background-color: rgba(255, 255, 255, 0.12);
+      }
+
+      img {
+        width: 50px;
+        height: 50px;
+        margin-bottom: 6px;
+      }
+
+      .label {
+        font-size: 12px;
+      }
+    }
   }
 
-  .grid {
+  // === Option B ===
+  .option-b-container {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(90px, 1fr));
-    gap: 14px;
+    grid-template-columns: repeat(auto-fit, minmax(70px, 1fr));
+    gap: 12px;
     justify-items: center;
-    padding: 5px 0;
-  }
+    width: 100%;
 
-  .grid-item {
-    background-color: rgba(255, 255, 255, 0.06);
-    border-radius: 12px;
-    padding: 12px;
-    cursor: pointer;
-    transition: transform 0.2s ease, background-color 0.2s ease;
-    width: 90px;
+    .card-small {
+      background-color: rgba(255, 255, 255, 0.04);
+      border-radius: 8px;
+      padding: 8px;
+      width: 70px;
+      text-align: center;
+      cursor: pointer;
+      transition: transform 0.15s ease;
 
-    &:hover {
-      transform: scale(1.07);
-      background-color: rgba(255, 255, 255, 0.15);
-    }
+      &:hover {
+        transform: scale(1.06);
+        background-color: rgba(255, 255, 255, 0.08);
+      }
 
-    img {
-      width: 50px;
-      height: 50px;
-      object-fit: contain;
-      margin-bottom: 6px;
-      filter: drop-shadow(0 0 1px black);
-    }
+      img {
+        width: 36px;
+        height: 36px;
+        margin-bottom: 4px;
+      }
 
-    .label {
-      font-size: 13px;
-      color: white;
-      word-break: break-word;
-      user-select: none;
+      .label {
+        font-size: 11px;
+        word-break: break-word;
+      }
     }
   }
 }
