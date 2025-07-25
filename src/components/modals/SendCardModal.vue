@@ -167,7 +167,7 @@ export default {
   
 .option-b-container {
   display: grid;
-  grid-template-columns: repeat(8-fit, minmax(70px, 1fr));
+  grid-template-columns: repeat(8, 1fr);
   gap: 12px;
   justify-items: center;
   width: 100%;
