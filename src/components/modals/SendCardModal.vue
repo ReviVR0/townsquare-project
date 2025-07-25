@@ -4,17 +4,21 @@
     v-if="modals.sendCard && !session.isSpectator"
     @close="toggleModal('sendCards')"
   >
-    <h3>Send Info to Players</h3>
+    <div class="send-cards-wrapper">
+      <h3>Send Info to Players</h3>
 
-    <div class="card-grid">
-      <div
-        class="card"
-        v-for="(card, index) in cardOptions"
-        :key="index"
-        @click="sendCard(card)"
-      >
-        <img :src="require('@/assets/token.png')" alt="icon" />
-        <span>{{ card.label }}</span>
+      <div class="card-scroll-container">
+        <div class="card-grid">
+          <div
+            class="card"
+            v-for="(card, index) in cardOptions"
+            :key="index"
+            @click="sendCard(card)"
+          >
+            <img :src="require('@/assets/token.png')" alt="icon" />
+            <span>{{ card.label }}</span>
+          </div>
+        </div>
       </div>
     </div>
   </Modal>
@@ -35,8 +39,7 @@ export default {
     ...mapMutations(["toggleModal"]),
     sendCard(card) {
       console.log(card);
-      // Send the selected card info to players
-      //this.$store.commit("session/sendCardToPlayers", card);
+      // this.$store.commit("session/sendCardToPlayers", card);
     },
   },
   data() {
@@ -50,6 +53,7 @@ export default {
         { label: "You Are" },
         { label: "This Player Is" },
         { label: "Selected You" },
+        // Add more to test scrolling
       ],
     };
   },
@@ -70,11 +74,24 @@ export default {
     margin-bottom: 20px;
   }
 
+  .send-cards-wrapper {
+    display: flex;
+    flex-direction: column;
+    max-height: 70vh;
+  }
+
+  .card-scroll-container {
+    overflow-y: auto;
+    flex-grow: 1;
+    padding-right: 5px;
+  }
+
   .card-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
     gap: 20px;
     justify-items: center;
+    padding: 5px;
   }
 
   .card {
