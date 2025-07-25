@@ -91,18 +91,6 @@ export default {
 
 <style lang="scss">
 .send-cards-modal {
-  ::v-deep(.modal) {
-    background-color: rgba(0, 0, 0, 0.9);
-    padding: 30px;
-    border-radius: 12px;
-    max-height: 85vh;
-    max-width: 90vw;
-    overflow: hidden;
-    color: white;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-  }
 
   .send-cards-wrapper {
     width: 100%;
@@ -124,75 +112,76 @@ export default {
     }
   }
 
-  // === Option A ===
-  .option-a-container {
-    display: flex;
-    justify-content: center;
-    flex-wrap: nowrap;
-    gap: 16px;
-    margin-bottom: 30px;
-    overflow-x: auto;
-    padding-bottom: 8px;
+// === Option A ===
+.option-a-container {
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  gap: 16px;
+  margin-bottom: 30px;
+  justify-items: center;
 
-    .card-large {
-      background-color: rgba(255, 255, 255, 0.05);
-      border-radius: 10px;
-      padding: 10px;
-      width: 90px;
-      text-align: center;
-      cursor: pointer;
-      transition: transform 0.2s ease;
+  .card-large {
+    background-color: rgba(255, 255, 255, 0.05);
+    border-radius: 10px;
+    padding: 10px;
+    width: 90px;
+    text-align: center;
+    cursor: pointer;
+    transition: transform 0.2s ease;
 
-      &:hover {
-        transform: scale(1.05);
-        background-color: rgba(255, 255, 255, 0.12);
-      }
+    &:hover {
+      transform: scale(1.05);
+      background-color: rgba(255, 255, 255, 0.12);
+    }
 
-      img {
-        width: 50px;
-        height: 50px;
-        margin-bottom: 6px;
-      }
+    img {
+      width: 50px;
+      height: 50px;
+      margin-bottom: 6px;
+    }
 
-      .label {
-        font-size: 12px;
-      }
+    .label {
+      font-size: 12px;
     }
   }
+}
 
-  // === Option B ===
-  .option-b-container {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(70px, 1fr));
-    gap: 12px;
-    justify-items: center;
-    width: 100%;
+// === Option B ===
+.option-b-container {
+  display: grid;
+  grid-template-columns: repeat(8, 1fr); // exactly 8 columns
+  grid-template-rows: repeat(2, auto);   // exactly 2 rows
+  gap: 12px;
+  justify-items: center;
+  width: 100%;
+  max-width: 560px; // 8 * 70px (card width) for centering
 
-    .card-small {
-      background-color: rgba(255, 255, 255, 0.04);
-      border-radius: 8px;
-      padding: 8px;
-      width: 70px;
-      text-align: center;
-      cursor: pointer;
-      transition: transform 0.15s ease;
+  .card-small {
+    background-color: rgba(255, 255, 255, 0.04);
+    border-radius: 8px;
+    padding: 8px;
+    width: 70px;
+    text-align: center;
+    cursor: pointer;
+    transition: transform 0.15s ease;
 
-      &:hover {
-        transform: scale(1.06);
-        background-color: rgba(255, 255, 255, 0.08);
-      }
+    &:hover {
+      transform: scale(1.06);
+      background-color: rgba(255, 255, 255, 0.08);
+    }
 
-      img {
-        width: 36px;
-        height: 36px;
-        margin-bottom: 4px;
-      }
+    img {
+      width: 36px;
+      height: 36px;
+      margin-bottom: 4px;
+    }
 
-      .label {
-        font-size: 11px;
-        word-break: break-word;
-      }
+    .label {
+      font-size: 11px;
+      word-break: break-word;
     }
   }
+}
+
 }
 </style>
