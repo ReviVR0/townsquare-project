@@ -36,6 +36,7 @@
     <VoteHistoryModal />
     <TimerModal/>
     <InvitationModal/>
+    <SendCardModal />
     <Canvas/>
     <GameStateModal />
     <Gradients />
@@ -63,6 +64,7 @@ import TimerModal from "@/components/modals/TimerModal";
 import GameStateModal from "@/components/modals/GameStateModal";
 import Canvas from "@/components/modals/Canvas.vue";
 import InvitationModal from "@/components/modals/InvitationModal.vue";
+import SendCardModal from "@/components/modals/SendCardModal.vue";
 
 import { EventBus } from "./event-bus.js";
 
@@ -83,7 +85,8 @@ export default {
     Menu,
     EditionModal,
     RolesModal,
-    Gradients
+    Gradients,
+    SendCardModal
   },
   computed: {
     ...mapState(["grimoire", "session"]),

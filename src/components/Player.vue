@@ -204,10 +204,10 @@
               Send Grimoire
           </li>
           <li
-            @click="SendGrim"
+            @click="SendCard"
             v-if=" !session.isSpectator && player.id && grimoire.isNight"
           >
-              <font-awesome-icon icon="theater-masks" />
+              <font-awesome-icon icon="people-arrows" />
               Send Card
           </li>
 
@@ -481,6 +481,9 @@ export default {
     },
     SendGrim(){
       this.$store.commit("session/sendGrim", [this.gamestate, this.player.id]);
+    }
+    SendCard(){
+      this.$store.commit("toggleModal", "sendCard");
     }
   }
 };
