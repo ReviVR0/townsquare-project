@@ -170,9 +170,9 @@ export default {
   grid-template-columns: repeat(8-fit, minmax(70px, 1fr));
   gap: 12px;
   justify-items: center;
-  width: 125%;
+  width: 150%;
   padding: 4px;
-  font-size: 75%;
+  font-size: 50%;
   @media (max-width: 800px) {
     grid-template-columns: repeat(4, 1fr); // force 2 rows of 8
   } 
