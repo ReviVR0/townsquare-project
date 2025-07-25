@@ -89,7 +89,7 @@ export default {
 };
 </script>
 
-<style lang="scss" scoped>
+<style lang="scss">
 .send-cards-modal {
   ::v-deep(.modal) {
     background-color: rgba(0, 0, 0, 0.9);
