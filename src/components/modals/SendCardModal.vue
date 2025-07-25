@@ -87,6 +87,9 @@ export default {
       this.$emit("card-selected", option.label);
     }
   },
+  mounted() {
+  console.log('SendCardModal mounted');
+}
 };
 </script>
 
