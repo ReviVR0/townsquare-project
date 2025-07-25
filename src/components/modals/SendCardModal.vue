@@ -1,22 +1,24 @@
 <template>
   <Modal
     class="send-cards-modal"
-    v-if="modals.sendCards && !session.isSpectator"
-    @close="toggleModal('sendCards')"
+    v-if="modals.sendCard && !session.isSpectator"
+    @close="toggleModal('sendCard')"
   >
-    <div class="modal-content">
-      <h3>{{ title }}</h3>
-      <p class="subtitle">{{ subtitle }}</p>
+    <div class="send-cards-wrapper">
+      <h3>Send Info to Players</h3>
+      <p class="subtitle">Click a token to send a message.</p>
 
-      <div class="grid-container">
-        <div
-          v-for="(card, index) in cards"
-          :key="index"
-          class="card-item"
-          @click="sendCard(card)"
-        >
-          <img :src="cardIcon" alt="card icon" />
-          <span class="label">{{ card.label }}</span>
+      <div class="grid-scroll-container">
+        <div class="grid">
+          <div
+            v-for="(option, index) in allOptions"
+            :key="index"
+            class="grid-item"
+            @click="selectOption(option)"
+          >
+            <img :src="iconSrc" alt="icon" />
+            <span class="label">{{ option.label }}</span>
+          </div>
         </div>
       </div>
     </div>
@@ -28,26 +30,11 @@ import Modal from "./Modal";
 import { mapState, mapMutations } from "vuex";
 
 export default {
-  components: {
-    Modal,
-  },
-  props: {
-    title: {
-      type: String,
-      default: "Send Info to Players",
-    },
-    subtitle: {
-      type: String,
-      default: "Choose what to send to the selected players.",
-    },
-  },
-  computed: {
-    ...mapState(["modals", "session"]),
-  },
+  components: { Modal },
   data() {
     return {
-      cardIcon: require("@/assets/token.png"),
-      cards: [
+      iconSrc: require("@/assets/token.png"),
+      optionsA: [
         { label: "Use Ability" },
         { label: "Make a Choice" },
         { label: "Not in Play" },
@@ -56,6 +43,8 @@ export default {
         { label: "You Are" },
         { label: "This Player Is" },
         { label: "Selected You" },
+      ],
+      optionsB: [
         { label: "Got it" },
         { label: "Yes" },
         { label: "No" },
@@ -75,94 +64,116 @@ export default {
       ],
     };
   },
+  computed: {
+    ...mapState(["modals", "session"]),
+    allOptions() {
+      return [...this.optionsA, ...this.optionsB];
+    },
+  },
   methods: {
     ...mapMutations(["toggleModal"]),
-    sendCard(card) {
-      console.log("Card sent:", card.label);
-      this.$emit("card-selected", card.label);
-      // Optionally: this.$store.commit("session/sendCardToPlayers", card);
+    selectOption(option) {
+      console.log("Selected:", option.label);
+      this.$emit("card-selected", option.label);
     },
   },
 };
 </script>
 
 <style lang="scss" scoped>
-@import "../../vars.scss";
+/* Scoped style with deep selector to override Modal internals */
 
 .send-cards-modal {
-  padding: 30px;
-  background-color: rgba(0, 0, 0, 0.85);
-  text-align: center;
-  color: white;
-
-  .modal-content {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
+  /* Override modal backdrop */
+  ::v-deep(.modal-backdrop) {
+    background-color: rgba(0, 0, 0, 0.85) !important;
   }
 
-  h3 {
-    font-size: 24px;
-    margin-bottom: 5px;
+  /* Override modal container */
+  ::v-deep(.modal) {
+    background-color: rgba(0, 0, 0, 0.9) !important;
+    padding: 30px !important;
+    border-radius: 14px !important;
+    max-height: 80vh !important;
+    max-width: 90vw !important;
+    width: auto !important;
+    box-shadow: 0 0 30px 5px rgba(255, 255, 255, 0.1) !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    text-align: center !important;
+    color: white !important;
   }
 
-  .subtitle {
-    font-size: 16px;
-    margin-bottom: 20px;
-    color: #ffd700;
+  /* Maximize button styles override if needed */
+  ::v-deep(.top-right-buttons) {
+    top: 20px !important;
+    right: 20px !important;
   }
 
-  .grid-container {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
-    gap: 15px;
+  .send-cards-wrapper {
     width: 100%;
     max-width: 700px;
-  }
-
-  .card-item {
     display: flex;
     flex-direction: column;
-    align-items: center;
-    background: rgba(255, 255, 255, 0.05);
-    border-radius: 10px;
-    padding: 10px;
+    gap: 12px;
+    user-select: none;
+
+    h3 {
+      font-size: 28px;
+      font-weight: 700;
+      margin: 0 0 10px 0;
+      color: #ffd700;
+    }
+
+    .subtitle {
+      font-size: 16px;
+      color: #eee;
+      margin-bottom: 15px;
+    }
+  }
+
+  .grid-scroll-container {
+    max-height: 65vh;
+    overflow-y: auto;
+    padding-right: 8px;
+    width: 100%;
+  }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(90px, 1fr));
+    gap: 14px;
+    justify-items: center;
+    padding: 5px 0;
+  }
+
+  .grid-item {
+    background-color: rgba(255, 255, 255, 0.06);
+    border-radius: 12px;
+    padding: 12px;
     cursor: pointer;
-    transition: transform 0.15s ease;
+    transition: transform 0.2s ease, background-color 0.2s ease;
+    width: 90px;
+
     &:hover {
-      transform: scale(1.05);
-      background-color: rgba(255, 255, 255, 0.1);
+      transform: scale(1.07);
+      background-color: rgba(255, 255, 255, 0.15);
     }
 
     img {
-      width: 40px;
-      height: 40px;
+      width: 50px;
+      height: 50px;
       object-fit: contain;
-      margin-bottom: 5px;
+      margin-bottom: 6px;
+      filter: drop-shadow(0 0 1px black);
     }
 
     .label {
       font-size: 13px;
+      color: white;
       word-break: break-word;
-    }
-  }
-
-  @media (max-width: 500px) {
-    .grid-container {
-      grid-template-columns: repeat(auto-fit, minmax(60px, 1fr));
-      gap: 10px;
-    }
-
-    .card-item {
-      padding: 8px;
-      img {
-        width: 30px;
-        height: 30px;
-      }
-
-      .label {
-        font-size: 11px;
-      }
+      user-select: none;
     }
   }
 }
