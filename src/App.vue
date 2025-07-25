@@ -36,7 +36,6 @@
     <VoteHistoryModal />
     <TimerModal/>
     <InvitationModal/>
-    <SendCardModal />
     <Canvas/>
     <GameStateModal />
     <Gradients />
