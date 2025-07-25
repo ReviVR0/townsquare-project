@@ -923,7 +923,7 @@ li.move:not(.from) .player .overlay svg.move {
 .player > .menu {
   position: absolute;
   left: 110%;
-  top: 5px;
+  bottom: -10px;
   text-align: left;
   white-space: nowrap;
   background: rgba(0, 0, 0, 0.5);
