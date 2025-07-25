@@ -105,7 +105,7 @@ export default {
   }
 
   .send-cards-wrapper {
-    width: 120%;
+    width: 100%;
     max-width: 850px;
     display: flex;
     flex-direction: column;
