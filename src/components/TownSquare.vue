@@ -97,7 +97,7 @@
 
     <ReminderModal :player-index="selectedPlayer"></ReminderModal>
     <RoleModal :player-index="selectedPlayer"></RoleModal>
-    <SendCardModal :player-index="selectedPlayer" ></SendCardModal>
+    <SendCardModal :player-index="selectedPlayer"></SendCardModal>
 
   </div>
 </template>
@@ -292,7 +292,7 @@ export default {
       } catch (e) {
         this.inviteCount = 0;
       }
-    },
+    }
     openSendCardModal(playerIndex) {
       this.selectedPlayer = playerIndex;
       this.$store.commit("toggleModal", "sendCard");
