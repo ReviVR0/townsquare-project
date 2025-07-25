@@ -79,15 +79,15 @@ export default {
   },
   computed: {
     ...mapState(["modals", "session"]),
+    playerIndex() {
+      return this.modals.sendCardPlayerIndex;
+    }
   },
   methods: {
     ...mapMutations(["toggleModal"]),
     selectOption(option) {
       console.log("Selected:", option.label);
       this.$emit("card-selected", option.label);
-    },
-      playerIndex() {
-    return this.modals.sendCardPlayerIndex;
     }
   },
 };
