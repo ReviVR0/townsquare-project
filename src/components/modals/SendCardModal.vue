@@ -79,9 +79,6 @@ export default {
   },
   computed: {
     ...mapState(["modals", "session"]),
-    playerIndex() {
-      return this.modals.sendCardPlayerIndex;
-    }
   },
   methods: {
     ...mapMutations(["toggleModal"]),
