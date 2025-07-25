@@ -292,7 +292,7 @@ export default {
       } catch (e) {
         this.inviteCount = 0;
       }
-    }
+    },
     openSendCardModal(playerIndex) {
       this.selectedPlayer = playerIndex;
       this.$store.commit("toggleModal", "sendCard");
