@@ -1,37 +1,20 @@
 <template>
   <Modal
-    class="timer-menu"
-    v-if="modals.timer && !session.isSpectator"
-    @close="toggleModal('timer')"
+    class="send-cards-modal"
+    v-if="modals.sendCard && !session.isSpectator"
+    @close="toggleModal('sendCards')"
   >
-    <h3>Timer Menu</h3>
-    <div class="content">
-      <p>Set Timer:</p>
-      <div class="timer-control-wrapper">
-        <div class="timer-controls">
-          <button class="button" @click="decreaseTimer" :disabled="timerMinutes <= 0 && timerSeconds == 5">
-          <font-awesome-icon
-            icon="minus-circle"
-          />          
-          </button>
-        </div>
+    <h3>Send Info to Players</h3>
 
-        <div class="timer-display">
-          <!-- Display current time in minutes and seconds -->
-          <span>  {{ Math.floor(timerTotalSeconds / 60) }}:{{ String(timerTotalSeconds % 60).padStart(2, '0') }} </span>
-        </div>
-
-        <div class="timer-controls">
-          <button class="button" @click="increaseTimer" :disabled="timerMinutes >= 10 && timerSeconds == 0">
-          <font-awesome-icon
-            icon="plus-circle"
-          />
-          </button>
-        </div>
-      </div>
-
-      <div class="timer-send">
-        <button class="button" @click="SendTimer">Send Timer</button>
+    <div class="card-grid">
+      <div
+        class="card"
+        v-for="(card, index) in cardOptions"
+        :key="index"
+        @click="sendCard(card)"
+      >
+        <img :src="require('@/assets/token.png')" alt="icon" />
+        <span>{{ card.label }}</span>
       </div>
     </div>
   </Modal>
@@ -39,111 +22,89 @@
 
 <script>
 import Modal from "./Modal";
-import { mapMutations, mapState } from "vuex";
+import { mapState, mapMutations } from "vuex";
 
 export default {
   components: {
-    Modal
+    Modal,
   },
   computed: {
-    ...mapState(["grimoire", "session", "edition"]),
-    ...mapState(["modals"]),
-    timerMinutes() {
-      // Return the timer in minutes
-      return Math.floor(this.timerTotalSeconds / 60);
-    },
-    timerSeconds() {
-      // Return the remaining seconds after calculating minutes
-      return this.timerTotalSeconds % 60;
+    ...mapState(["modals", "session"]),
+  },
+  methods: {
+    ...mapMutations(["toggleModal"]),
+    sendCard(card) {
+      console.log(card);
+      // Send the selected card info to players
+      // this.$store.commit("session/sendCardToPlayers", card);
     },
   },
   data() {
     return {
-      timerTotalSeconds: 180, // Default start time: 3 minutes
+      cardOptions: [
+        { label: "Use Ability" },
+        { label: "Make a Choice" },
+        { label: "Not in Play" },
+        { label: "This is the Demon" },
+        { label: "Your Minions" },
+        { label: "You Are" },
+        { label: "This Player Is" },
+        { label: "Selected You" },
+      ],
     };
   },
-  methods: {
-    ...mapMutations(["toggleModal"]),
-    
-    // Decrease the timer by 30 seconds
-    decreaseTimer() {
-      if (this.timerTotalSeconds > 60) {
-        this.timerTotalSeconds -= 30;
-      }
-      else if(this.timerTotalSeconds > 5){
-        this.timerTotalSeconds -= 5;
-      }
-    },
-    SendTimer(){
-      this.$store.commit("session/timer", this.timerTotalSeconds);
-    },
-    
-    // Increase the timer by 30 seconds
-    increaseTimer() {
-      if (this.timerTotalSeconds < 600 && this.timerTotalSeconds >= 60) { // Max of 10 minutes (600 seconds)
-        this.timerTotalSeconds += 30;
-      } else if(this.timerTotalSeconds >= 5){
-      this.timerTotalSeconds += 5;
-      }
-    },
-  }
 };
 </script>
 
 <style lang="scss" scoped>
 @import "../../vars.scss";
-.timer-menu {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  padding: 50px 50px;
 
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-
-  background-color: rgba(0, 0, 0, 0.5); // semi-transparent dark background
+.send-cards-modal {
+  padding: 40px;
+  background-color: rgba(0, 0, 0, 0.85);
   color: white;
-  font-weight: bold;
   text-align: center;
-  z-index: 999; // ensure it appears above everything
-  pointer-events: auto;
-}
-
-h3 {
   font-weight: bold;
-  margin: 30px 0 20px 0;
-  svg {
-    vertical-align: middle;
-  }}
-.content {
-  text-align: center;
-  font-size: 16px;
-  color: white;
-}
+  max-width: 700px;
+  margin: 0 auto;
 
-.timer-display {
-  font-size: 24px;
-  font-weight: bold;
-}
-.timer-control-wrapper {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 20px; /* space between buttons and timer */
-}
-.timer-controls {
-  display: flex;
-  font-size: 18px;
-  justify-content: center;
-  gap: 20px;
-}
-.button{
-    font-weight: bold;
-  font-size: 16px;
-}
+  h3 {
+    margin-bottom: 20px;
+  }
 
+  .card-grid {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 20px;
+    justify-items: center;
+  }
+
+  .card {
+    background-color: rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+    padding: 10px;
+    cursor: pointer;
+    transition: transform 0.2s ease;
+    width: 100%;
+    max-width: 100px;
+    text-align: center;
+
+    &:hover {
+      transform: scale(1.05);
+      background-color: rgba(255, 255, 255, 0.1);
+    }
+
+    img {
+      width: 60px;
+      height: 60px;
+      object-fit: contain;
+      margin-bottom: 5px;
+    }
+
+    span {
+      display: block;
+      font-size: 12px;
+    }
+  }
+}
 </style>
