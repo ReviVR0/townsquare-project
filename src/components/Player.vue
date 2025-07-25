@@ -483,10 +483,10 @@ export default {
       this.isMenuOpen = false;
       this.$store.commit("session/sendGrim", [this.gamestate, this.player.id]);
     },
-    SendCard(player){
+    SendCard(){
       this.isMenuOpen = false;
-      console.log(player);
-      this.$emit('trigger', ['openSendCardModal', player]);
+      console.log(this.index);
+      this.$emit('trigger', ['openSendCardModal', this.index]);
     }
   }
 };
