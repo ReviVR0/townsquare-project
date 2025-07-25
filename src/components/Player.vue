@@ -481,7 +481,7 @@ export default {
     },
     SendCard(player){
       this.isMenuOpen = false;
-      this.$emit('trigger', ['openSendCardModal', player]);
+      this.$emit('trigger', ['openSendCardModal', this.index]);
     }
   }
 };

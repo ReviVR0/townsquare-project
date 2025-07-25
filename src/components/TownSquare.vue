@@ -97,7 +97,8 @@
 
     <ReminderModal :player-index="selectedPlayer"></ReminderModal>
     <RoleModal :player-index="selectedPlayer"></RoleModal>
-    <SendCardModal :player-index="selectedPlayer"></SendCardModal>
+    <SendCardModal :player-index="selectedPlayer"   v-if="modals.sendCard && !session.isSpectator"
+></SendCardModal>
 
   </div>
 </template>
