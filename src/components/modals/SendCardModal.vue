@@ -167,13 +167,13 @@ export default {
   
 .option-b-container {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(70px, 1fr));
+  grid-template-columns: repeat(8-fit, minmax(70px, 1fr));
   gap: 12px;
   justify-items: center;
-  width: 120%;
-  padding: 5%;
-  @media (min-width: 800px) {
-    grid-template-columns: repeat(8, 1fr); // force 2 rows of 8
+  width: 125%;
+  padding 10px;
+  @media (max-width: 800px) {
+    grid-template-columns: repeat(4, 1fr); // force 2 rows of 8
   } 
   .card-small {
     background-color: rgba(255, 255, 255, 0.04);
