@@ -203,6 +203,13 @@
               <font-awesome-icon icon="theater-masks" />
               Send Grimoire
           </li>
+          <li
+            @click="SendGrim"
+            v-if=" !session.isSpectator && player.id && grimoire.isNight"
+          >
+              <font-awesome-icon icon="theater-masks" />
+              Send Card
+          </li>
 
 
 
