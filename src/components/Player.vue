@@ -479,7 +479,7 @@ export default {
         !this.session.votes[this.index]
       ]);
     },
-    SendCard(player){
+    SendCard(){
       this.isMenuOpen = false;
       this.$emit('trigger', ['openSendCardModal', this.index]);
     }
