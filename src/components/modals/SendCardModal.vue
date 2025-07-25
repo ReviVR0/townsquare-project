@@ -122,33 +122,37 @@ export default {
       color: #ccc;
       margin-bottom: 20px;
     }
+    @media (max-width: 600px) {
+    h3 {
+      font-size: 20px;
+    }
+
+    .subtitle {
+      font-size: 12px;
+      margin-bottom: 16px;
+    }
+  }
   }
 
   // === Option A ===
   .option-a-container {
   display: flex;
+  flex-wrap: wrap;
   justify-content: center;
-  flex-wrap: nowrap;
-  gap: 16px;
-  margin-bottom: 30px;
-  overflow-x: auto;
-  padding-bottom: 12px; // add more buffer space
-  @media (max-width: 800px) {
-    grid-template-columns: repeat(4, 1fr); // force 2 rows of 8
-  } 
+  gap: 12px 16px;
+  margin-bottom: 24px;
+
   .card-large {
     background-color: rgba(255, 255, 255, 0.05);
     border-radius: 10px;
-    padding: 10px;
+    padding: 8px;
     width: 90px;
     text-align: center;
     cursor: pointer;
-    transition: transform 0.2s ease;
     display: flex;
     flex-direction: column;
     align-items: center;
-    will-change: transform; // hint browser for smoother transform
-    transform-origin: center center; // scale from center
+    transition: transform 0.2s ease;
 
     &:hover {
       transform: scale(1.05);
@@ -165,25 +169,38 @@ export default {
       font-size: 12px;
     }
   }
+
+  @media (max-width: 800px) {
+    .card-large {
+      width: 80px;
+
+      img {
+        width: 44px;
+        height: 44px;
+      }
+
+      .label {
+        font-size: 11px;
+      }
+    }
+  }
 }
 
   // === Option B ===
   
 .option-b-container {
   display: grid;
-  grid-template-columns: repeat(8, 1fr);
-  gap: 12px;
+  grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
+  gap: 10px;
   justify-items: center;
   width: 100%;
-  font-size: 50%;
-  @media (max-width: 800px) {
-    grid-template-columns: repeat(4, 1fr); // force 2 rows of 8
-  } 
+  max-width: 100%;
+
   .card-small {
     background-color: rgba(255, 255, 255, 0.04);
-    border-radius: 8px;
-    padding: 8px;
-    width: 70px;
+    border-radius: 6px;
+    padding: 6px;
+    width: 60px;
     text-align: center;
     cursor: pointer;
     transition: transform 0.15s ease;
@@ -194,17 +211,22 @@ export default {
     }
 
     img {
-      width: 36px;
-      height: 36px;
+      width: 30px;
+      height: 30px;
       margin-bottom: 4px;
     }
 
     .label {
-      font-size: 11px;
+      font-size: 10px;
       word-break: break-word;
     }
   }
+
+  @media (max-width: 800px) {
+    grid-template-columns: repeat(4, 1fr);
+  }
 }
+
 
 
 }
