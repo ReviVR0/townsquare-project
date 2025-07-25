@@ -1,22 +1,24 @@
 <template>
   <Modal
-    class="send-cards-modal"
-    v-if="modals.sendCards && !session.isSpectator"
-    @close="toggleModal('sendCards')"
+    class="info-menu"
+    v-if="modals.sendCard && !session.isSpectator"
+    @close="toggleModal('sendCard')"
   >
-    <div class="modal-content">
+    <div class="menu-content">
       <h3>{{ title }}</h3>
       <p class="subtitle">{{ subtitle }}</p>
 
-      <div class="grid-container">
-        <div
-          v-for="(card, index) in cards"
-          :key="index"
-          class="card-item"
-          @click="sendCard(card)"
-        >
-          <img :src="cardIcon" alt="card icon" />
-          <span class="label">{{ card.label }}</span>
+      <div class="grid-scroll-container">
+        <div class="grid">
+          <div
+            v-for="(option, index) in allOptions"
+            :key="index"
+            class="grid-item"
+            @click="selectOption(option)"
+          >
+            <img :src="iconSrc" alt="icon" />
+            <span class="label">{{ option.label }}</span>
+          </div>
         </div>
       </div>
     </div>
@@ -28,26 +30,11 @@ import Modal from "./Modal";
 import { mapState, mapMutations } from "vuex";
 
 export default {
-  components: {
-    Modal,
-  },
-  props: {
-    title: {
-      type: String,
-      default: "Send Info to Players",
-    },
-    subtitle: {
-      type: String,
-      default: "Choose what to send to the selected players.",
-    },
-  },
-  computed: {
-    ...mapState(["modals", "session"]),
-  },
+  components: { Modal },
   data() {
     return {
-      cardIcon: require("@/assets/token.png"),
-      cards: [
+      iconSrc: require("@/assets/token.png"),
+      optionsA: [
         { label: "Use Ability" },
         { label: "Make a Choice" },
         { label: "Not in Play" },
@@ -56,6 +43,8 @@ export default {
         { label: "You Are" },
         { label: "This Player Is" },
         { label: "Selected You" },
+      ],
+      optionsB: [
         { label: "Got it" },
         { label: "Yes" },
         { label: "No" },
@@ -75,30 +64,45 @@ export default {
       ],
     };
   },
+  computed: {
+    ...mapState(["modals", "session"]),
+    allOptions() {
+      return [...this.optionsA, ...this.optionsB];
+    },
+    title() {
+      return "Send Info to Players";
+    },
+    subtitle() {
+      return "Click a token to send a message.";
+    },
+  },
   methods: {
     ...mapMutations(["toggleModal"]),
-    sendCard(card) {
-      console.log("Card sent:", card.label);
-      this.$emit("card-selected", card.label);
-      // Optionally: this.$store.commit("session/sendCardToPlayers", card);
+    selectOption(option) {
+      console.log("Selected:", option.label);
+      // You can commit to Vuex or emit here if needed:
+      // this.$store.commit("session/sendCardToPlayers", option);
+      this.$emit("card-selected", option.label);
     },
   },
 };
 </script>
 
-<style lang="scss" scoped>
+<style lang="scss">
 @import "../../vars.scss";
 
-.send-cards-modal {
+.info-menu {
   padding: 30px;
   background-color: rgba(0, 0, 0, 0.85);
   text-align: center;
   color: white;
 
-  .modal-content {
+  .menu-content {
     display: flex;
     flex-direction: column;
+    gap: 12px;
     align-items: center;
+    width: 100%;
   }
 
   h3 {
@@ -107,62 +111,50 @@ export default {
   }
 
   .subtitle {
-    font-size: 16px;
-    margin-bottom: 20px;
+    font-size: 14px;
+    margin-bottom: 10px;
     color: #ffd700;
   }
 
-  .grid-container {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
-    gap: 15px;
+  .grid-scroll-container {
+    max-height: 70vh;
+    overflow-y: auto;
+    padding-right: 8px;
     width: 100%;
-    max-width: 700px;
   }
 
-  .card-item {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    background: rgba(255, 255, 255, 0.05);
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(90px, 1fr));
+    gap: 12px;
+    justify-items: center;
+    padding: 10px 0;
+  }
+
+  .grid-item {
+    background-color: rgba(255, 255, 255, 0.05);
     border-radius: 10px;
     padding: 10px;
     cursor: pointer;
-    transition: transform 0.15s ease;
+    transition: transform 0.2s ease;
+    width: 90px;
+
     &:hover {
       transform: scale(1.05);
       background-color: rgba(255, 255, 255, 0.1);
     }
 
     img {
-      width: 40px;
-      height: 40px;
+      width: 50px;
+      height: 50px;
       object-fit: contain;
       margin-bottom: 5px;
     }
 
     .label {
-      font-size: 13px;
+      font-size: 12px;
+      text-align: center;
       word-break: break-word;
-    }
-  }
-
-  @media (max-width: 500px) {
-    .grid-container {
-      grid-template-columns: repeat(auto-fit, minmax(60px, 1fr));
-      gap: 10px;
-    }
-
-    .card-item {
-      padding: 8px;
-      img {
-        width: 30px;
-        height: 30px;
-      }
-
-      .label {
-        font-size: 11px;
-      }
     }
   }
 }
