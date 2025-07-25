@@ -74,24 +74,11 @@ export default {
     margin-bottom: 20px;
   }
 
-  .send-cards-wrapper {
-    display: flex;
-    flex-direction: column;
-    max-height: 70vh;
-  }
-
-  .card-scroll-container {
-    overflow-y: auto;
-    flex-grow: 1;
-    padding-right: 5px;
-  }
-
   .card-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
-    gap: 20px;
+    grid-template-columns: repeat(13, 1fr); // <<< 13 items per row
+    gap: 10px;
     justify-items: center;
-    padding: 5px;
   }
 
   .card {
@@ -100,7 +87,7 @@ export default {
     padding: 10px;
     cursor: pointer;
     transition: transform 0.2s ease;
-    width: 100px;
+    width: 70px; // << Make sure it's not too wide to fit 13 per row
 
     &:hover {
       transform: scale(1.05);
@@ -108,16 +95,19 @@ export default {
     }
 
     img {
-      width: 60px;
-      height: 60px;
+      width: 50px;
+      height: 50px;
       object-fit: contain;
       margin-bottom: 5px;
     }
 
     span {
       display: block;
-      font-size: 12px;
+      font-size: 11px;
+      text-align: center;
+      word-break: break-word;
     }
   }
 }
+
 </style>
