@@ -5,7 +5,7 @@
     @close="toggleModal('sendCard')"
   >
     <div class="send-cards-wrapper">
-      <h3>Send Info to Players</h3>
+      <h3>Send Info to Player {{ playerIndex }}</h3>
       <p class="subtitle">Click a token to send a message.</p>
 
       <!-- Option A: Primary Cards -->
@@ -43,6 +43,7 @@ import { mapState, mapMutations } from "vuex";
 
 export default {
   components: { Modal },
+  props: ["playerIndex"],
   data() {
     return {
       iconSrc: require("@/assets/token.png"),
@@ -85,6 +86,9 @@ export default {
       console.log("Selected:", option.label);
       this.$emit("card-selected", option.label);
     },
+      playerIndex() {
+    return this.modals.sendCardPlayerIndex;
+    }
   },
 };
 </script>

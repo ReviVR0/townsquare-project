@@ -479,13 +479,9 @@ export default {
         !this.session.votes[this.index]
       ]);
     },
-    SendGrim(){
+    SendCard(player){
       this.isMenuOpen = false;
-      this.$store.commit("session/sendGrim", [this.gamestate, this.player.id]);
-    },
-    SendCard(){
-      this.isMenuOpen = false;
-      this.$store.commit("toggleModal", "sendCard");
+      this.$emit('trigger', ['openSendCardModal', player]);
     }
   }
 };

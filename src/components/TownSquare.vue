@@ -97,6 +97,8 @@
 
     <ReminderModal :player-index="selectedPlayer"></ReminderModal>
     <RoleModal :player-index="selectedPlayer"></RoleModal>
+    <SendCardModal :player-index="selectedPlayer"></SendCardModal>
+
   </div>
 </template>
 
@@ -284,13 +286,17 @@ export default {
       this.$store.commit("session/inviteChat", to);
     },
     updateInviteCount() {
-    try {
-      const invites = JSON.parse(localStorage.getItem("invites")) || [];
-      this.inviteCount = invites.length;
-    } catch (e) {
-      this.inviteCount = 0;
+      try {
+        const invites = JSON.parse(localStorage.getItem("invites")) || [];
+        this.inviteCount = invites.length;
+      } catch (e) {
+        this.inviteCount = 0;
+      }
     }
-  }
+    openSendCardModal(playerIndex) {
+      this.selectedPlayer = playerIndex;
+      this.$store.commit("toggleModal", "sendCard");
+    },
   },
   created() {
     this.updateInviteCount();
