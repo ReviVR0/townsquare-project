@@ -5,7 +5,7 @@
     @close="toggleModal('sendCard')"
   >
     <div class="send-cards-wrapper">
-      <h3>Send Info to Playeraaaaaaaaaa {{ playerIndex }}</h3>
+      <h3>Send Info to Player {{ playerIndex }}</h3>
       <p class="subtitle">Click a token to send a message.</p>
 
       <!-- Option A: Primary Cards -->
@@ -92,18 +92,7 @@ export default {
 
 <style lang="scss" scoped>
 .send-cards-modal {
-  ::v-deep(.modal) {
-    background-color: rgba(0, 0, 0, 0.9);
-    padding: 30px;
-    border-radius: 12px;
-    max-height: 85vh;
-    max-width: 110vw;
-    overflow: hidden;
-    color: white;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-  }
+
 
   .send-cards-wrapper {
     width: 100%;
