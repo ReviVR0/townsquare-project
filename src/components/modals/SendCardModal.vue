@@ -190,7 +190,7 @@ export default {
   
 .option-b-container {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
+  grid-template-columns: repeat(8, 1fr);
   gap: 10px;
   justify-items: center;
   width: 100%;
