@@ -230,7 +230,6 @@ export default {
     finish() {
       for(let i = 0; i<this.players.length; i++){
           if(this.session.votes[i]===true && this.players[i].isDead){
-            console.log("Voting");
           this.$store.commit("players/update", { 
           player: this.players[i],
           property: "isVoteless",

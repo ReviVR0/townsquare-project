@@ -34,8 +34,9 @@ export default {
   methods: {
     ...mapMutations(["toggleModal"]),
     sendCard(card) {
+      console.log(card);
       // Send the selected card info to players
-      this.$store.commit("session/sendCardToPlayers", card);
+      //this.$store.commit("session/sendCardToPlayers", card);
     },
   },
   data() {
