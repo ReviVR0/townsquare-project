@@ -108,6 +108,8 @@ import Player from "./Player";
 import Token from "./Token";
 import ReminderModal from "./modals/ReminderModal";
 import RoleModal from "./modals/RoleModal";
+import SendCardModal from "./modals/SendCardModal";
+
 
 export default {
   components: {
