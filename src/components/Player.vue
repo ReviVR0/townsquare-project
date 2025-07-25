@@ -203,15 +203,6 @@
               <font-awesome-icon icon="theater-masks" />
               Send Grimoire
           </li>
-          <li
-            @click="SendCard"
-            v-if=" !session.isSpectator && player.id && grimoire.isNight"
-          >
-              <font-awesome-icon icon="people-arrows" />
-              Send Card
-          </li>
-
-
 
 
 
@@ -479,10 +470,6 @@ export default {
         !this.session.votes[this.index]
       ]);
     },
-    SendCard(){
-      this.isMenuOpen = false;
-      //this.$emit('trigger', ['openSendCardModal', this.index]);
-    }
   }
 };
 </script>
