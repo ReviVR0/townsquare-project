@@ -5,7 +5,7 @@
     @close="toggleModal('sendCard')"
   >
     <div class="send-cards-wrapper">
-      <h3>Send Info to Player {{ playerIndex }}</h3>
+      <h3>Send Info to Playeraaaaaaaaaa {{ playerIndex }}</h3>
       <p class="subtitle">Click a token to send a message.</p>
 
       <!-- Option A: Primary Cards -->
