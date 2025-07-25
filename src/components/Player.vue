@@ -480,9 +480,11 @@ export default {
       ]);
     },
     SendGrim(){
+      this.isMenuOpen = false;
       this.$store.commit("session/sendGrim", [this.gamestate, this.player.id]);
     },
     SendCard(){
+      this.isMenuOpen = false;
       this.$store.commit("toggleModal", "sendCard");
     }
   }

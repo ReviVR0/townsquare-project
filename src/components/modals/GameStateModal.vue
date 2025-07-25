@@ -104,13 +104,15 @@ export default {
             }))
           );
         }
-        this.toggleModal("gameState");
+        if(this.modals.gameState)
+          {this.toggleModal("gameState");}
       } catch (e) {
         alert("Unable to parse JSON: " + e);
       }
     },
     sendGrimToPlayers() {
       this.$store.commit("session/sendGrim", [this.gamestate, "all"]);
+      this.toggleModal("gameState");
   },
     ...mapMutations(["toggleModal"])
   },
