@@ -197,30 +197,35 @@ export default {
   max-width: 100%;
 
   .card-small {
-    background-color: rgba(255, 255, 255, 0.04);
-    border-radius: 6px;
-    padding: 6px;
-    width: 60px;
-    text-align: center;
-    cursor: pointer;
-    transition: transform 0.15s ease;
+  background-color: rgba(255, 255, 255, 0.04);
+  border-radius: 6px;
+  padding: 6px;
+  width: 60px;
+  text-align: center;
+  cursor: pointer;
+  transition: transform 0.15s ease;
 
-    &:hover {
-      transform: scale(1.06);
-      background-color: rgba(255, 255, 255, 0.08);
-    }
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 
-    img {
-      width: 30px;
-      height: 30px;
-      margin-bottom: 4px;
-    }
-
-    .label {
-      font-size: 10px;
-      word-break: break-word;
-    }
+  &:hover {
+    transform: scale(1.06);
+    background-color: rgba(255, 255, 255, 0.08);
   }
+
+  img {
+    width: 30px;
+    height: 30px;
+    margin-bottom: 4px;
+  }
+
+  .label {
+    font-size: 8px;
+    word-break: break-word;
+  }
+}
+
 
   @media (max-width: 800px) {
     grid-template-columns: repeat(4, 1fr);
