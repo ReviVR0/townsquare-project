@@ -1,23 +1,22 @@
 <template>
   <Modal
-    class="info-menu"
+    class="send-cards-modal"
     v-if="modals.sendCard && !session.isSpectator"
-    @close="toggleModal('sendCard')"
+    @close="toggleModal('sendCards')"
   >
-    <div class="menu-content">
-      <h3>{{ title }}</h3>
-      <p class="subtitle">{{ subtitle }}</p>
+    <div class="send-cards-wrapper">
+      <h3>Send Info to Players</h3>
 
-      <div class="grid-scroll-container">
-        <div class="grid">
+      <div class="card-scroll-container">
+        <div class="card-grid">
           <div
-            v-for="(option, index) in allOptions"
+            class="card"
+            v-for="(card, index) in cardOptions"
             :key="index"
-            class="grid-item"
-            @click="selectOption(option)"
+            @click="sendCard(card)"
           >
-            <img :src="iconSrc" alt="icon" />
-            <span class="label">{{ option.label }}</span>
+            <img :src="require('@/assets/token.png')" alt="icon" />
+            <span>{{ card.label }}</span>
           </div>
         </div>
       </div>
@@ -30,11 +29,22 @@ import Modal from "./Modal";
 import { mapState, mapMutations } from "vuex";
 
 export default {
-  components: { Modal },
+  components: {
+    Modal,
+  },
+  computed: {
+    ...mapState(["modals", "session"]),
+  },
+  methods: {
+    ...mapMutations(["toggleModal"]),
+    sendCard(card) {
+      console.log(card);
+      // this.$store.commit("session/sendCardToPlayers", card);
+    },
+  },
   data() {
     return {
-      iconSrc: require("@/assets/token.png"),
-      optionsA: [
+      cardOptions: [
         { label: "Use Ability" },
         { label: "Make a Choice" },
         { label: "Not in Play" },
@@ -43,101 +53,64 @@ export default {
         { label: "You Are" },
         { label: "This Player Is" },
         { label: "Selected You" },
-      ],
-      optionsB: [
-        { label: "Got it" },
-        { label: "Yes" },
-        { label: "No" },
-        { label: "Good" },
-        { label: "Evil" },
-        { label: "Clockwise" },
-        { label: "Anticlockwise" },
-        { label: "Zero" },
-        { label: "One" },
-        { label: "Two" },
-        { label: "Three" },
-        { label: "Four" },
-        { label: "Five" },
-        { label: "Player" },
-        { label: "Character" },
-        { label: "Custom" },
+        // Add more for scroll test
+        { label: "Action Taken" },
+        { label: "Blocked" },
+        { label: "In Play" },
+        { label: "Revealed" },
+        { label: "Seen You" },
+        { label: "Wants to Help" },
+        { label: "Marked by Death" },
       ],
     };
-  },
-  computed: {
-    ...mapState(["modals", "session"]),
-    allOptions() {
-      return [...this.optionsA, ...this.optionsB];
-    },
-    title() {
-      return "Send Info to Players";
-    },
-    subtitle() {
-      return "Click a token to send a message.";
-    },
-  },
-  methods: {
-    ...mapMutations(["toggleModal"]),
-    selectOption(option) {
-      console.log("Selected:", option.label);
-      // You can commit to Vuex or emit here if needed:
-      // this.$store.commit("session/sendCardToPlayers", option);
-      this.$emit("card-selected", option.label);
-    },
   },
 };
 </script>
 
-<style lang="scss">
+<style lang="scss" scoped>
 @import "../../vars.scss";
 
-.info-menu {
-  padding: 30px;
-  background-color: rgba(0, 0, 0, 0.85);
-  text-align: center;
-  color: white;
-
-  .menu-content {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-    align-items: center;
+.send-cards-modal {
+  // ⬇ Overrides modal content width
+  ::v-deep(.modal) {
+    max-width: 90vw !important;
+    max-height: 90vh !important;
     width: 100%;
+    height: auto;
+    overflow: auto;
   }
+
+  padding: 20px;
+  color: white;
+  text-align: center;
+  font-weight: bold;
 
   h3 {
-    font-size: 24px;
-    margin-bottom: 5px;
+    margin-bottom: 20px;
   }
 
-  .subtitle {
-    font-size: 14px;
-    margin-bottom: 10px;
-    color: #ffd700;
-  }
-
-  .grid-scroll-container {
-    max-height: 70vh;
+  .card-scroll-container {
     overflow-y: auto;
-    padding-right: 8px;
-    width: 100%;
+    max-height: 70vh;
   }
 
-  .grid {
+  .card-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(90px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
     gap: 12px;
     justify-items: center;
-    padding: 10px 0;
+    max-width: 1000px;
+    margin: 0 auto;
   }
 
-  .grid-item {
+  .card {
     background-color: rgba(255, 255, 255, 0.05);
-    border-radius: 10px;
+    border-radius: 12px;
     padding: 10px;
     cursor: pointer;
     transition: transform 0.2s ease;
-    width: 90px;
+    width: 80px;
+    text-align: center;
 
     &:hover {
       transform: scale(1.05);
@@ -151,9 +124,9 @@ export default {
       margin-bottom: 5px;
     }
 
-    .label {
-      font-size: 12px;
-      text-align: center;
+    span {
+      display: block;
+      font-size: 11px;
       word-break: break-word;
     }
   }
