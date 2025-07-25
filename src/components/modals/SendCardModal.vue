@@ -171,7 +171,8 @@ export default {
   gap: 12px;
   justify-items: center;
   width: 125%;
-  padding 10px;
+  padding: 4px;
+  font-size: 75%;
   @media (max-width: 800px) {
     grid-template-columns: repeat(4, 1fr); // force 2 rows of 8
   } 
