@@ -13,7 +13,7 @@
         :key="index"
         @click="sendCard(card)"
       >
-        <img :src="require('@/assets/icons/token.png')" alt="icon" />
+        <img :src="require('.../assets/icons/token.png')" alt="icon" />
         <span>{{ card.label }}</span>
       </div>
     </div>
