@@ -92,7 +92,18 @@ export default {
 
 <style lang="scss" scoped>
 .send-cards-modal {
-
+  ::v-deep(.modal) {
+    background-color: rgba(0, 0, 0, 0.9);
+    padding: 30px;
+    border-radius: 12px;
+    max-height: 85vh;
+    max-width: 110vw;
+    overflow: hidden;
+    color: white;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
 
   .send-cards-wrapper {
     width: 100%;
