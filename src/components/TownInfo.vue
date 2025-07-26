@@ -75,7 +75,7 @@
     :class="{ blinking: session.timer > 0 && session.timer < 10 }">
   {{ Math.floor(session.timer / 60) }}:{{ String(session.timer % 60).padStart(2, '0') }}
   </div>
-<audio ref="countdownSound" src="../assets/sounds/countdown.mp3"></audio>
+<audio ref="countdownSound" src="../assets/sounds/hells_bell_hit.mp3"></audio>
 
 </div>
   
