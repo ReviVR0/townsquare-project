@@ -485,7 +485,6 @@ export default {
     },
     SendCard(){
       this.isMenuOpen = false;
-      console.log(this.index);
       this.$emit('trigger', ['openSendCardModal']);
     }
   }

@@ -29,7 +29,8 @@ const state = () => ({
   isVoteHistoryAllowed: true,
   isRolesDistributed: false,
   timer: 0,
-  receivedGrim: null
+  receivedGrim: null,
+  recivedMessage: null,
 });
 
 const getters = {};
@@ -111,7 +112,14 @@ const mutations = {
   inviteChat(){},
   sendGrim (state, grim){
     state.receivedGrim = grim;
-  }
+  },
+  sendCard(state, message){
+    state.recivedMessage = message;
+  },
+clearRecievedMessage(state) {
+  state.recivedMessage = null;
+}
+
 
 
 };

@@ -218,6 +218,10 @@ class LiveSession {
         break;
       case "SendGrim":
         this._store.commit("session/sendGrim", params);
+        break;
+      case "SendCard":
+          this._store.commit("session/sendCard", params);
+        break;
     }
 
   }
@@ -855,7 +859,7 @@ class LiveSession {
     this._send("timer", payload);
   }
   inviteChat(payload){
-    this._send("inviteChat", payload);
+    //this._send("inviteChat", payload);
       console.log(`${payload[0]}, ${payload[1]}`);
       if (payload[1][1]=="ST") {
         this._sendDirect("host", 'ConfirmChat', payload);
@@ -892,6 +896,10 @@ class LiveSession {
       this._send("SendGrim", params[0]);
     else
       this._sendDirect(params[1], "SendGrim", params[0]);
+  }
+  SendCard(params){
+    console.log(params);
+    this._sendDirect(params[0], "SendCard", params[1]);
   }
 
 }
@@ -983,6 +991,9 @@ export default store => {
       case "session/sendGrim":
         if (session._isSpectator) return;
         session.SendGrim(payload);
+        break;
+      case "session/sendCard":
+        session.SendCard(payload);
         break;
     }
   });
