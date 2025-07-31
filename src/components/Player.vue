@@ -92,8 +92,14 @@
           @click="nominatePlayer(player)"
           title="Nominate this player"
         />
-      </div>
+        <font-awesome-icon
+          v-if="showHandUp"
+          icon="hand-paper"
+          class="vote hand-up"
+          title="Hand UP (auto)"
+        />
 
+      </div>
       <!-- Claimed seat icon -->
       <font-awesome-icon
         icon="chair"
@@ -168,6 +174,13 @@
               Remove
             </li>
             <li
+            @click="SendGrim"
+            v-if="player.id"
+            >
+              <font-awesome-icon icon="theater-masks" />
+              Send Grimoire
+            </li>
+            <li
               @click="updatePlayer('id', '', true)"
               v-if="player.id && session.sessionId"
             >
@@ -180,6 +193,13 @@
                 Nomination
               </li>
             </template>
+          <li
+            @click="SendCard"
+            v-if="player.id && grimoire.isNight"
+          >
+              <font-awesome-icon icon="people-arrows" />
+              Send Card
+          </li>
           </template>
           <li
             @click="claimSeat"
@@ -196,20 +216,7 @@
             </template>
             <template v-else> Seat occupied</template>
           </li>
-          <li
-            @click="SendGrim"
-            v-if=" !session.isSpectator && player.id"
-          >
-              <font-awesome-icon icon="theater-masks" />
-              Send Grimoire
-          </li>
-          <li
-            @click="SendCard"
-            v-if=" !session.isSpectator && player.id && grimoire.isNight"
-          >
-              <font-awesome-icon icon="people-arrows" />
-              Send Card
-          </li>
+
 
 
 
@@ -271,6 +278,7 @@
 import Token from "./Token";
 
 import { mapGetters, mapState } from "vuex";
+//import { EventBus } from "../event-bus.js";
 
 export default {
   components: {
@@ -289,7 +297,7 @@ export default {
   roles: state => state.roles,
   fabled: state => state.players.fabled,
   playerList: state => state.players.players
-}),
+  }),
 
     ...mapState("players", ["players"]),
     ...mapState(["grimoire", "session"]),
@@ -353,7 +361,8 @@ export default {
       isSwap: false,
       VoteUsed: "../assets/shroud.png",
       VoteNotUsed: "../assets/shroud.png",
-      hoveredReminderGroup: null
+      hoveredReminderGroup: null,
+      showHandUp: false
     };
   },
   methods: {
@@ -400,7 +409,7 @@ export default {
     if (!isValid) {
       alert("Invalid name. Name must be in range of 1-32 and not contain special characters");
       return;
-  }
+    }
       
       this.updatePlayer("name", name, true);
     },
@@ -486,8 +495,23 @@ export default {
     SendCard(){
       this.isMenuOpen = false;
       this.$emit('trigger', ['openSendCardModal']);
-    }
-  }
+    },
+    /* -- Raise hand attention
+    onSpacebarRaiseHand() {
+      if (this.session.nomination==false) {
+        if(this.showHandUp)
+          this.showHandUp = false;
+        else this.showHandUp = true;
+    
+      }
+    },*/
+  },
+  /*mounted() {
+    EventBus.$on("spacebar-vote", this.onSpacebarRaiseHand);
+  },
+  beforeDestroy() {
+    EventBus.$off("spacebar-vote", this.onSpacebarRaiseHand);
+  },*/
 };
 </script>
 
@@ -1107,6 +1131,21 @@ li.move:not(.from) .player .overlay svg.move {
 #townsquare.public .reminder {
   opacity: 0;
   pointer-events: none;
+}
+
+#townsquare .player .overlay svg.vote.hand-up {
+  opacity: 1 !important;
+  animation: pulse 1s infinite;
+  transform: scale(1.15);
+  z-index: 5;
+}
+
+
+
+@keyframes pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.15); }
+  100% { transform: scale(1); }
 }
 
 

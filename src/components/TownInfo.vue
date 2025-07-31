@@ -1,5 +1,9 @@
 <template>
 <div class="wrapper">
+    <div v-if="winnerMessage" :class="['winner-banner', winnerClass]">
+      {{ winnerMessage }}
+    </div>
+
   <ul class="info">
     <li
       class="edition"
@@ -91,6 +95,7 @@ export default {
       position: { x: 100, y: 100 },
       isDragging: false,
       offset: { x: 0, y: 0 },
+      winTeam: "null"
     };
   },
   computed: {
@@ -112,6 +117,19 @@ export default {
     ...mapState(["edition", "grimoire"]),
     ...mapState("players", ["players"]),
     ...mapState(["grimoire", "session", "edition"]),
+      winnerMessage() {
+        const team = this.winTeam;
+        if (team === "good") return "Good Wins!";
+        if (team === "evil") return "Evil Wins!";
+        return null;
+      },
+      winnerClass() {
+        const team = this.winTeam;
+        if (team === "good") return "good-win";
+        if (team === "evil") return "evil-win";
+        return "";
+      },
+
   },
   methods: {
 
@@ -197,6 +215,9 @@ mounted() {
     if (newVal > 0 && !this.timerInterval) {
       this.startTimer();
     }
+  },
+  'session.winningTeam'(newVal) {
+    this.winTeam = newVal;
   }
 }
 };
@@ -324,4 +345,46 @@ div.timer {
   50% { color: white; border-color: $townsfolk}
   100% { color: red; border-color: red}
 }
+
+.winner-banner {
+  position: absolute;
+  top: 35%;
+  width: 100%;
+  text-align: center;
+  font-size: 54px;
+  font-family: PiratesBay, serif;
+  text-shadow: 0 0 10px black, 0 0 20px currentColor;
+  z-index: 20;
+  animation: fade-in-scale 3s ease;
+  pointer-events: none;
+}
+@media (max-width: 600px) {
+  .winner-banner {
+    font-size: 40px;
+  }
+}
+@media (max-hight: 700px) {
+  .winner-banner {
+    top: 33%;
+  }
+}
+.good-win {
+  color: $townsfolk;
+}
+
+.evil-win {
+  color: $demon;
+}
+@keyframes fade-in-scale {
+  0% {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+
 </style>

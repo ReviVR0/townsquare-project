@@ -148,6 +148,7 @@
             <li @click="toggleModal('timer')" v-if="!session.isSpectator">
               Timer<em>[T]</em>
             </li>
+
             <li @click="leaveSession">
               Leave Session
               <em>{{ session.sessionId }}</em>

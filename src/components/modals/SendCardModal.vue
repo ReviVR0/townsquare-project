@@ -5,7 +5,7 @@
     @close="closeModal"
   >
     <div class="send-cards-wrapper">
-      <h3>Send Info to {{ player.name }}</h3>
+      <h3>Send info to {{ InfoReciver }}</h3>
       <p class="subtitle">Click a token to send a message.</p>
 <!-- Response Mode -->
 <div v-if="mode === 'response'" class="submenu">
@@ -22,27 +22,40 @@
 
   <p>Respond with:</p>
 
-  <div class="option-b-container">
-    <div class="card-small" @click="selectOption({ label: 'Player' })">
-      <span class="label">Choose Player</span>
-    </div>
-    <div class="card-small" @click="selectOption({ label: 'Character' })">
-      <span class="label">Choose Character</span>
-    </div>
-    <div class="card-small" @click="messageQueue.push('Got it ')">
-      <span class="label">Got it</span>
-    </div>
-    <div class="card-small" @click="selectOption({ label: 'Custom' })">
-      <span class="label">Custom Message</span>
-    </div>
+<div class="option-b-container" v-if="this.session.isSpectator">
+  <div class="card-small" @click="selectOption({ label: 'Player' })">
+    <img :src="iconSrc" alt="token" />
+    <span class="label">Choose Player</span>
   </div>
+  <div class="card-small" @click="selectOption({ label: 'Character' })">
+    <img :src="iconSrc" alt="token" />
+    <span class="label">Choose Character</span>
+  </div>
+  <div class="card-small" @click="messageQueue.push('Got it ')">
+    <img :src="iconSrc" alt="token" />
+    <span class="label">Got it</span>
+  </div>
+  <div class="card-small" @click="messageQueue.push('Yes ')">
+    <img :src="iconSrc" alt="token" />
+    <span class="label">Yes</span>
+  </div>
+  <div class="card-small" @click="messageQueue.push('No ')">
+    <img :src="iconSrc" alt="token" />
+    <span class="label">No</span>
+  </div>
+  <div class="card-small" @click="selectOption({ label: 'Custom' })">
+    <img :src="iconSrc" alt="token" />
+    <span class="label">Custom Message</span>
+  </div>
+</div>
+
 
   <button @click="closeModal">Close</button>
 </div>
 
       <!-- Default mode with message queue and options -->
 <div v-if="mode === 'default'">
-  <!-- Display queued message -->
+  <!-- Display queued message (same as response mode) -->
   <div v-if="messageQueue.length" style="margin-bottom: 10px; text-align: center;">
     <p style="color: #ccc;">
       <strong>Current Message:</strong> {{ messageQueue.join(" ") }}
@@ -187,7 +200,11 @@ export default {
     },
       rolesArray() {
     return Array.from(this.$store.state.roles.entries()).map(([key, value]) => ({ key, value }));
-  },
+    },
+    InfoReciver(){
+      if(this.isResponse) return "Storyteller";
+      return this.player.name;
+    }
   },
   methods: {
     ...mapMutations(["toggleModal"]),
@@ -218,7 +235,7 @@ export default {
       if (this.customMessage.trim()) {
         this.messageQueue.push(this.customMessage.trim());
         this.customMessage = "";
-        this.mode = "default";
+        this.mode = this.previousMode || "default";
       }
     },
     getRoleImage(id) {
@@ -235,13 +252,14 @@ export default {
         {
           this.$store.commit("session/sendCard", ["host", fullMessage]);
         }        
-        else 
+        else
           this.$store.commit("session/sendCard", [this.player.id, fullMessage]);
 
         this.messageQueue = [];
         this.incomingMessage = "";
         this.isResponse = false;
         this.mode = "default";
+        this.toggleModal("sendCard");
       }
     },
     clearQueue() {
@@ -270,6 +288,8 @@ export default {
 </script>
 
 <style lang="scss" scoped>
+@import "../../vars.scss";
+
 .send-cards-modal {
   ::v-deep(.modal) {
     background-color: rgba(0, 0, 0, 0.9);
@@ -294,7 +314,7 @@ export default {
     h3 {
       font-size: 24px;
       margin-bottom: 5px;
-      color: #ffd700;
+      color: $townsfolk;
     }
 
     .subtitle {
@@ -325,20 +345,6 @@ export default {
     h4 {
       color: white;
       margin-bottom: 10px;
-    }
-
-    button {
-      margin-top: 10px;
-      padding: 6px 14px;
-      background-color: #333;
-      border: none;
-      border-radius: 6px;
-      color: white;
-      cursor: pointer;
-
-      &:hover {
-        background-color: #555;
-      }
     }
 
     textarea {
@@ -465,6 +471,18 @@ export default {
     pointer-events: none;
   }
 }
+    button {
+      margin-top: 10px;
+      padding: 6px 14px;
+      background-color: #333;
+      border: none;
+      border-radius: 6px;
+      color: white;
+      cursor: pointer;
 
+      &:hover {
+        background-color: #555;
+      }
+    }
 
 </style>

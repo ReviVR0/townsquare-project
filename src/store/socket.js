@@ -1,7 +1,7 @@
 class LiveSession {
   constructor(store) {
   this._wss = "wss://townsquare-project-back.onrender.com/";
-    //this._wss = "ws://localhost:8081/"; // uncomment if using local server with NODE_ENV=development
+    this._wss = "ws://localhost:8081/"; // uncomment if using local server with NODE_ENV=development
     this._socket = null;
     this._isSpectator = true;
     this._gamestate = [];
@@ -221,6 +221,10 @@ class LiveSession {
         break;
       case "SendCard":
           this._store.commit("session/sendCard", params);
+        break;
+      case "winningTeam":
+        if (!this._isSpectator) return;
+        this._store.commit("session/winningTeam", params);
         break;
     }
 
@@ -898,8 +902,10 @@ class LiveSession {
       this._sendDirect(params[1], "SendGrim", params[0]);
   }
   SendCard(params){
-    console.log(params);
     this._sendDirect(params[0], "SendCard", params[1]);
+  }
+  winningTeam(payload){
+    this._send("winningTeam", payload);
   }
 
 }
@@ -995,6 +1001,9 @@ export default store => {
       case "session/sendCard":
         session.SendCard(payload);
         break;
+      case "session/winningTeam":
+        session.winningTeam(payload);
+        break;         
     }
   });
 

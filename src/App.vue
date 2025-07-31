@@ -39,6 +39,7 @@
     <Canvas/>
     <GameStateModal />
     <Gradients />
+    <WinningTeamModal />
     <span id="version">v{{ version }}</span>
   </div>
 </template>
@@ -63,6 +64,8 @@ import TimerModal from "@/components/modals/TimerModal";
 import GameStateModal from "@/components/modals/GameStateModal";
 import Canvas from "@/components/modals/Canvas.vue";
 import InvitationModal from "@/components/modals/InvitationModal.vue";
+import WinningTeamModal from "@/components/modals/WinningTeamModal.vue";
+
 
 import { EventBus } from "./event-bus.js";
 
@@ -84,6 +87,7 @@ export default {
     EditionModal,
     RolesModal,
     Gradients,
+    WinningTeamModal,
   },
   computed: {
     ...mapState(["grimoire", "session"]),
@@ -150,6 +154,10 @@ export default {
           if (!this.session.isSpectator) return;
           EventBus.$emit("spacebar-vote");
           break;
+        case "w":
+          if (this.session.isSpectator) return;
+          this.$store.commit("toggleModal", "winningTeam");
+          break;
       }
     }
   }
@@ -180,7 +188,7 @@ html,
 body {
   font-size: 1.2em;
   line-height: 1.4;
-  background: url("assets/background.gif") center center;
+  background: url("assets/background2.jpg") center center;
   background-size: cover;
   color: white;
   height: 100%;

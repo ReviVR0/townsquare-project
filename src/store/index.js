@@ -123,6 +123,7 @@ export default new Vuex.Store({
       trivia: false,
       form: false,
       sendCard: false,
+      winningTeam: false,
     },
     edition: editionJSONbyId.get("tb"),
     roles: getRolesByEdition(),

@@ -31,6 +31,7 @@ const state = () => ({
   timer: 0,
   receivedGrim: null,
   recivedMessage: null,
+  winningTeam: null,
 });
 
 const getters = {};
@@ -56,6 +57,7 @@ const mutations = {
   claimSeat: set("claimedSeat"),
   distributeRoles: set("isRolesDistributed"),
   timer: set("timer"),
+  winningTeam: set("winningTeam"),
   setSessionId(state, sessionId) {
     state.sessionId = sessionId
       .toLocaleLowerCase()
@@ -114,11 +116,12 @@ const mutations = {
     state.receivedGrim = grim;
   },
   sendCard(state, message){
+    if(Array.isArray(message)) return;
     state.recivedMessage = message;
   },
-clearRecievedMessage(state) {
-  state.recivedMessage = null;
-}
+  clearRecievedMessage(state) {
+    state.recivedMessage = null;
+  },
 
 
 
