@@ -57,7 +57,12 @@
           </span>
         </h3>
       </div>
-
+<div  class="timer" v-if="session.timer!=0"  :style="{ top: position.y + 'px', left: position.x + 'px' }"
+    @mousedown="startDrag"
+    :class="{ blinking: session.timer > 0 && session.timer < 10 }">
+  {{ Math.floor(session.timer / 60) }}:{{ String(session.timer % 60).padStart(2, '0') }}
+  </div>
+<audio ref="countdownSound" src="../assets/sounds/hells_bell_hit.mp3"></audio>
 
 
     <div class="fabled" :class="{ closed: !isFabledOpen }" v-if="fabled.length">
@@ -142,7 +147,10 @@ export default {
       nominate: -1,
       isBluffsOpen: true,
       isFabledOpen: true,
-      inviteCount: 0
+      inviteCount: 0,
+      position: { x: 15, y: 15 },
+      isDragging: false,
+      offset: { x: 0, y: 0 },
     };
   },
   methods: {
@@ -300,15 +308,98 @@ export default {
       this.selectedPlayer = playerIndex;
       this.$store.commit("toggleModal", "sendCard");
     },
+    handleResize() {
+      if(this.position.x>window.innerWidth/2 || -this.position.x>window.innerWidth/2 || this.position.y>window.innerHeight/2 || -this.position.y>window.innerHeight/2){
+        this.position.x=0;
+        this.position.y=0;
+      }
+    },
+    startDrag(event) {
+      this.isDragging = true;
+      this.offset = {
+        x: event.clientX - this.position.x,
+        y: event.clientY - this.position.y,
+      };
+      document.addEventListener("mousemove", this.onDrag);
+      document.addEventListener("mouseup", this.stopDrag);
+    },
+onDrag(event) {
+  if (!this.isDragging) return;
+
+  const buffer = 10; // distance from screen edge
+  const timerBox = this.$el.querySelector('.timer');
+
+  const timerWidth = timerBox.offsetWidth;
+  const timerHeight = timerBox.offsetHeight;
+
+  let x = event.clientX - this.offset.x;
+  let y = event.clientY - this.offset.y;
+
+  const maxX = window.innerWidth - timerWidth - buffer;
+  const maxY = window.innerHeight - timerHeight - buffer;
+
+  this.position.x = Math.min(Math.max(x, buffer), maxX);
+  this.position.y = Math.min(Math.max(y, buffer), maxY);
+},
+
+
+
+    stopDrag() {
+      this.isDragging = false;
+      document.removeEventListener("mousemove", this.onDrag);
+      document.removeEventListener("mouseup", this.stopDrag);
+    },
+
+
+    startTimer() {
+  this.timerInterval = setInterval(() => {
+    if (this.session.timer > 0) {
+      this.session.timer--;
+    } else {
+      clearInterval(this.timerInterval);
+      this.timerInterval = null;
+      if (!this.grimoire.isMuted && this.$refs.countdownSound) {
+        this.$refs.countdownSound.play().catch(err => {
+          console.warn("Sound failed to play:", err);
+        });
+      }
+    }
+  }, 1000);
+},
+  },
+  mounted() {
+    window.addEventListener('resize', this.handleResize);
+    this.handleResize();
+    const unlock = () => {
+      const audio = this.$refs.countdownSound;
+      if (audio) {
+        // Try to play and immediately pause just to unlock it
+        audio.play().then(() => audio.pause()).catch(() => {});
+      }
+      document.removeEventListener("click", unlock);
+    };
+    document.addEventListener("click", unlock);
   },
   created() {
     this.updateInviteCount();
     this.inviteCheckInterval = setInterval(this.updateInviteCount, 1000);
   },
   beforeDestroy() {
+    if (this.timerInterval) {
+      clearInterval(this.timerInterval);
+          this.timerInterval = null; 
+    }
+    window.removeEventListener('resize', this.handleResize);
     clearInterval(this.inviteCheckInterval);
     this.$root.$off("invites-updated", this.updateInviteCount);
-  }
+  },
+  watch: {
+  'session.timer'(newVal) {
+    if (newVal > 0 && !this.timerInterval) {
+      this.startTimer();
+    }
+  },
+}
 };
 </script>
 
@@ -734,6 +825,32 @@ export default {
   opacity: 0.5;
   cursor: not-allowed;
 }
+div.timer {
+  position: fixed;
+    font-weight: bold;
+  cursor: grab;
+  display: flex;
+  justify-content: center;
+  padding: 4px 10px;
+  width: 150px;
 
+  background-color: rgba(0, 0, 0, 0.75);
+  border-radius: 12px;
+  border: 3px solid $townsfolk;
+
+  white-space: nowrap;
+  z-index: 10;
+  user-select: none;
+
+}
+
+.blinking {
+  animation: blink-red-white 1s infinite;
+}
+@keyframes blink-red-white {
+  0% { color: red; border-color: red}
+  50% { color: white; border-color: $townsfolk}
+  100% { color: red; border-color: red}
+}
 
 </style>
