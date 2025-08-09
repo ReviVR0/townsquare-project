@@ -1002,6 +1002,7 @@ export default store => {
         session.SendCard(payload);
         break;
       case "session/winningTeam":
+        if (session._isSpectator) return;
         session.winningTeam(payload);
         break;         
     }
