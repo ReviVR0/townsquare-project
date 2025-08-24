@@ -32,6 +32,7 @@ const state = () => ({
   receivedGrim: null,
   recivedMessage: null,
   winningTeam: null,
+  StorytellerCode: null,
 });
 
 const getters = {};
@@ -122,9 +123,13 @@ const mutations = {
   clearRecievedMessage(state) {
     state.recivedMessage = null;
   },
-
-
-
+  StorytellerCode(state, Code){
+    state.StorytellerCode = Code;
+  },
+  StorytellerCodeGrim(){},
+  SetSpectator(state, param){
+    state.isSpectator = param[1];
+  }
 };
 
 export default {

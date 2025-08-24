@@ -128,12 +128,6 @@
               Copy player link
               <em><font-awesome-icon icon="copy" /></em>
             </li>
-
-            <li @click="InviteST" v-if="session.isSpectator && isSeated">
-              Invite Storyteller
-              <em><font-awesome-icon icon="copy" /></em>
-            </li>
-
             <li v-if="!session.isSpectator" @click="distributeRoles">
               Send Characters
               <em><font-awesome-icon icon="theater-masks" /></em>
@@ -147,6 +141,10 @@
 
             <li @click="toggleModal('timer')" v-if="!session.isSpectator">
               Timer<em>[T]</em>
+            </li>
+            <li @click="StorytellerCode" v-if="!isSeated">
+              Co-Storyteller
+              <em v-if="!session.isSpectator">{{ session.StorytellerCode }}</em>
             </li>
 
             <li @click="leaveSession">
@@ -362,22 +360,24 @@ export default {
       "setZoom",
       "toggleModal",
     ]),
-    InviteST() {
-      const chat = [];
-      const playerChat = [];
-      this.players.forEach((player) => {
-        if (player.id == this.session.playerId) {
-          playerChat.push(player.name);
-          playerChat.push(player.id);
-          chat.push(playerChat);
-        }
-      });
-      chat.push("ST");
-      this.$store.commit("session/inviteChat", chat);
-    },
     handleResize() {
       this.setZoom(this.grimoire.zoom + 1);
       this.setZoom(this.grimoire.zoom - 1);
+    },
+    StorytellerCode() {
+      if (this.session.isSpectator){
+        const code = prompt("Enter your Co-Storyteller command (JS code):");
+        if (this.session.StorytellerCode==code){
+          this.$store.commit("session/StorytellerCodeGrim", code);
+          //this.$store.commit("session/SetSpectator", [this.session.playerId, false]);
+        } else {
+            alert("Wrong code!");
+        }
+      }
+      else{
+        const randomCode = Math.floor(1000 + Math.random() * 9000);
+        this.$store.commit("session/StorytellerCode", randomCode.toString());
+        }
     },
   },
   mounted() {

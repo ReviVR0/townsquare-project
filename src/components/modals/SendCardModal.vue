@@ -9,9 +9,12 @@
       <p class="subtitle">Click a token to send a message.</p>
 <!-- Response Mode -->
 <div v-if="mode === 'response'" class="submenu">
-  <h4>Message Received:</h4>
-  <p class="subtitle">{{ incomingMessage }}</p>
-
+<div v-if="fullLog.length" class="message-log" style="margin-bottom: 10px; max-height: 120px; overflow-y: auto;">
+  <h4>Recent Messages:</h4>
+  <div v-for="(msg, idx) in fullLog.slice(-4)" :key="idx" style="font-size: 0.9em; color: #aaa; margin-bottom: 2px;">
+    {{ msg }}
+  </div>
+</div>
   <div v-if="messageQueue.length" style="margin-bottom: 10px; text-align: center;">
     <p style="color: #ccc;">
       <strong>Current Message:</strong> {{ messageQueue.join(" ") }}
@@ -55,6 +58,12 @@
 
       <!-- Default mode with message queue and options -->
 <div v-if="mode === 'default'">
+<div v-if="fullLog.length" class="message-log" style="margin-bottom: 10px; max-height: 120px; overflow-y: auto;">
+  <h4>Recent Messages:</h4>
+  <div v-for="(msg, idx) in fullLog.slice(-4)" :key="idx" style="font-size: 0.9em; color: #aaa; margin-bottom: 2px;">
+    {{ msg }}
+  </div>
+</div>
   <!-- Display queued message (same as response mode) -->
   <div v-if="messageQueue.length" style="margin-bottom: 10px; text-align: center;">
     <p style="color: #ccc;">
@@ -189,25 +198,46 @@ export default {
       previousMode: null,
       customMessage: "",
       messageQueue: [],
-      isResponse: false,
       incomingMessage: "",
+      fullLog: [], // stores full messages from localStorage
+      isResponse: false,
     };
   },
   computed: {
+    ...mapState("players", ["players"]),
     ...mapState(["modals", "session"]),
     player() {
-      return this.$store.state.players.players[this.playerIndex];
+      return this.players[this.playerIndex];
     },
-      rolesArray() {
-    return Array.from(this.$store.state.roles.entries()).map(([key, value]) => ({ key, value }));
+    rolesArray() {
+      return Array.from(this.$store.state.roles.entries()).map(([key, value]) => ({ key, value }));
     },
-    InfoReciver(){
-      if(this.isResponse) return "Storyteller";
-      return this.player.name;
-    }
+    InfoReciver() {
+      return this.isResponse ? "Storyteller" : this.player.name;
+    },
+    storageKey() {
+      // Key to use for storing messages in localStorage
+      return !this.session.isSpectator
+        ? `messages_${this.player.id}`
+        : "messages_host";
+    },
   },
   methods: {
     ...mapMutations(["toggleModal"]),
+
+    loadMessages() {
+      const saved = localStorage.getItem(this.storageKey);
+      this.fullLog = saved ? JSON.parse(saved) : [];
+    },
+
+    saveMessage(message) {
+      this.fullLog.push(message);
+        if (this.fullLog.length > 20) {
+        this.fullLog = this.fullLog.slice(-10);
+        }
+      localStorage.setItem(this.storageKey, JSON.stringify(this.fullLog));
+    },
+
     selectOption(option) {
       switch (option.label) {
         case "Player":
@@ -224,13 +254,14 @@ export default {
           break;
         default:
           this.messageQueue.push(option.label);
-
       }
     },
+
     selectSubOption(type, value) {
       this.messageQueue.push(`${type}: ${value}`);
       this.mode = this.previousMode || "default";
     },
+
     submitCustomMessage() {
       if (this.customMessage.trim()) {
         this.messageQueue.push(this.customMessage.trim());
@@ -238,54 +269,81 @@ export default {
         this.mode = this.previousMode || "default";
       }
     },
+
     getRoleImage(id) {
       try {
         return require(`@/assets/icons/Reminder/${id}.png`);
       } catch {
-        return require("@/assets/token.png"); // fallback icon
+        return require("@/assets/token.png");
       }
     },
+
     sendQueuedMessage() {
       const fullMessage = this.messageQueue.join(" ");
-      if (fullMessage) {
-        if(this.isResponse)
-        {
-          this.$store.commit("session/sendCard", ["host", fullMessage]);
-        }        
-        else
-          this.$store.commit("session/sendCard", [this.player.id, fullMessage]);
+      if (!fullMessage) return;
 
-        this.messageQueue = [];
-        this.incomingMessage = "";
-        this.isResponse = false;
-        this.mode = "default";
-        this.toggleModal("sendCard");
+      // Save locally as "You"
+      this.saveMessage(`You: ${fullMessage}`);
+
+      if (this.isResponse) {
+        this.$store.commit("session/sendCard", ["host", fullMessage]);
+      } else {
+        this.$store.commit("session/sendCard", [this.player.id, fullMessage]);
       }
+
+      this.messageQueue = [];
+      this.incomingMessage = "";
+      this.isResponse = false;
+      this.mode = "default";
+      this.toggleModal("sendCard");
     },
+
     clearQueue() {
       this.messageQueue = [];
     },
+
     closeModal() {
       this.toggleModal("sendCard");
       this.messageQueue = [];
       this.incomingMessage = "";
       this.isResponse = false;
       this.mode = "default";
+      // Reload messages for next time
+      this.loadMessages();
     },
   },
-  watch: {
+
+watch: {
   'session.recivedMessage'(Message) {
     if (Message) {
+      // Determine sender
+      const sender = !this.session.isSpectator ? this.player.name : "Host";
       this.incomingMessage = Message;
+      this.saveMessage(`${sender}: ${Message}`);
       this.$store.commit("session/clearRecievedMessage");
       this.isResponse = true;
       this.mode = 'response';
       this.toggleModal('sendCard');
     }
+  },
+  'modals.sendCard'(isOpen) {
+    if (isOpen && this.session.isSpectator) {
+      this.mode = 'response';
+      if (this.fullLog.length > 0) {
+        this.incomingMessage = this.fullLog[this.fullLog.length - 1].split(': ').slice(1).join(': ');
+        this.isResponse = true;
+      }
+    }
   }
+
 },
+
+  mounted() {
+    this.loadMessages();
+  }
 };
 </script>
+
 
 <style lang="scss" scoped>
 @import "../../vars.scss";

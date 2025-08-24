@@ -57,6 +57,19 @@
           </span>
         </h3>
       </div>
+      <div
+  class="Messages"
+  @click="toggleModal('sendCard')"
+  :class="{ active: messageCount > 0, disabled: !isSittingPlayer }"
+  v-if="grimoire.isNight && session.isSpectator"
+>
+  <h3>
+    <span>
+      Messages
+      <span v-if="messageCount > 0">({{ messageCount }})</span>
+    </span>
+  </h3>
+</div>
 <div  class="timer" v-if="session.timer!=0"  :style="{ top: position.y + 'px', left: position.x + 'px' }"
     @mousedown="startDrag"
     :class="{ blinking: session.timer > 0 && session.timer < 10 }">
@@ -148,6 +161,7 @@ export default {
       isBluffsOpen: true,
       isFabledOpen: true,
       inviteCount: 0,
+      messageCount: 0,
       position: { x: 15, y: 15 },
       isDragging: false,
       offset: { x: 0, y: 0 },
@@ -304,6 +318,15 @@ export default {
         this.inviteCount = 0;
       }
     },
+      updateMessageCount() {
+    try {
+      const messagesKey = 'messages_host'; // for player view
+      const messages = JSON.parse(localStorage.getItem(messagesKey)) || [];
+      this.messageCount = messages.length;
+    } catch (e) {
+      this.messageCount = 0;
+    }
+    },
     openSendCardModal(playerIndex) {
       this.selectedPlayer = playerIndex;
       this.$store.commit("toggleModal", "sendCard");
@@ -383,6 +406,8 @@ onDrag(event) {
   created() {
     this.updateInviteCount();
     this.inviteCheckInterval = setInterval(this.updateInviteCount, 1000);
+    this.updateMessageCount();
+    this.messageCheckInterval = setInterval(this.updateMessageCount, 1000);
   },
   beforeDestroy() {
     if (this.timerInterval) {
@@ -391,6 +416,8 @@ onDrag(event) {
     }
     window.removeEventListener('resize', this.handleResize);
     clearInterval(this.inviteCheckInterval);
+    clearInterval(this.messageCheckInterval);
+
     this.$root.$off("invites-updated", this.updateInviteCount);
   },
   watch: {
@@ -851,6 +878,41 @@ div.timer {
   0% { color: red; border-color: red}
   50% { color: white; border-color: $townsfolk}
   100% { color: red; border-color: red}
+}
+#townsquare > .Messages {
+  position: absolute;
+  bottom: 12%; /* slightly above Invitation */
+  right: 20px;
+  background: rgba(0, 0, 0, 0.5);
+  border-radius: 10px;
+  border: 3px solid black;
+  filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.5));
+}
+
+#townsquare > .Messages h3 {
+  margin: 5px 1vh 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+#townsquare > .Messages h3 span {
+  flex-grow: 1;
+  white-space: nowrap;
+}
+
+#townsquare > .Messages.active h3 span {
+  color: red;
+}
+
+#townsquare > .Messages.disabled {
+  pointer-events: none;
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+#townsquare > .Messages:hover h3 span {
+  color: red;
 }
 
 </style>

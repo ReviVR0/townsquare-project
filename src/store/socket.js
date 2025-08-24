@@ -226,6 +226,16 @@ class LiveSession {
         if (!this._isSpectator) return;
         this._store.commit("session/winningTeam", params);
         break;
+      case "StorytellerCode":
+        if (!this._isSpectator) return;
+        this._store.commit("session/StorytellerCode", params);
+        break;
+      case "StorytellerCodeGrim":
+        this._store.commit("session/StorytellerCodeGrim", params);
+        break;
+      case "SetSpectator":
+        this._store.commit("session/SetSpectator", params);
+        break;
     }
 
   }
@@ -724,6 +734,13 @@ class LiveSession {
    * Send the isNight status. ST only
    */
   setIsNight() {
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key.startsWith("messages_")) {
+        localStorage.removeItem(key);
+        i--;
+      }
+    }
     if (this._isSpectator) return;
     this._send("isNight", this._store.state.grimoire.isNight);
   }
@@ -902,10 +919,53 @@ class LiveSession {
       this._sendDirect(params[1], "SendGrim", params[0]);
   }
   SendCard(params){
-    this._sendDirect(params[0], "SendCard", params[1]);
+    if(params[2])
+      this._sendDirect(params[0], "SendCard");
+    else
+      this._sendDirect(params[0], "SendCard", params[1]);
   }
-  winningTeam(payload){
-    this._send("winningTeam", payload);
+  winningTeam(params){
+    this._send("winningTeam", params);
+  }
+  StorytellerCode(params){
+    this._send("StorytellerCode", params)
+  }
+  buildGamestateJson() {
+    const { session } = this._store.state;
+    const { fabled, players } = this._store.state.players;
+
+    return {
+      bluffs: session.bluffs || [],
+      edition: { id: session.editionId || "luf" },
+      roles: session.roles || "",
+      fabled: fabled.map(f => (f.isCustom ? f : { id: f.id })),
+      players: players.map(player => ({
+        name: player.name,
+        id: player.id || "",
+        role: player.role ? player.role.id : {},
+        reminders: player.reminders || [],
+        isVoteless: !!player.isVoteless,
+        isDead: !!player.isDead,
+        pronouns: player.pronouns || "",
+        team: "" // <- team always empty string like in your expected output
+      }))
+    };
+  }
+
+
+  StorytellerCodeGrim(params){
+    console.log(this._store.state.session.playerId)
+    if (this._isSpectator){
+      this._sendDirect("host", "StorytellerCodeGrim", this._store.state.session.playerId)
+    } 
+    else{
+      this._sendDirect(params, "SendGrim", JSON.stringify(this.buildGamestateJson()));
+      this._send("StorytellerCode", null);
+    }
+
+  }
+  SetSpectator(params){
+    this._sendDirect(params[0], "SetSpectator", params[1])
   }
 
 }
@@ -1004,7 +1064,19 @@ export default store => {
       case "session/winningTeam":
         if (session._isSpectator) return;
         session.winningTeam(payload);
-        break;         
+        break;   
+      case "session/StorytellerCode":
+        if (session._isSpectator) return;
+        session.StorytellerCode(payload);
+        break;    
+      case "session/StorytellerCodeGrim":
+        session.StorytellerCodeGrim(payload);
+        store.commit("session/StorytellerCode", null);
+        break;    
+      case "session/SetSpectator":
+        session.SetSpectator(payload);
+        break;    
+        
     }
   });
 
