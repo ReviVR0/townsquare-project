@@ -117,8 +117,8 @@ const mutations = {
     state.receivedGrim = grim;
   },
   sendCard(state, message){
-    if(Array.isArray(message)) return;
-    state.recivedMessage = message;
+    if(!message[2]) return;
+    state.recivedMessage = message[1];
   },
   clearRecievedMessage(state) {
     state.recivedMessage = null;

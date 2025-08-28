@@ -58,11 +58,11 @@
         </h3>
       </div>
       <div
-  class="Messages"
-  @click="toggleModal('sendCard')"
-  :class="{ active: messageCount > 0, disabled: !isSittingPlayer }"
-  v-if="grimoire.isNight && session.isSpectator"
->
+        class="Messages"
+        @click="toggleModal('sendCard')"
+        :class="{ active: messageCount > 0, disabled: !isSittingPlayer }"
+        v-if="grimoire.isNight && session.isSpectator"
+      >
   <h3>
     <span>
       Messages

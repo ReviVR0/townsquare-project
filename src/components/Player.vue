@@ -130,9 +130,9 @@
       <div
         class="name"
         @click="isMenuOpen = !isMenuOpen"
-        :class="{ active: isMenuOpen }"
+        :class="{ active: isMenuOpen || messageCount > 0}"
       >
-        <span>{{ player.name }}</span>
+        <span>{{ player.name }}<span v-if="messageCount > 0 && !session.isSpectator">({{ messageCount }})</span></span>
         <font-awesome-icon icon="venus-mars" v-if="player.pronouns" />
         <div class="pronouns" v-if="player.pronouns">
           <span>{{ player.pronouns }}</span>
@@ -148,6 +148,13 @@
 
       <transition name="fold">
         <ul class="menu" v-if="isMenuOpen">
+          <li
+            @click="SendGrim"
+            v-if="player.id && !session.isSpectator"
+            >
+              <font-awesome-icon icon="theater-masks" />
+              Send Grimoire
+          </li>
           <li
             @click="changePronouns"
             v-if="
@@ -172,13 +179,6 @@
             <li @click="removePlayer" :class="{ disabled: session.lockedVote }">
               <font-awesome-icon icon="times-circle" />
               Remove
-            </li>
-            <li
-            @click="SendGrim"
-            v-if="player.id"
-            >
-              <font-awesome-icon icon="theater-masks" />
-              Send Grimoire
             </li>
             <li
               @click="updatePlayer('id', '', true)"
@@ -362,7 +362,8 @@ export default {
       VoteUsed: "../assets/shroud.png",
       VoteNotUsed: "../assets/shroud.png",
       hoveredReminderGroup: null,
-      showHandUp: false
+      showHandUp: false,
+      messageCount: 0,
     };
   },
   methods: {
@@ -496,6 +497,15 @@ export default {
       this.isMenuOpen = false;
       this.$emit('trigger', ['openSendCardModal']);
     },
+    updateMessageCount() {
+      try {
+        const messagesKey = `messages_${this.player.id}`;
+        const messages = JSON.parse(localStorage.getItem(messagesKey)) || [];
+        this.messageCount = messages.length;
+      } catch (e) {
+        this.messageCount = 0;
+      }
+    },
     /* -- Raise hand attention
     onSpacebarRaiseHand() {
       if (this.session.nomination==false) {
@@ -512,6 +522,10 @@ export default {
   beforeDestroy() {
     EventBus.$off("spacebar-vote", this.onSpacebarRaiseHand);
   },*/
+  created() {
+    this.updateMessageCount();
+    this.messageCheckInterval = setInterval(this.updateMessageCount, 1000);
+  },
 };
 </script>
 

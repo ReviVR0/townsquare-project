@@ -918,12 +918,10 @@ class LiveSession {
     else
       this._sendDirect(params[1], "SendGrim", params[0]);
   }
-  SendCard(params){
-    if(params[2])
-      this._sendDirect(params[0], "SendCard");
-    else
-      this._sendDirect(params[0], "SendCard", params[1]);
-  }
+SendCard(params) {
+  const extendedParams = [...params, "Send"]; 
+  this._sendDirect(params[0], "SendCard", extendedParams);
+}
   winningTeam(params){
     this._send("winningTeam", params);
   }

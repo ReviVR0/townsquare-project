@@ -11,14 +11,42 @@
 <div v-if="mode === 'response'" class="submenu">
 <div v-if="fullLog.length" class="message-log" style="margin-bottom: 10px; max-height: 120px; overflow-y: auto;">
   <h4>Recent Messages:</h4>
-  <div v-for="(msg, idx) in fullLog.slice(-4)" :key="idx" style="font-size: 0.9em; color: #aaa; margin-bottom: 2px;">
-    {{ msg }}
-  </div>
+<div
+  v-for="(msg, idx) in fullLog.slice(-4)"
+  :key="idx"
+  style="font-size: 0.9em; margin-bottom: 2px; display: flex; flex-wrap: wrap; align-items: center;"
+>
+  <span :style="{ color: msg.startsWith('You:') ? '#ce0100' : '#1f65ff', display: 'inline-flex', flexWrap: 'wrap', alignItems: 'center' }">
+<span v-for="(part, i) in parseMessage(msg)" :key="i" style="display: inline-flex; align-items: center; margin-right: 2px;">
+  <img
+    v-if="part.img"
+    :src="part.img"
+    :alt="part.text"
+    :style="{
+      width: part.type === 'Character' ? '30px' : '20px',
+      height: part.type === 'Character' ? '30px' : '20px',
+      marginRight: '2px'
+    }"
+  />
+  <span>{{ part.text }}</span>
+</span>
+
+  </span>
+</div>
+
+
+
 </div>
   <div v-if="messageQueue.length" style="margin-bottom: 10px; text-align: center;">
-    <p style="color: #ccc;">
-      <strong>Current Message:</strong> {{ messageQueue.join(" ") }}
-    </p>
+<p style="display: flex; flex-wrap: wrap; align-items: center;">
+  <strong style="margin-right: 4px;">Current Message:</strong>
+  <span v-for="(part, i) in parseMessage(messageQueue.join(' '))" :key="i"
+        :style="{ color: messageQueue.join(' ').startsWith('You:') ? '#1f65ff' : '#ce0100', display: 'inline-flex', alignItems: 'center', marginRight: '2px' }">
+    <img v-if="part.img" :src="part.img" :alt="part.text" style="width:20px; height:20px; margin-right: 2px;" />
+    <span>{{ part.text }}</span>
+  </span>
+</p>
+
     <button @click="sendQueuedMessage" style="margin-top: 6px;">Send Message</button>
     <button @click="clearQueue" style="margin-top: 6px; margin-left: 8px;">Clear</button>
   </div>
@@ -60,9 +88,31 @@
 <div v-if="mode === 'default'">
 <div v-if="fullLog.length" class="message-log" style="margin-bottom: 10px; max-height: 120px; overflow-y: auto;">
   <h4>Recent Messages:</h4>
-  <div v-for="(msg, idx) in fullLog.slice(-4)" :key="idx" style="font-size: 0.9em; color: #aaa; margin-bottom: 2px;">
-    {{ msg }}
-  </div>
+<div
+  v-for="(msg, idx) in fullLog.slice(-4)"
+  :key="idx"
+  style="font-size: 0.9em; margin-bottom: 2px; display: flex; flex-wrap: wrap; align-items: center;"
+>
+  <span :style="{ color: msg.startsWith('You:') ? '#ce0100' : '#1f65ff', display: 'inline-flex', flexWrap: 'wrap', alignItems: 'center' }">
+<span v-for="(part, i) in parseMessage(msg)" :key="i" style="display: inline-flex; align-items: center; margin-right: 2px;">
+  <img
+    v-if="part.img"
+    :src="part.img"
+    :alt="part.text"
+    :style="{
+      width: part.type === 'Character' ? '30px' : '20px',
+      height: part.type === 'Character' ? '30px' : '20px',
+      marginRight: '2px'
+    }"
+  />
+  <span>{{ part.text }}</span>
+</span>
+
+  </span>
+</div>
+
+
+
 </div>
   <!-- Display queued message (same as response mode) -->
   <div v-if="messageQueue.length" style="margin-bottom: 10px; text-align: center;">
@@ -225,18 +275,29 @@ export default {
   methods: {
     ...mapMutations(["toggleModal"]),
 
-    loadMessages() {
-      const saved = localStorage.getItem(this.storageKey);
+    loadMessages(playerId = null) {
+      const key = this.session.isSpectator
+        ? "host"
+        : playerId || this.player.id; // use passed ID if available
+      const saved = localStorage.getItem(`messages_${key}`);
       this.fullLog = saved ? JSON.parse(saved) : [];
     },
 
-    saveMessage(message) {
-      this.fullLog.push(message);
-        if (this.fullLog.length > 20) {
-        this.fullLog = this.fullLog.slice(-10);
+
+      saveMessage(message, storageId = null) {
+        if(this.session.isSpectator) storageId = "host";
+        const key = storageId || this.player.id;
+        const saved = localStorage.getItem(`messages_${key}`);
+        const fullLog = saved ? JSON.parse(saved) : [];
+
+        fullLog.push(message);
+        if (fullLog.length > 20) {
+          fullLog.splice(0, fullLog.length - 10); // keep last 10
         }
-      localStorage.setItem(this.storageKey, JSON.stringify(this.fullLog));
+
+        localStorage.setItem(`messages_${key}`, JSON.stringify(fullLog));
     },
+
 
     selectOption(option) {
       switch (option.label) {
@@ -260,7 +321,8 @@ export default {
     selectSubOption(type, value) {
       this.messageQueue.push(`${type}: ${value}`);
       this.mode = this.previousMode || "default";
-    },
+  },
+
 
     submitCustomMessage() {
       if (this.customMessage.trim()) {
@@ -282,13 +344,12 @@ export default {
       const fullMessage = this.messageQueue.join(" ");
       if (!fullMessage) return;
 
-      // Save locally as "You"
       this.saveMessage(`You: ${fullMessage}`);
 
       if (this.isResponse) {
-        this.$store.commit("session/sendCard", ["host", fullMessage]);
+        this.$store.commit("session/sendCard", ["host", [fullMessage, this.session.playerId]]);
       } else {
-        this.$store.commit("session/sendCard", [this.player.id, fullMessage]);
+        this.$store.commit("session/sendCard", [this.player.id, [fullMessage, "host"]]);
       }
 
       this.messageQueue = [];
@@ -309,24 +370,81 @@ export default {
       this.isResponse = false;
       this.mode = "default";
       // Reload messages for next time
-      this.loadMessages();
     },
+parseMessage(msg) {
+  const regex = /(Character|Player): (\w+)/g;
+  const parts = [];
+  let lastIndex = 0;
+  let match;
+
+  while ((match = regex.exec(msg)) !== null) {
+    if (match.index > lastIndex) {
+      parts.push({ text: msg.slice(lastIndex, match.index) });
+    }
+
+    const type = match[1];
+    const name = match[2];
+    let img = null;
+
+    try {
+      if (type === "Character") {
+        img = require(`@/assets/icons/Reminder/${name.toLowerCase()}.png`);
+      } else if (type === "Player") {
+        img = require(`@/assets/icons/Reminder/user.png`);
+      }
+    } catch (err) {
+      console.warn(`Image not found for ${type}: ${name}`);
+    }
+
+    parts.push({ text: name, img, type });
+    lastIndex = regex.lastIndex;
+  }
+
+  if (lastIndex < msg.length) {
+    parts.push({ text: msg.slice(lastIndex) });
+  }
+
+  return parts;
+}
+
+
+
   },
 
 watch: {
-  'session.recivedMessage'(Message) {
-    if (Message) {
-      // Determine sender
-      const sender = !this.session.isSpectator ? this.player.name : "Host";
-      this.incomingMessage = Message;
-      this.saveMessage(`${sender}: ${Message}`);
-      this.$store.commit("session/clearRecievedMessage");
-      this.isResponse = true;
-      this.mode = 'response';
-      this.toggleModal('sendCard');
+  'session.recivedMessage'(messageData) {
+    if (!messageData) return;
+
+    const [text, playerId] = messageData;
+
+    // Determine sender
+    let senderName;
+    if (this.session.isSpectator) {
+      senderName = "Host";
+    } else {
+      senderName = "Unknown";
+      this.players.forEach(player => {
+        if (player.id === playerId) {
+          senderName = player.name;
+        }
+      });
     }
+
+    // Save message using playerId as storage key
+    this.incomingMessage = text;
+    this.saveMessage(`${senderName}: ${text}`, playerId);
+
+    this.$store.commit("session/clearRecievedMessage");
+    this.isResponse = true;
+    this.mode = 'response';
+    if(!this.modals.sendCard)
+      this.toggleModal('sendCard');
+    else
+        this.loadMessages(this.player.id);
+
   },
   'modals.sendCard'(isOpen) {
+    this.loadMessages(this.player.id);
     if (isOpen && this.session.isSpectator) {
       this.mode = 'response';
       if (this.fullLog.length > 0) {
@@ -339,7 +457,7 @@ watch: {
 },
 
   mounted() {
-    this.loadMessages();
+    this.loadMessages(this.player.id);
   }
 };
 </script>
