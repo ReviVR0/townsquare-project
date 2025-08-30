@@ -919,6 +919,7 @@ class LiveSession {
       this._sendDirect(params[1], "SendGrim", params[0]);
   }
 SendCard(params) {
+  if(params[2]) return;
   const extendedParams = [...params, "Send"]; 
   this._sendDirect(params[0], "SendCard", extendedParams);
 }
@@ -1057,7 +1058,7 @@ export default store => {
         session.SendGrim(payload);
         break;
       case "session/sendCard":
-        session.SendCard(payload);
+        session.SendCard(payload);;
         break;
       case "session/winningTeam":
         if (session._isSpectator) return;

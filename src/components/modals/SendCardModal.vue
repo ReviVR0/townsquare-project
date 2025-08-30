@@ -6,53 +6,69 @@
   >
     <div class="send-cards-wrapper">
       <h3>Send info to {{ InfoReciver }}</h3>
-      <p class="subtitle">Click a token to send a message.</p>
 <!-- Response Mode -->
 <div v-if="mode === 'response'" class="submenu">
-<div v-if="fullLog.length" class="message-log" style="margin-bottom: 10px; max-height: 120px; overflow-y: auto;">
-  <h4>Recent Messages:</h4>
-<div
-  v-for="(msg, idx) in fullLog.slice(-4)"
-  :key="idx"
-  style="font-size: 0.9em; margin-bottom: 2px; display: flex; flex-wrap: wrap; align-items: center;"
->
-  <span :style="{ color: msg.startsWith('You:') ? '#ce0100' : '#1f65ff', display: 'inline-flex', flexWrap: 'wrap', alignItems: 'center' }">
-<span v-for="(part, i) in parseMessage(msg)" :key="i" style="display: inline-flex; align-items: center; margin-right: 2px;">
-  <img
-    v-if="part.img"
-    :src="part.img"
-    :alt="part.text"
-    :style="{
-      width: part.type === 'Character' ? '30px' : '20px',
-      height: part.type === 'Character' ? '30px' : '20px',
-      marginRight: '2px'
-    }"
-  />
-  <span>{{ part.text }}</span>
-</span>
-
+  <div v-if="fullLog.length" class="message-log" style="margin-bottom: 10px; max-height: 120px; overflow-y: auto;">
+    <h4>Recent Messages:</h4>
+  <div
+    v-for="(msg, idx) in fullLog.slice(-4)"
+    :key="idx"
+    style="font-size: 0.9em; margin-bottom: 2px; display: flex; flex-wrap: wrap; align-items: center;"
+  >
+  <span
+    :style="{ color: msg.startsWith('You:') ? '#777' : '#aaa', display: 'inline-flex', flexWrap: 'wrap', alignItems: 'center' }"
+  >
+  <span v-for="(part, i) in parseMessage(msg)" :key="i" style="display: inline-flex; align-items: center;">
+    <img
+      v-if="part.img"
+      :src="part.img"
+      :alt="part.text"
+      :style="iconStyle"
+    />
+  <span :class="part.team ? part.team : ''"
+    style= "margin-right: 2px;">
+    {{ part.text }}
   </span>
+  </span>
+    </span>
 </div>
 
 
 
 </div>
   <div v-if="messageQueue.length" style="margin-bottom: 10px; text-align: center;">
-<p style="display: flex; flex-wrap: wrap; align-items: center;">
+<p style="display: flex; flex-wrap: wrap; align-items: center; display: 'inline-flex',
+    alignItems: 'center'," v-if="this.session.isSpectator">
   <strong style="margin-right: 4px;">Current Message:</strong>
-  <span v-for="(part, i) in parseMessage(messageQueue.join(' '))" :key="i"
-        :style="{ color: messageQueue.join(' ').startsWith('You:') ? '#1f65ff' : '#ce0100', display: 'inline-flex', alignItems: 'center', marginRight: '2px' }">
-    <img v-if="part.img" :src="part.img" :alt="part.text" style="width:20px; height:20px; margin-right: 2px;" />
-    <span>{{ part.text }}</span>
-  </span>
+<span
+  v-for="(part, i) in parseMessage(messageQueue.join(' '))"
+  :key="i"
+  :class="part.team ? part.team : ''"
+  :style="{
+    marginRight: '2px',
+    color: !part.team
+      ? (messageQueue.join(' ').startsWith('You:') ? '#777' : '#aaa')
+      : undefined
+  }"
+>
+  <img
+    v-if="part.img"
+    :src="part.img"
+    :alt="part.text"
+    :style="iconStyle"
+  />
+  <span style="margin-left: 2px;">{{ part.text }}</span> <!-- small gap after image -->
+</span>
+
+
 </p>
 
-    <button @click="sendQueuedMessage" style="margin-top: 6px;">Send Message</button>
-    <button @click="clearQueue" style="margin-top: 6px; margin-left: 8px;">Clear</button>
+    <button @click="sendQueuedMessage" style="margin-top: 6px;" v-if="this.session.isSpectator">Send Message</button>
+    <button @click="clearQueue" style="margin-top: 6px; margin-left: 8px;" v-if="this.session.isSpectator">Clear</button>
   </div>
 
-  <p>Respond with:</p>
-
+  <h4 v-if="this.session.isSpectator">Respond with:</h4>
+  <p class="subtitle" v-if="this.session.isSpectator">Click a token to send a message.</p>
 <div class="option-b-container" v-if="this.session.isSpectator">
   <div class="card-small" @click="selectOption({ label: 'Player' })">
     <img :src="iconSrc" alt="token" />
@@ -93,19 +109,18 @@
   :key="idx"
   style="font-size: 0.9em; margin-bottom: 2px; display: flex; flex-wrap: wrap; align-items: center;"
 >
-  <span :style="{ color: msg.startsWith('You:') ? '#ce0100' : '#1f65ff', display: 'inline-flex', flexWrap: 'wrap', alignItems: 'center' }">
-<span v-for="(part, i) in parseMessage(msg)" :key="i" style="display: inline-flex; align-items: center; margin-right: 2px;">
+<span
+  :style="{ color: msg.startsWith('You:') ? '#777' : '#aaa', display: 'inline-flex', flexWrap: 'wrap', alignItems: 'center' }"
+>
+<span v-for="(part, i) in parseMessage(msg)" :key="i" style="display: inline-flex; align-items: center;">
   <img
     v-if="part.img"
     :src="part.img"
     :alt="part.text"
-    :style="{
-      width: part.type === 'Character' ? '30px' : '20px',
-      height: part.type === 'Character' ? '30px' : '20px',
-      marginRight: '2px'
-    }"
+    :style="iconStyle"
   />
-  <span>{{ part.text }}</span>
+<span :class="part.team ? part.team : ''" style= "margin-right: 2px;">
+    {{ part.text }}</span>
 </span>
 
   </span>
@@ -116,9 +131,31 @@
 </div>
   <!-- Display queued message (same as response mode) -->
   <div v-if="messageQueue.length" style="margin-bottom: 10px; text-align: center;">
-    <p style="color: #ccc;">
-      <strong>Current Message:</strong> {{ messageQueue.join(" ") }}
-    </p>
+<p style="color: #ccc,
+    display: 'inline-flex',
+    alignItems: 'center',">
+  <strong>Current Message:</strong>
+<span
+  v-for="(part, i) in parseMessage(messageQueue.join(' '))"
+  :key="i"
+  :class="part.team ? part.team : ''"
+  :style="{
+    color: !part.team
+      ? (messageQueue.join(' ').startsWith('You:') ? '#777' : '#aaa')
+      : undefined
+  }"
+>
+  <img
+    v-if="part.img"
+    :src="part.img"
+    :alt="part.text"
+    :style="iconStyle"
+  />
+  <span style="margin-left: 2px;">{{ part.text }}</span> <!-- small gap after image -->
+</span>
+
+</p>
+
     <button @click="sendQueuedMessage" style="margin-top: 6px;">Send Message</button>
     <button @click="clearQueue" style="margin-top: 6px; margin-left: 8px;">Clear</button>
   </div>
@@ -173,7 +210,7 @@
         v-for="roleEntry in rolesArray"
         :key="roleEntry.key"
         class="card-small token-wrapper"
-        @click="selectSubOption('Character', roleEntry.value.name)"
+        @click="selectSubOption('Character', roleEntry.value.id)"
       >
         <img class="token-bg" :src="iconSrc" alt="token" />
         <img
@@ -251,11 +288,25 @@ export default {
       incomingMessage: "",
       fullLog: [], // stores full messages from localStorage
       isResponse: false,
+      iconStyle: {
+        width: '1.7em',
+        height: '1.7em',
+        display: 'inline-block',
+        objectFit: 'cover',
+        clipPath: 'inset(5% 10% 20% 10%)',
+        borderRadius: '2px',
+        verticalAlign: 'text-bottom',
+        marginBottom: '-0.2em',
+        marginRight: '-0.2em',
+        marginLeft: '-0.1em'
+
+      },
     };
   },
   computed: {
     ...mapState("players", ["players"]),
     ...mapState(["modals", "session"]),
+    ...mapState(["roles", "modals"]),
     player() {
       return this.players[this.playerIndex];
     },
@@ -321,7 +372,7 @@ export default {
     selectSubOption(type, value) {
       this.messageQueue.push(`${type}: ${value}`);
       this.mode = this.previousMode || "default";
-  },
+    },
 
 
     submitCustomMessage() {
@@ -333,12 +384,18 @@ export default {
     },
 
     getRoleImage(id) {
-      try {
-        return require(`@/assets/icons/Reminder/${id}.png`);
-      } catch {
-        return require("@/assets/token.png");
+      const role = this.roles.get(id);
+      if (role) {
+        if (role.image) return role.image; // use URL if present
+        try {
+          return require(`@/assets/icons/Reminder/${id}.png`); // fallback to local file
+        } catch {
+          console.warn(`Local image not found for role: ${id}`);
+        }
       }
+      return require("@/assets/token.png"); // ultimate fallback
     },
+
 
     sendQueuedMessage() {
       const fullMessage = this.messageQueue.join(" ");
@@ -372,7 +429,7 @@ export default {
       // Reload messages for next time
     },
 parseMessage(msg) {
-  const regex = /(Character|Player): (\w+)/g;
+  const regex = /(Character|Player): ([\p{L}\p{N}_]+)/gu;
   const parts = [];
   let lastIndex = 0;
   let match;
@@ -382,21 +439,33 @@ parseMessage(msg) {
       parts.push({ text: msg.slice(lastIndex, match.index) });
     }
 
-    const type = match[1];
-    const name = match[2];
+    const type = match[1]; // "Character" or "Player"
+    const id = match[2];   // lowercase id for lookup
+    let name = id;         
     let img = null;
+    let team = null;
 
     try {
       if (type === "Character") {
-        img = require(`@/assets/icons/Reminder/${name.toLowerCase()}.png`);
+        const role = this.roles.get(id);
+        if (role) {
+          name = role.name;      // display name
+          team = role.team;      // team color
+          img = role.image || require(`@/assets/icons/Reminder/${id}.png`);
+        } else {
+          img = require(`@/assets/icons/Reminder/${id}.png`);
+        }
       } else if (type === "Player") {
+        name = id;
+        team = "player";
         img = require(`@/assets/icons/Reminder/user.png`);
       }
     } catch (err) {
-      console.warn(`Image not found for ${type}: ${name}`);
+      console.warn(`Image not found for ${type}: ${id}`);
+      img = null; // fallback to null if image fails
     }
 
-    parts.push({ text: name, img, type });
+    parts.push({ text: name, img, type, team });
     lastIndex = regex.lastIndex;
   }
 
@@ -405,7 +474,10 @@ parseMessage(msg) {
   }
 
   return parts;
-}
+},
+
+
+
 
 
 
@@ -433,25 +505,24 @@ watch: {
     // Save message using playerId as storage key
     this.incomingMessage = text;
     this.saveMessage(`${senderName}: ${text}`, playerId);
-
-    this.$store.commit("session/clearRecievedMessage");
     this.isResponse = true;
     this.mode = 'response';
     if(!this.modals.sendCard)
       this.toggleModal('sendCard');
-    else
-        this.loadMessages(this.player.id);
+    this.loadMessages(playerId);
+
 
   },
   'modals.sendCard'(isOpen) {
-    this.loadMessages(this.player.id);
     if (isOpen && this.session.isSpectator) {
       this.mode = 'response';
+      this.isResponse = true;
       if (this.fullLog.length > 0) {
         this.incomingMessage = this.fullLog[this.fullLog.length - 1].split(': ').slice(1).join(': ');
-        this.isResponse = true;
       }
     }
+    if(!this.isResponse)
+      this.loadMessages(this.player.id);
   }
 
 },
@@ -465,7 +536,6 @@ watch: {
 
 <style lang="scss" scoped>
 @import "../../vars.scss";
-
 .send-cards-modal {
   ::v-deep(.modal) {
     background-color: rgba(0, 0, 0, 0.9);
@@ -494,9 +564,9 @@ watch: {
     }
 
     .subtitle {
-      font-size: 14px;
+      font-size: 10px;
       color: #ccc;
-      margin-bottom: 20px;
+      margin-bottom: 10px;
     }
 
     @media (max-width: 600px) {
@@ -660,5 +730,11 @@ watch: {
         background-color: #555;
       }
     }
+.townsfolk { color: $townsfolk; }
+.outsider { color: $outsider; }
+.minion { color: $minion; }
+.demon { color: $demon; }
+.traveler { color: $traveler; }
+.player {color: #ffffffff}
 
 </style>

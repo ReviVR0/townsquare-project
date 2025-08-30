@@ -490,8 +490,10 @@ export default {
       ]);
     },
     SendGrim(){
-      this.isMenuOpen = false;
-      this.$store.commit("session/sendGrim", [this.gamestate, this.player.id]);
+      if (confirm(`Are you sure you want to send grim to ${this.player.name}?`)) {
+        this.isMenuOpen = false;
+        this.$store.commit("session/sendGrim", [this.gamestate, this.player.id]);
+      }
     },
     SendCard(){
       this.isMenuOpen = false;
