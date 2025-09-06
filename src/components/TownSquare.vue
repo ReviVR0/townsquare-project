@@ -402,6 +402,17 @@ onDrag(event) {
       document.removeEventListener("click", unlock);
     };
     document.addEventListener("click", unlock);
+    
+
+    const siteNameMeta = document.querySelector('meta[property="og:site_name"]');
+    if (!siteNameMeta) return;
+
+    const content = (this.session.isSpectator && this.messageCount > 0)
+      ? `(${this.messageCount}) Blood on the Clocktower Town Square`
+      : `Blood on the Clocktower Town Square`;
+
+    siteNameMeta.setAttribute('content', content);
+    document.title = content;
   },
   created() {
     this.updateInviteCount();
@@ -425,6 +436,18 @@ onDrag(event) {
     if (newVal > 0 && !this.timerInterval) {
       this.startTimer();
     }
+  },
+  messageCount(newCount) {
+    const siteNameMeta = document.querySelector('meta[property="og:site_name"]');
+    if (!siteNameMeta) return;
+
+    // Only show count if spectator and count > 0
+    const content = (this.session.isSpectator && newCount > 0)
+      ? `(${newCount}) Blood on the Clocktower Town Square`
+      : `Blood on the Clocktower Town Square`;
+
+    siteNameMeta.setAttribute('content', content);
+    document.title = content;
   },
 }
 };

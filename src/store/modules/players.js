@@ -6,7 +6,8 @@ const NEWPLAYER = {
   isVoteless: false,
   isDead: false,
   pronouns: "",
-  team: ""
+  team: "",
+  handRaised: null,
 };
 
 const state = () => ({

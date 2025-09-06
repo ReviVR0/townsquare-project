@@ -11,7 +11,12 @@
       >!
       <br />
       <em class="blue">
-        {{ voters.length }} vote{{ voters.length !== 1 ? "s" : "" }}
+        <template v-if="session.hiddenVote && session.isSpectator">
+          ??? votes
+        </template>
+        <template v-else>
+          {{ voters.length }} vote{{ voters.length !== 1 ? "s" : "" }}
+        </template>
       </em>
       in favor
       <em v-if="nominee.role.team !== 'traveler'">
@@ -67,6 +72,13 @@
           </div>
           <div class="button" @click="removeMarked">
             Clear mark
+          </div>
+          <div
+            class="button"
+            :class="{ demon: session.hiddenVote, townsfolk: !session.hiddenVote }"
+            @click="toggleHiddenVote"
+          >
+            {{ session.hiddenVote ? "Show Votes" : "Hide Votes" }}
           </div>
         </div>
       </template>
@@ -236,9 +248,9 @@ export default {
           value: true
           });
           }
-      
-      
       }
+      if(this.session.hiddenVote)         
+        this.$store.commit("session/setVoteHistoryAllowed", false);
       clearInterval(this.voteTimer);
       this.$store.commit("session/addHistory", this.players);
       this.$store.commit("session/nomination");   
@@ -270,7 +282,10 @@ export default {
     },
     removeMarked() {
       this.$store.commit("session/setMarkedPlayer", -1);
-    }
+    },
+    toggleHiddenVote() {
+      this.$store.commit("session/setHiddenVote", !this.session.hiddenVote);
+  },
   },
   mounted() {
     EventBus.$on("spacebar-vote", this.toggleVote);

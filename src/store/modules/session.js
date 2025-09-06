@@ -33,6 +33,7 @@ const state = () => ({
   recivedMessage: null,
   winningTeam: null,
   StorytellerCode: null,
+  hiddenVote: false,
 });
 
 const getters = {};
@@ -59,6 +60,7 @@ const mutations = {
   distributeRoles: set("isRolesDistributed"),
   timer: set("timer"),
   winningTeam: set("winningTeam"),
+  setHiddenVote: set("hiddenVote"),
   setSessionId(state, sessionId) {
     state.sessionId = sessionId
       .toLocaleLowerCase()
@@ -129,7 +131,8 @@ const mutations = {
   StorytellerCodeGrim(){},
   SetSpectator(state, param){
     state.isSpectator = param[1];
-  }
+  },
+  setHandRaised(){}
 };
 
 export default {

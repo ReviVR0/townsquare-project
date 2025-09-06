@@ -1186,7 +1186,7 @@
             "Attack 2",
             "Attack 3"
         ],
-        "setup": false,
+        "setup": true,
         "ability": "You think you are a Demon, but you are not. The Demon knows who you are & who you choose at night."
     },
     {
@@ -2246,5 +2246,61 @@
         ],
         "setup": false,
         "ability": "Each night*, if no-one died today, choose a player: they die. The 1st time you die, you live but register as dead."
+    },
+    {
+        "id": "princess",
+        "name": "Princess",
+        "edition": "exp",
+        "team": "townsfolk",
+        "firstNight": 0,
+        "firstNightReminder": "",
+        "otherNight": 20,
+        "otherNightReminder": "If the Princess nominates and executes a player, mark the Demon with the DOESN'T KILL reminder. Tonight, if the Demon would wake to choose a player, wake them as normal. The Demon does not kill.",
+        "reminders": [
+            "Doesn't Kill"
+        ],
+        "setup": false,
+        "ability": "On your 1st day, if you nominated & executed a player, the Demon doesn’t kill tonight."
+    },
+    {
+        "id": "wraith",
+        "name": "Wraith",
+        "edition": "exp",
+        "team": "minion",
+        "firstNight": 1,
+        "firstNightReminder": "Wake the Wraith whenever other evil players wake.",
+        "otherNight": 1,
+        "otherNightReminder": "Wake the Wraith whenever other evil players wake.",
+        "reminders": [],
+        "setup": false,
+        "ability": "You may choose to open your eyes at night. You wake when other evil players do."
+    },
+    {
+        "id": "cacklejack",
+        "name": "Cacklejack",
+        "edition": "exp",
+        "team": "traveler",
+        "firstNight": 0,
+        "firstNightReminder": "",
+        "otherNight": 1,
+        "otherNightReminder": "Each day, the Cacklejack chooses a player. Mark them with the NOT ME reminder. Each night, except the first, replace any player’s character token with a different character token. Wake that player. Show the YOU ARE info token, and their new character token, then put them to sleep.",
+        "reminders": [
+            "Not Me"
+        ],
+        "setup": false,
+        "ability": "Each day, choose a player: a different player changes character tonight."
+    },
+    {
+        "id": "hermit",
+        "name": "Hermit",
+        "edition": "exp",
+        "team": "outsider",
+        "firstNight": 0,
+        "firstNightReminder": "",
+        "otherNight": 0,
+        "otherNightReminder": "",
+        "reminders": [],
+        "setup": true,
+        "ability": "You have all Outsider abilities. [-0 or -1 Outsider]"
     }
 ]

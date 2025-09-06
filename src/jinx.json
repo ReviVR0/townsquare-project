@@ -30,6 +30,10 @@
           {
               "id": "poppygrower",
               "reason": "If the Cannibal eats the Poppy Grower, then dies or loses the Poppy Grower ability, the Demon and Minions learn each other that night."
+          },
+                    {
+              "id": "princess",
+              "reason": "If the Cannibal nominated, executed, & killed the Princess today, the Demon doesn’t kill tonight."
           }
       ]
   },
@@ -611,5 +615,35 @@
               "reason": "An evil Townsfolk is only created if the Bounty Hunter is still in play after the Kazali acts."
           }
       ]
+  },
+  {
+        "id": "alhadikhia",
+        "jinx": [
+            {              
+                "id": "princess",
+                "reason": "If the Princess nominated & executed a player on their 1st day, no one dies to the Al-Hadikhia ability tonight."
+            }
+              ]
+  },
+  {
+        "id": "wraith",
+        "jinx": [
+            {              
+                "id": "alchemist",
+                "reason": "If the Alchemist has the Wraith ability, they do not, and a Wraith is in play. Each day, after the execution phase, the living Alchemist may publicly guess a living player as the Wraith: if correct, the Demon must choose the Wraith tonight."
+            },
+            {              
+                "id": "magician",
+                "reason": "Each day, after the execution phase, the living Magician may publicly guess a living player as the Wraith: if correct, the Demon must choose the Wraith tonight."
+            },
+            {              
+                "id": "plaguedoctor",
+                "reason": "If the Plague Doctor dies, a living Minion gains the Wraith ability in addition to their own ability, and learns this."
+            },
+            {              
+                "id": "marionette",
+                "reason": "The Wraith does not wake with the Marionette."
+            }
+              ]
   }
 ]

@@ -9,20 +9,19 @@
           marked: session.markedPlayer === index,
           'no-vote': player.isVoteless,
           you: session.sessionId && player.id && player.id === session.playerId,
-          'vote-yes': session.votes[index],
+          'vote-yes': session.votes[index] && (
+            !session.hiddenVote || player.id === session.playerId || !session.isSpectator
+          ),
           'vote-lock': voteLocked
         },
         player.role.team
       ]"
+
     >
-
-
       <div
-          class="shroud"
-          :style="{
-              '--before-bg-image': shroudImage
-          }"
-          @click="toggleStatus()"
+        class="shroud"
+        :style="{ '--before-bg-image': getShroudImage(player) }"
+        @click="toggleStatus()"
       ></div>
 
 
@@ -63,6 +62,16 @@
           @click="vote()"
         />
         <font-awesome-icon
+          v-if="player.handRaised"
+          :icon="player.handRaised === 'rock' ? 'hand-rock' :
+                player.handRaised === 'paper' ? 'hand-paper' :
+                'cut'"
+          class="vote hand-up"
+          :title="`Hand UP (${player.handRaised})`"
+        />
+
+
+        <font-awesome-icon
           icon="times"
           class="vote"
           title="Hand DOWN"
@@ -84,7 +93,7 @@
           icon="redo-alt"
           class="move"
           @click="movePlayer(player)"
-          title="Move player to this seat"
+          title="Move player to this sea`t"
         />
         <font-awesome-icon
           icon="hand-point-right"
@@ -93,11 +102,12 @@
           title="Nominate this player"
         />
         <font-awesome-icon
-          v-if="showHandUp"
+          v-if="showHandUp && (!session.hiddenVote || player.id === session.playerId || !session.isSpectator)"
           icon="hand-paper"
           class="vote hand-up"
           title="Hand UP (auto)"
         />
+
 
       </div>
       <!-- Claimed seat icon -->
@@ -118,10 +128,11 @@
       <font-awesome-icon
         icon="vote-yea"
         class="has-vote"
-        v-if="player.isDead && !player.isVoteless"
+        v-show="canShowGhost(player)"
         @click="updatePlayer('isVoteless', true)"
         title="Ghost vote"
       />
+
 
       <!-- On block icon -->
       <div class="marked">
@@ -216,10 +227,10 @@
             </template>
             <template v-else> Seat occupied</template>
           </li>
-
-
-
-
+          <li @click="cycleMove" v-if="player.id === session.playerId">
+            <font-awesome-icon :icon="getMoveIcon(move)" />
+            {{ move.charAt(0).toUpperCase() + move.slice(1) }}
+          </li>
 
 
         </ul>
@@ -278,7 +289,7 @@
 import Token from "./Token";
 
 import { mapGetters, mapState } from "vuex";
-//import { EventBus } from "../event-bus.js";
+import { EventBus } from "../event-bus.js";
 
 export default {
   components: {
@@ -291,13 +302,13 @@ export default {
     }
   },
   computed: {
-    ...mapState({
-  bluffs: state => state.players.bluffs,
-  edition: state => state.edition,
-  roles: state => state.roles,
-  fabled: state => state.players.fabled,
-  playerList: state => state.players.players
-  }),
+      ...mapState({
+    bluffs: state => state.players.bluffs,
+    edition: state => state.edition,
+    roles: state => state.roles,
+    fabled: state => state.players.fabled,
+    playerList: state => state.players.players
+    }),
 
     ...mapState("players", ["players"]),
     ...mapState(["grimoire", "session"]),
@@ -328,14 +339,6 @@ export default {
     isSeated() {
       return this.players.some(player => player.id === this.session.playerId);
     },
-    shroudImage() {
-      const img = this.player.isVoteless
-          ? require('../assets/shroud_used_.png')
-          : require('../assets/shroud.png');
-      const url = img.default || img;
-      return `url('${url}')`;
-    },
-
     gamestate() {
       return JSON.stringify({
         bluffs: this.bluffs.map(({ id }) => id),
@@ -353,8 +356,23 @@ export default {
           role: player.role.id || {}
         }))
       });
+    },
+    handIcon() {
+      return (player) => {
+        switch (player.handMove) {
+          case "rock":
+            return "hand-rock";
+          case "paper":
+            return "hand-paper";
+          case "scissors":
+            return "cut";  // since no free hand-scissors icon
+          default:
+            return "hand-paper"; // fallback
+        }
+      };
     }
-  },
+
+},
   data() {
     return {
       isMenuOpen: false,
@@ -364,6 +382,10 @@ export default {
       hoveredReminderGroup: null,
       showHandUp: false,
       messageCount: 0,
+      revealed: {}, // { playerId: true }
+      revealedShroud: {},
+      move: "paper",
+      moves: ["rock", "paper", "scissors"]
     };
   },
   methods: {
@@ -423,7 +445,8 @@ export default {
       if (
         this.session.isSpectator &&
         property !== "reminders" &&
-        property !== "pronouns"
+        property !== "pronouns" &&
+        property !== "handRaised"
       )
         return;
       this.$store.commit("players/update", {
@@ -508,25 +531,106 @@ export default {
         this.messageCount = 0;
       }
     },
-    /* -- Raise hand attention
     onSpacebarRaiseHand() {
-      if (this.session.nomination==false) {
-        if(this.showHandUp)
-          this.showHandUp = false;
-        else this.showHandUp = true;
-    
+      if (!this.session.nomination) {
+        const isSelf = this.session.playerId && this.player.id === this.session.playerId;
+        if (!isSelf) return;
+        if(this.player.handRaised) this.$store.commit("session/setHandRaised", [this.index, null]);
+        else {
+          const newHand = this.move || (this.player.handRaised ? null : "paper");
+          this.$store.commit("session/setHandRaised", [this.index, newHand]);
+        }
+
       }
-    },*/
+    },
+
+    markRevealed(player, type) {
+      if (!this.revealed[player.id]) this.revealed[player.id] = {};
+      this.$set(this.revealed[player.id], type, true);
+    },
+    canShowGhost(player) {
+      const r = this.revealed[player.id] || {};
+      if (r.ghost) return true;
+      return (!this.session.hiddenVote || this.grimoire.isNight) && player.isDead && !player.isVoteless;
+    },
+    getShroudImage(player) {
+    const isSelf = this.session.playerId && player.id === this.session.playerId;
+    const isHost = !this.session.isSpectator;
+
+    const maskOthersDuringDay =
+      this.session.hiddenVote &&
+      !this.grimoire.isNight &&
+      !isSelf &&
+      !isHost &&
+      !this.revealedShroud[player.id];
+
+    const file = maskOthersDuringDay
+      ? 'shroud.png'
+      : (player.isVoteless ? 'shroud_used.png' : 'shroud.png');
+
+    try {
+      const img = require(`../assets/${file}`);
+      const url = img.default || img;
+      return `url('${url}')`;
+    } catch {
+      return 'none';
+    }
   },
-  /*mounted() {
+   cycleMove() {
+    const currentIndex = this.moves.indexOf(this.move);
+    const nextIndex = (currentIndex + 1) % this.moves.length;
+    this.move = this.moves[nextIndex];
+  },
+  getMoveIcon(move) {
+    switch (move) {
+      case "rock": return "hand-rock";
+      case "paper": return "hand-paper";
+      case "scissors": return "cut"; // since free hand-scissors icon doesn't exist
+    }
+  },
+  },
+  mounted() {
     EventBus.$on("spacebar-vote", this.onSpacebarRaiseHand);
   },
   beforeDestroy() {
     EventBus.$off("spacebar-vote", this.onSpacebarRaiseHand);
-  },*/
+  },
   created() {
     this.updateMessageCount();
     this.messageCheckInterval = setInterval(this.updateMessageCount, 1000);
+  },
+  watch: {
+    'grimoire.isNight'(isNight) {
+      if (isNight && this.session.hiddenVote) {
+        this.players.forEach(p => {
+          if (p.id && !this.revealedShroud[p.id]) {
+            this.$set(this.revealedShroud, p.id, true);
+          }
+        });
+      }
+    },
+    player: {
+      handler(newPlayer) {
+        if (!newPlayer.isDead && !newPlayer.isVoteless) {
+          this.$set(this.revealedShroud, newPlayer.id, false);
+        }
+      },
+      deep: true
+    },
+    'session.nomination'(newVal) {
+      if (newVal) {
+        // reset everyone’s hand when voting begins
+        this.players.forEach(p => {
+          if (p.handRaised) {
+            this.$store.commit("players/update", {
+              player: p,
+              property: "handRaised",
+              value: false
+            });
+          }
+        });
+      }
+    }
   },
 };
 </script>
@@ -739,6 +843,13 @@ export default {
     }
     &.fa-times * {
       fill: url(#townsfolk);
+    }
+    .vote.hand-up {
+      pointer-events: auto;         /* can hover if needed */
+      transition: all 250ms ease-in-out;
+      color: yellow;                /* highlight color */
+      filter: drop-shadow(0 0 6px black);
+      z-index: 1;
     }
   }
 }
@@ -1150,7 +1261,7 @@ li.move:not(.from) .player .overlay svg.move {
 }
 
 #townsquare .player .overlay svg.vote.hand-up {
-  opacity: 1 !important;
+  opacity: 0.5 !important;
   animation: pulse 1s infinite;
   transform: scale(1.15);
   z-index: 5;

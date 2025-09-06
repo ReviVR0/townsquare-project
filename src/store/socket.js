@@ -1,7 +1,7 @@
 class LiveSession {
   constructor(store) {
   this._wss = "wss://townsquare-project-back.onrender.com/";
-    //this._wss = "ws://localhost:8081/"; // uncomment if using local server with NODE_ENV=development
+    this._wss = "ws://localhost:8081/"; // uncomment if using local server with NODE_ENV=development
     this._socket = null;
     this._isSpectator = true;
     this._gamestate = [];
@@ -236,6 +236,22 @@ class LiveSession {
       case "SetSpectator":
         this._store.commit("session/SetSpectator", params);
         break;
+      case "setHiddenVote":
+        if (!this._isSpectator) return;
+        this._store.commit("session/setHiddenVote", params);
+        break;
+      case "setHandRaised": {
+        if (this._isSpectator) return;
+        const player = this._store.state.players.players[params[0]]; 
+        if (player) {
+          this._store.commit("players/update", {
+            player,      
+            property: "handRaised",
+            value: params[1]
+          });
+        }
+        break;
+      }
     }
 
   }
@@ -918,11 +934,11 @@ class LiveSession {
     else
       this._sendDirect(params[1], "SendGrim", params[0]);
   }
-SendCard(params) {
-  if(params[2]) return;
-  const extendedParams = [...params, "Send"]; 
-  this._sendDirect(params[0], "SendCard", extendedParams);
-}
+  SendCard(params) {
+    if(params[2]) return;
+    const extendedParams = [...params, "Send"]; 
+    this._sendDirect(params[0], "SendCard", extendedParams);
+  }
   winningTeam(params){
     this._send("winningTeam", params);
   }
@@ -953,7 +969,6 @@ SendCard(params) {
 
 
   StorytellerCodeGrim(params){
-    console.log(this._store.state.session.playerId)
     if (this._isSpectator){
       this._sendDirect("host", "StorytellerCodeGrim", this._store.state.session.playerId)
     } 
@@ -966,7 +981,12 @@ SendCard(params) {
   SetSpectator(params){
     this._sendDirect(params[0], "SetSpectator", params[1])
   }
-
+  setHiddenVote(params){
+    this._send("setHiddenVote", params);
+  }
+  setHandRaised(params){
+    this._send("setHandRaised", params);
+  }
 }
 export default store => {
   // setup
@@ -1074,8 +1094,14 @@ export default store => {
         break;    
       case "session/SetSpectator":
         session.SetSpectator(payload);
+        break; 
+      case "session/setHiddenVote":
+        if (session._isSpectator) return;
+        session.setHiddenVote(payload);
+        break;     
+      case "session/setHandRaised":
+        session.setHandRaised(payload);
         break;    
-        
     }
   });
 
