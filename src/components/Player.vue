@@ -535,10 +535,14 @@ export default {
       if (!this.session.nomination) {
         const isSelf = this.session.playerId && this.player.id === this.session.playerId;
         if (!isSelf) return;
-        if(this.player.handRaised) this.$store.commit("session/setHandRaised", [this.index, null]);
+        if(this.player.handRaised) {
+          this.$store.commit("session/setHandRaised", [this.index, null]);
+          this.updatePlayer('handRaised', null);
+        }
         else {
           const newHand = this.move || (this.player.handRaised ? null : "paper");
           this.$store.commit("session/setHandRaised", [this.index, newHand]);
+          this.updatePlayer('handRaised', newHand);
         }
 
       }
