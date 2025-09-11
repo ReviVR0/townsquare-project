@@ -528,6 +528,7 @@ class LiveSession {
     if (!player) return;
     // special case where a player stops being a traveler
     if (property === "role") {
+        this._store.dispatch("players/clearRoles");
       if (!value && player.role.team === "traveler") {
         // reset to an unknown role
         this._store.commit("players/update", {
@@ -703,7 +704,9 @@ class LiveSession {
    * This will be split server side so that each player only receives their own (sub)message.
    */
   distributeRoles() {
-    if (this._isSpectator) return;
+    if (this._isSpectator) {
+      return;
+    }
     const message = {};
     this._store.state.players.players.forEach((player, index) => {
       if (player.id && player.role) {
@@ -1010,6 +1013,7 @@ export default store => {
         if (payload) {
           session.distributeRoles();
         }
+        this._store.dispatch("players/clearRoles")
         break;
       case "session/nomination":
       case "session/setNomination":

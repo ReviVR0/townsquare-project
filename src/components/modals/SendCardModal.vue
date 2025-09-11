@@ -257,8 +257,8 @@ export default {
         { label: "Use Ability" },
         { label: "Make a Choice" },
         { label: "Not in Play" },
-        { label: "This is the Demon" },
-        { label: "Your Minions" },
+        { label: "This is the Demon", action: "showDemon" },
+        { label: "Your Minions", action: "showMinion" },
         { label: "You Are" },
         { label: "This Player Is" },
         { label: "Selected You" },
@@ -351,6 +351,10 @@ export default {
 
 
     selectOption(option) {
+      if (option.action && typeof this[option.action] === "function") {
+        this[option.action](option);
+        return;
+      }
       switch (option.label) {
         case "Player":
           this.previousMode = this.mode;
@@ -428,55 +432,126 @@ export default {
       this.mode = "default";
       // Reload messages for next time
     },
-parseMessage(msg) {
-  const regex = /(Character|Player): ([\p{L}\p{N}_]+)/gu;
-  const parts = [];
-  let lastIndex = 0;
-  let match;
+    parseMessage(msg) {
+      const regex = /(Character|Player): ([\p{L}\p{N}_]+)/gu;
+      const parts = [];
+      let lastIndex = 0;
+      let match;
 
-  while ((match = regex.exec(msg)) !== null) {
-    if (match.index > lastIndex) {
-      parts.push({ text: msg.slice(lastIndex, match.index) });
-    }
-
-    const type = match[1]; // "Character" or "Player"
-    const id = match[2];   // lowercase id for lookup
-    let name = id;         
-    let img = null;
-    let team = null;
-
-    try {
-      if (type === "Character") {
-        const role = this.roles.get(id);
-        if (role) {
-          name = role.name;      // display name
-          team = role.team;      // team color
-          img = role.image || require(`@/assets/icons/Reminder/${id}.png`);
-        } else {
-          img = require(`@/assets/icons/Reminder/${id}.png`);
+      while ((match = regex.exec(msg)) !== null) {
+        if (match.index > lastIndex) {
+          parts.push({ text: msg.slice(lastIndex, match.index) });
         }
-      } else if (type === "Player") {
-        name = id;
-        team = "player";
-        img = require(`@/assets/icons/Reminder/user.png`);
+
+        const type = match[1]; // "Character" or "Player"
+        const id = match[2];   // lowercase id for lookup
+        let name = id;         
+        let img = null;
+        let team = null;
+
+        try {
+          if (type === "Character") {
+            const role = this.roles.get(id);
+            if (role) {
+              name = role.name;      // display name
+              team = role.team;      // team color
+              img = role.image || require(`@/assets/icons/Reminder/${id}.png`);
+            } else {
+              img = require(`@/assets/icons/Reminder/${id}.png`);
+            }
+          } else if (type === "Player") {
+            name = id;
+            team = "player";
+            img = require(`@/assets/icons/Reminder/user.png`);
+          }
+        } catch (err) {
+          console.warn(`Image not found for ${type}: ${id}`);
+          img = null; // fallback to null if image fails
+        }
+
+        parts.push({ text: name, img, type, team });
+        lastIndex = regex.lastIndex;
       }
-    } catch (err) {
-      console.warn(`Image not found for ${type}: ${id}`);
-      img = null; // fallback to null if image fails
-    }
 
-    parts.push({ text: name, img, type, team });
-    lastIndex = regex.lastIndex;
-  }
+      if (lastIndex < msg.length) {
+        parts.push({ text: msg.slice(lastIndex) });
+      }
 
-  if (lastIndex < msg.length) {
-    parts.push({ text: msg.slice(lastIndex) });
-  }
+      return parts;
+    },
 
-  return parts;
-},
+    showDemon() {
+      const isCurrentMinion = this.player.role?.team === "minion";
+      let demons = this.players.filter(player => player.role?.team === "demon");
 
+      if (isCurrentMinion) {
+        const magician = this.players.find(player => player.role?.id === "magician");
+        if (magician && !demons.includes(magician)) {
+          demons.push(magician);
+        }
+      }
 
+      if (demons.length === 0) {
+        this.messageQueue.push("No demons found");
+        return;
+      }
+
+      if (demons.length === 1) {
+        this.messageQueue.push("This is the Demon");
+        this.messageQueue.push(`Player: ${demons[0].name}`);
+      } else {
+        this.messageQueue.push("These are the Demons");
+        demons.forEach(demon => {
+          this.messageQueue.push(`Player: ${demon.name}`);
+        });
+      }
+    },
+    showMinion() {
+      this.players.forEach(player => {
+        player.reminders.forEach(reminderToken => {
+          if(reminderToken.name == "Is the Marionette")
+            console.log(reminderToken.name)
+        })
+      })
+      const isCurrentDemon = this.player.role?.team === "demon";
+      let minions = this.players.filter(player =>
+        player.role?.team === "minion" && player.role?.id !== "marionette"
+      );
+
+      if (isCurrentDemon) {
+        const magician = this.players.find(player => player.role?.id === "magician");
+        if (magician && !minions.includes(magician)) {
+          minions.push(magician);
+        }
+      }
+
+      if (minions.length === 0) {
+        this.messageQueue.push("No minions found");
+        return;
+      }
+
+      if (minions.length === 1) {
+        this.messageQueue.push("This is the Minion");
+        this.messageQueue.push(`Player: ${minions[0].name}`);
+      } else {
+        this.messageQueue.push("These are the Minions");
+        minions.forEach(minion => {
+          this.messageQueue.push(`Player: ${minion.name}`);
+        });
+      }
+      
+      if (isCurrentDemon) {
+        this.players.forEach(player => {
+          const hasMarionetteReminder = player.reminders?.some(
+            reminder => reminder.name === "Is the Marionette"
+          );
+          if (hasMarionetteReminder) {
+            this.messageQueue.push("This is Marionette");
+            this.messageQueue.push(`Player: ${player.name}`);
+          }
+        });
+      }
+    },
 
 
 
