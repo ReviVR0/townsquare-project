@@ -24,28 +24,32 @@
         <h4>{{ team }}</h4>
       </aside>
       <ul>
-        <li v-for="role in teamRoles" :class="[team]" :key="role.id">
-          <span
-            class="icon"
-            v-if="role.id"
-            :style="{
-              backgroundImage: `url(${
-                role.image && grimoire.isImageOptIn
-                  ? role.image
-                  : require('../../assets/icons/Reminder/' +
-                      (role.imageAlt || role.id) +
-                      '.png')
-              })`
-            }"
-          ></span>
-          <div class="role">
-            <span class="player" v-if="Object.keys(playersByRole).length">{{
-              playersByRole[role.id] ? playersByRole[role.id].join(", ") : ""
-            }}</span>
-            <span class="name">{{ role.name }}</span>
-            <span class="ability">{{ role.ability }}</span>
-          </div>
-        </li>
+<li v-for="role in teamRoles" :class="[team]" :key="role.id">
+  <a
+    v-if="role.id"
+    class="icon"
+    :href="`https://wiki.bloodontheclocktower.com/${role.name.replace(/ /g, '_')}`"
+    target="_blank"
+    rel="noopener noreferrer"
+    :style="{
+      backgroundImage: `url(${
+        role.image && grimoire.isImageOptIn
+          ? role.image
+          : require('../../assets/icons/Reminder/' +
+              (role.imageAlt || role.id) +
+              '.png')
+      })`
+    }"
+  ></a>
+  <div class="role">
+    <span class="player" v-if="Object.keys(playersByRole).length">
+      {{ playersByRole[role.id] ? playersByRole[role.id].join(", ") : "" }}
+    </span>
+    <span class="name">{{ role.name }}</span>
+    <span class="ability">{{ role.ability }}</span>
+  </div>
+</li>
+
         <li :class="[team]"></li>
         <li :class="[team]"></li>
       </ul>

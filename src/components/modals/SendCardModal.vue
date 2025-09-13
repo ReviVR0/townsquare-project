@@ -256,7 +256,7 @@ export default {
       optionsA: [
         { label: "Use Ability" },
         { label: "Make a Choice" },
-        { label: "Not in Play" },
+        { label: "Not in Play" , action: "notInPlay"},
         { label: "This is the Demon", action: "showDemon" },
         { label: "Your Minions", action: "showMinion" },
         { label: "You Are" },
@@ -281,13 +281,6 @@ export default {
         { label: "Character" },
         { label: "Custom" },
       ],
-      mode: "default",
-      previousMode: null,
-      customMessage: "",
-      messageQueue: [],
-      incomingMessage: "",
-      fullLog: [], // stores full messages from localStorage
-      isResponse: false,
       iconStyle: {
         width: '1.7em',
         height: '1.7em',
@@ -299,14 +292,23 @@ export default {
         marginBottom: '-0.2em',
         marginRight: '-0.2em',
         marginLeft: '-0.1em'
-
       },
+      mode: "default",
+      previousMode: null,
+      customMessage: "",
+      messageQueue: [],
+      incomingMessage: "",
+      fullLog: [], // stores full messages from localStorage
+      isResponse: false,
+      wraithPlayer: null
     };
   },
   computed: {
-    ...mapState("players", ["players"]),
+    ...mapState("players", ["players", "bluffs"]),
     ...mapState(["modals", "session"]),
     ...mapState(["roles", "modals"]),
+    ...mapState(["grimoire", "session"]),
+
     player() {
       return this.players[this.playerIndex];
     },
@@ -410,7 +412,16 @@ export default {
       if (this.isResponse) {
         this.$store.commit("session/sendCard", ["host", [fullMessage, this.session.playerId]]);
       } else {
-        this.$store.commit("session/sendCard", [this.player.id, [fullMessage, "host"]]);
+        this.$store.commit("session/sendCard", [this.player.id, [fullMessage, "Host"]]);
+        if(this.wraithPlayer){
+          this.wraithPlayer.forEach(wraith=>{
+            if(!wraith.id)
+              this.wraithPlayer = this.getWraithPlayers();
+            if(wraith.id && wraith.id != this.player.id){
+              this.$store.commit("session/wraithPeek", [wraith.id, this.player.id]);
+              }
+          })
+        }
       }
 
       this.messageQueue = [];
@@ -507,12 +518,6 @@ export default {
       }
     },
     showMinion() {
-      this.players.forEach(player => {
-        player.reminders.forEach(reminderToken => {
-          if(reminderToken.name == "Is the Marionette")
-            console.log(reminderToken.name)
-        })
-      })
       const isCurrentDemon = this.player.role?.team === "demon";
       let minions = this.players.filter(player =>
         player.role?.team === "minion" && player.role?.id !== "marionette"
@@ -552,23 +557,29 @@ export default {
         });
       }
     },
-
-
-
+    notInPlay(){
+      this.messageQueue.push("Not in Play");
+      this.bluffs.forEach(bluff  => {
+        if(bluff.id)
+          this.messageQueue.push(`Character: ${bluff.id}`)
+      })
+    },
+    getWraithPlayers() {
+      return this.players.filter(p => p.role && p.role.name === "Wraith" && !p.isDead);
+    }
 
   },
 
 watch: {
   'session.recivedMessage'(messageData) {
     if (!messageData) return;
-
     const [text, playerId] = messageData;
-
     // Determine sender
     let senderName;
-    if (this.session.isSpectator) {
-      senderName = "Host";
-    } else {
+      if (playerId == "Host" || playerId == "Wraith") {
+        senderName = playerId;
+      }
+      else {
       senderName = "Unknown";
       this.players.forEach(player => {
         if (player.id === playerId) {
@@ -582,10 +593,9 @@ watch: {
     this.saveMessage(`${senderName}: ${text}`, playerId);
     this.isResponse = true;
     this.mode = 'response';
-    if(!this.modals.sendCard)
+    if(!this.modals.sendCard && senderName != "Wraith")
       this.toggleModal('sendCard');
     this.loadMessages(playerId);
-
 
   },
   'modals.sendCard'(isOpen) {
@@ -598,8 +608,18 @@ watch: {
     }
     if(!this.isResponse)
       this.loadMessages(this.player.id);
+  },
+  "grimoire.isNight"(newVal) {
+    if (newVal && !this.session.isSpectator) {
+      const wraiths = this.getWraithPlayers();
+      if (wraiths.length > 0) {
+        this.wraithPlayer = wraiths;
+      }
+    }
+    else if(this.session.isSpectator && !newVal){
+      this.session.wraithPeek = [];
+    }
   }
-
 },
 
   mounted() {

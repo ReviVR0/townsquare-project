@@ -69,7 +69,7 @@
           class="vote hand-up"
           :title="`Hand UP (${player.handRaised})`"
         />
-
+        <!-- TO DO :style="{ transform: `rotate(${-pointingAngle(12, 6, 0) + 180}deg) scale(1) !important` }" -->
 
         <font-awesome-icon
           icon="times"
@@ -141,10 +141,11 @@
       <div
         class="name"
         @click="isMenuOpen = !isMenuOpen"
-        :class="{ active: isMenuOpen || messageCount > 0}"
+        :class="{ active: isMenuOpen || messageCount > 0 || session.wraithPeek.includes(player.id)}"
       >
         <span>{{ player.name }}<span v-if="messageCount > 0 && !session.isSpectator">({{ messageCount }})</span></span>
         <font-awesome-icon icon="venus-mars" v-if="player.pronouns" />
+        <font-awesome-icon icon="eye" v-if="session.wraithPeek.includes(player.id)"/>
         <div class="pronouns" v-if="player.pronouns">
           <span>{{ player.pronouns }}</span>
         </div>
@@ -204,13 +205,13 @@
                 Nomination
               </li>
             </template>
-          <li
-            @click="SendCard"
-            v-if="player.id && grimoire.isNight"
-          >
-              <font-awesome-icon icon="people-arrows" />
-              Send Card
-          </li>
+            <li
+              @click="SendCard"
+              v-if="player.id && grimoire.isNight"
+            >
+                <font-awesome-icon icon="people-arrows" />
+                Send Card
+            </li>
           </template>
           <li
             @click="claimSeat"
@@ -231,7 +232,13 @@
             <font-awesome-icon :icon="getMoveIcon(move)" />
             {{ move.charAt(0).toUpperCase() + move.slice(1) }}
           </li>
-
+          <li
+            @click="WraithLook"
+            v-if="player.id && grimoire.isNight && session.wraithPeek.length > 0"
+          >
+              <font-awesome-icon icon="eye" />
+              Look
+          </li>
 
         </ul>
       </transition>
@@ -592,6 +599,41 @@ export default {
       case "scissors": return "cut"; // since free hand-scissors icon doesn't exist
     }
   },
+
+  pointingAngle(total, fromIndex, toIndex) {
+    if (fromIndex === toIndex) return 0; // pointing at yourself
+
+    // angle for each player clockwise from 12 o'clock
+    const angleClockwiseFrom12 = (index) => (index * 360) / total;
+
+    // convert polar to cartesian coordinates
+    const toXY = (thetaDeg) => {
+      const rad = (thetaDeg * Math.PI) / 180;
+      return { x: Math.sin(rad), y: -Math.cos(rad) };
+    };
+
+    const { x: x1, y: y1 } = toXY(angleClockwiseFrom12(fromIndex));
+    const { x: x2, y: y2 } = toXY(angleClockwiseFrom12(toIndex));
+
+    const dx = x2 - x1;
+    const dy = y2 - y1;
+
+    // atan2 gives angle from +X axis, CCW positive
+    const angleRad = Math.atan2(dy, dx);
+    const angleDeg = (angleRad * 180) / Math.PI;
+
+    // convert to CSS rotation: 0deg = up (12 o'clock), positive clockwise
+    let cssDeg = 90 - angleDeg;
+    cssDeg = ((cssDeg % 360) + 360) % 360; // normalize to 0..360
+
+    return cssDeg;
+  },
+  WraithLook(){
+    this.isMenuOpen = false;
+  localStorage.removeItem("messages_host");
+    this.$store.commit("session/wraithLook", [this.session.playerId, this.player.id]);
+  }
+
   },
   mounted() {
     EventBus.$on("spacebar-vote", this.onSpacebarRaiseHand);
@@ -843,20 +885,28 @@ export default {
     }
     &:hover *,
     &.fa-hand-paper * {
-      fill: url(#demon);
+      fill: url(#townsfolk);
+    }
+    &.fa-cut * {
+      fill: url(#townsfolk);
+    }
+    &.fa-hand-rock * {
+      fill: url(#townsfolk);
     }
     &.fa-times * {
       fill: url(#townsfolk);
     }
-    .vote.hand-up {
-      pointer-events: auto;         /* can hover if needed */
-      transition: all 250ms ease-in-out;
-      color: yellow;                /* highlight color */
-      filter: drop-shadow(0 0 6px black);
-      z-index: 1;
-    }
   }
 }
+.player .overlay svg.vote.hand-up {
+  pointer-events: auto;         /* can hover if needed */
+  transition: all 250ms ease-in-out;
+  color: yellow;                /* highlight color */
+  filter: drop-shadow(0 0 6px black);
+  z-index: 1;  
+  transform-origin: center center; /* important for rotation */
+}
+
 
 // other player voted yes, but is not locked yet
 #townsquare.vote .player.vote-yes .overlay svg.vote.fa-hand-paper {

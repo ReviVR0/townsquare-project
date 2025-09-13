@@ -252,6 +252,12 @@ class LiveSession {
         }
         break;
       }
+      case "wraithPeek":
+        this._store.commit("session/wraithPeek", params);
+      break;
+      case "wraithLook":
+        this._store.commit("session/wraithLook", params);
+      break;
     }
 
   }
@@ -969,6 +975,57 @@ class LiveSession {
       }))
     };
   }
+  wraithPeek(params) {
+    this._sendDirect(params[0], "wraithPeek", params[1]);
+  }
+  wraithLook(params) {
+    if (!this._isSpectator) {
+      const fromId = params[0]; // Wraith
+      const ofWhoId = params[1]; // Player being looked at
+
+      const key = `messages_${ofWhoId}`;
+      const stored = localStorage.getItem(key);
+
+      if (stored) {
+        let messages = [];
+        try {
+          messages = JSON.parse(stored);
+        } catch (e) {
+          console.error("Invalid messages format in localStorage:", stored);
+        }
+        const recent = messages.slice(-4);
+
+        recent.forEach(msg => {
+          let sender = String(ofWhoId);
+          let content = msg;
+
+          if (msg.startsWith("You:")) {
+            sender = "Host";
+            content = msg.replace(/^You:\s*/, "");
+          } else {
+            content = msg.replace(/^[^:]+:\s*/, "");
+          }
+
+          this._store.commit("session/sendCard", [
+            fromId,              
+            [content, sender]   
+          ]);
+        });
+        
+        this._store.commit("session/sendCard", [
+          ofWhoId,              
+          ["Looked at you", "Wraith"]   
+        ]);
+      } else {
+        console.log(`No messages found for ${ofWhoId}`);
+      }
+
+      return;
+    }
+
+    // spectators still notify host
+    this._sendDirect("host", "wraithLook", params);
+  }
 
 
   StorytellerCodeGrim(params){
@@ -1106,6 +1163,13 @@ export default store => {
       case "session/setHandRaised":
         session.setHandRaised(payload);
         break;    
+      case "session/wraithPeek":
+        session.wraithPeek(payload);;
+        break;
+      case "session/wraithLook":
+        session.wraithLook(payload);;
+        break;
+        
     }
   });
 

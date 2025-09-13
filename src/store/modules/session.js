@@ -34,6 +34,7 @@ const state = () => ({
   winningTeam: null,
   StorytellerCode: null,
   hiddenVote: false,
+  wraithPeek: [],
 });
 
 const getters = {};
@@ -132,7 +133,13 @@ const mutations = {
   SetSpectator(state, param){
     state.isSpectator = param[1];
   },
-  setHandRaised(){}
+  setHandRaised(){},
+  wraithPeek(state, person){
+    if (!state.wraithPeek.includes(person) && state.isSpectator) {
+      state.wraithPeek.push(person);
+    }  
+  },
+  wraithLook(){},
 };
 
 export default {

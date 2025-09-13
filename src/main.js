@@ -5,7 +5,7 @@ import { library } from "@fortawesome/fontawesome-svg-core";
 import { fas } from "@fortawesome/free-solid-svg-icons";
 import { fab } from "@fortawesome/free-brands-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome";
-import { faHandPaper, faHandRock, faCut } from '@fortawesome/free-solid-svg-icons';
+import { faHandPaper, faHandRock, faCut} from '@fortawesome/free-solid-svg-icons';
 library.add(faHandPaper, faHandRock, faCut);
 
 const faIcons = [
@@ -55,6 +55,7 @@ const faIcons = [
   "VoteYea",
   "WindowMaximize",
   "WindowMinimize",
+  "Eye",
 ];
 const fabIcons = ["Github", "Discord"];
 library.add(
