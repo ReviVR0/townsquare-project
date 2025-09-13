@@ -392,7 +392,8 @@ export default {
       revealed: {}, // { playerId: true }
       revealedShroud: {},
       move: "paper",
-      moves: ["rock", "paper", "scissors"]
+      moves: ["rock", "paper", "scissors"],
+      banNames: ["wraith", "st", "host", "you", "storyteller", "player"],
     };
   },
   methods: {
@@ -430,19 +431,28 @@ export default {
     },
     changeName() {
       if (this.session.isSpectator) return;
-      const name = prompt("Player name", this.player.name) || this.player.name;
-      const isValid =
-      name.length > 0 &&
-      name.length <= 32 &&
-      /^[A-Za-z0-9\s'-]+$/.test(name);
 
-    if (!isValid) {
-      alert("Invalid name. Name must be in range of 1-32 and not contain special characters");
-      return;
-    }
-      
+      let name = prompt("Player name", this.player.name) || this.player.name;
+      name = name.trim();
+      // Basic validation
+      const isValid =
+        name.length > 0 &&
+        name.length <= 32 &&
+        /^[\p{L}0-9\s'-]+$/u.test(name);
+      if (!isValid) {
+        alert("Invalid name. Name must be in range of 1-32 and not contain special characters");
+        return;
+      }
+
+      // Ban list check
+      if (this.banNames.includes(name.toLowerCase())) {
+        alert("This name is not allowed. Please choose another.");
+        return;
+      }
+
       this.updatePlayer("name", name, true);
     },
+
     removeReminder(reminder) {
       const reminders = [...this.player.reminders];
       reminders.splice(this.player.reminders.indexOf(reminder), 1);

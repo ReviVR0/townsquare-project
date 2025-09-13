@@ -246,6 +246,7 @@ export default {
   data() {
     return {
       tab: "grimoire",
+      banNames: ["wraith", "st", "host", "you", "storyteller", "player"],
     };
   },
   methods: {
@@ -318,11 +319,32 @@ export default {
     addPlayer() {
       if (this.session.isSpectator) return;
       if (this.players.length >= 20) return;
-      const name = prompt("Player name");
-      if (name) {
-        this.$store.commit("players/add", name);
+
+      let name = prompt("Player name");
+      if (!name) return;
+
+      name = name.trim();
+
+      // Basic validation
+      const isValid =
+        name.length > 0 &&
+        name.length <= 32 &&
+        /^[\p{L}0-9\s'-]+$/u.test(name);
+
+      if (!isValid) {
+        alert("Invalid name. Name must be 1-32 characters and not contain special characters");
+        return;
       }
+
+      // Forbidden names check (case-insensitive)
+      if (this.banNames.includes(name.toLowerCase())) {
+        alert("This name is not allowed. Please choose another.");
+        return;
+      }
+
+      this.$store.commit("players/add", name);
     },
+
     randomizeSeatings() {
       if (this.session.isSpectator) return;
       if (confirm("Are you sure you want to randomize seatings?")) {
