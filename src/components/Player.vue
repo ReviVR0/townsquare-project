@@ -239,7 +239,6 @@
               <font-awesome-icon icon="eye" />
               Look
           </li>
-
         </ul>
       </transition>
     </div>
@@ -642,8 +641,7 @@ export default {
     this.isMenuOpen = false;
   localStorage.removeItem("messages_host");
     this.$store.commit("session/wraithLook", [this.session.playerId, this.player.id]);
-  }
-
+  },
   },
   mounted() {
     EventBus.$on("spacebar-vote", this.onSpacebarRaiseHand);

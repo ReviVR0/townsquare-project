@@ -6,6 +6,9 @@
   >
     <div class="send-cards-wrapper">
       <h3>Send info to {{ InfoReciver }}</h3>
+
+
+    
 <!-- Response Mode -->
 <div v-if="mode === 'response'" class="submenu">
   <div v-if="fullLog.length" class="message-log" style="margin-bottom: 10px; max-height: 120px; overflow-y: auto;">
@@ -100,6 +103,34 @@
   <button @click="closeModal">Close</button>
 </div>
 
+<div v-else-if="mode === 'wraith'" class="submenu">
+  <h4>Select a Wraith Receiver:</h4>
+  <div class="option-b-container">
+    <!-- Storyteller option -->
+    <div
+      class="card-small"
+      @click="setWraithReceiver({ id: -1, name: 'Storyteller' }); mode = 'response'"
+    >
+      <img :src="iconSrc" />
+      <span class="label">Storyteller</span>
+    </div>
+
+    <!-- Players with valid id -->
+    <div
+      v-for="(p, idx) in validPlayers"
+      :key="'wraith-p-' + idx"
+      class="card-small"
+      @click="setWraithReceiver(p); mode = 'response'"
+    >
+      <img :src="iconSrc" />
+      <span class="label">{{ p.name }}</span>
+    </div>
+  </div>
+
+  <button @click="closeModal">Close</button>
+</div>
+
+
       <!-- Default mode with message queue and options -->
 <div v-if="mode === 'default'">
 <div v-if="fullLog.length" class="message-log" style="margin-bottom: 10px; max-height: 120px; overflow-y: auto;">
@@ -129,6 +160,9 @@
 
 
 </div>
+
+
+
   <!-- Display queued message (same as response mode) -->
   <div v-if="messageQueue.length" style="margin-bottom: 10px; text-align: center;">
 <p style="color: #ccc,
@@ -300,7 +334,8 @@ export default {
       incomingMessage: "",
       fullLog: [], // stores full messages from localStorage
       isResponse: false,
-      wraithPlayer: null
+      wraithPlayer: null,
+      wraithReceiver: null,
     };
   },
   computed: {
@@ -308,14 +343,19 @@ export default {
     ...mapState(["modals", "session"]),
     ...mapState(["roles", "modals"]),
     ...mapState(["grimoire", "session"]),
-
+    isWraith(){
+      const me = this.players.find(p => p.id === this.session.playerId);
+      return me?.role?.id === "wraith";
+    },
     player() {
+      //if(this.isWraith && this.wraithReceiver) return this.wraithReceiver;
       return this.players[this.playerIndex];
     },
     rolesArray() {
       return Array.from(this.$store.state.roles.entries()).map(([key, value]) => ({ key, value }));
     },
     InfoReciver() {
+      if(this.isWraith && this.wraithReceiver) return this.wraithReceiver.name;
       return this.isResponse ? "Storyteller" : this.player.name;
     },
     storageKey() {
@@ -323,6 +363,11 @@ export default {
       return !this.session.isSpectator
         ? `messages_${this.player.id}`
         : "messages_host";
+    },
+    validPlayers() {
+      return this.$store.state.players.players.filter(
+        p => p.id && p.id !== this.session.playerId
+      );
     },
   },
   methods: {
@@ -332,9 +377,26 @@ export default {
       const key = this.session.isSpectator
         ? "host"
         : playerId || this.player.id; // use passed ID if available
+
       const saved = localStorage.getItem(`messages_${key}`);
-      this.fullLog = saved ? JSON.parse(saved) : [];
+      let messages = saved ? JSON.parse(saved) : [];
+
+      if (this.wraithReceiver && this.session.isSpectator) {
+        if (this.wraithReceiver.id !== -1) {
+          // Only keep messages sent to this specific receiver
+          const prefix = `You to ${this.wraithReceiver.name}:`;
+          messages = messages.filter(msg => msg.startsWith(prefix));
+        } else {
+          // Storyteller → keep everything except "You to ..." messages
+          messages = messages.filter(msg => !msg.startsWith("You to"));
+        }
+      }
+
+      this.fullLog = messages;
     },
+
+
+
 
 
       saveMessage(message, storageId = null) {
@@ -407,17 +469,24 @@ export default {
       const fullMessage = this.messageQueue.join(" ");
       if (!fullMessage) return;
 
-      this.saveMessage(`You: ${fullMessage}`);
 
       if (this.isResponse) {
-        this.$store.commit("session/sendCard", ["host", [fullMessage, this.session.playerId]]);
+        if(this.isWraith && this.wraithReceiver.id != -1){
+          this.saveMessage(`You to ${this.wraithReceiver.name}: ${fullMessage}`);
+          this.$store.commit("session/sendCard", ["host", [`Wraith#${this.wraithReceiver.name}#${this.wraithReceiver.id}#`+fullMessage, this.session.playerId]]);
+        }
+        else{
+          this.saveMessage(`You: ${fullMessage}`);
+          this.$store.commit("session/sendCard", ["host", [fullMessage, this.session.playerId]]);
+        }
       } else {
+        this.saveMessage(`You: ${fullMessage}`);
         this.$store.commit("session/sendCard", [this.player.id, [fullMessage, "Host"]]);
         if(this.wraithPlayer){
           this.wraithPlayer.forEach(wraith=>{
-            if(!wraith.id)
+            if(!wraith.id || this.players.some(p => p.id === wraith.id && p.role?.id === "Wraith"))
               this.wraithPlayer = this.getWraithPlayers();
-            if(wraith.id && wraith.id != this.player.id){
+            if(wraith.id && wraith.id != this.player.id && !this.hasDisabledAbility(wraith.id)){
               this.$store.commit("session/wraithPeek", [wraith.id, this.player.id]);
               }
           })
@@ -427,7 +496,7 @@ export default {
       this.messageQueue = [];
       this.incomingMessage = "";
       this.isResponse = false;
-      this.mode = "default";
+      this.wraithReceiver = null;
       this.toggleModal("sendCard");
     },
 
@@ -441,6 +510,7 @@ export default {
       this.incomingMessage = "";
       this.isResponse = false;
       this.mode = "default";
+      this.wraithReceiver = null;
       // Reload messages for next time
     },
     parseMessage(msg) {
@@ -566,41 +636,84 @@ export default {
     },
     getWraithPlayers() {
       return this.players.filter(p => p.role && p.role.name === "Wraith" && !p.isDead);
+    },
+    hasDisabledAbility(playerId) {
+      const player = this.players.find(p => p.id === playerId);
+      if (!player || !player.reminders) return false;
+
+      const disabledReminders = ["Poisoned", "Drunk", "No ability"];
+      return player.reminders.some(r => disabledReminders.includes(r.name));
+    },
+    setWraithReceiver(params){
+      this.wraithReceiver = params;
+      this.loadMessages();
     }
+
 
   },
 
 watch: {
-  'session.recivedMessage'(messageData) {
-    if (!messageData) return;
-    const [text, playerId] = messageData;
-    // Determine sender
-    let senderName;
-      if (playerId == "Host" || playerId == "Wraith") {
-        senderName = playerId;
+'session.recivedMessage'(messageData) {
+  if (!messageData) return;
+
+  let [text, playerId] = messageData;
+  if (!text || !text.length) return;
+  let messageShow = true;
+
+
+  let senderName;
+  if (!this.session.isSpectator && text.startsWith("Wraith#")) {
+    const sender = this.players.find(p => p.id === playerId);
+    if(sender?.role?.id !== "wraith" || this.hasDisabledAbility(sender.id)) {
+      this.$store.commit("session/sendCard", [this.player.id, ["You have no ability", "Host"]])
+      return
+    }
+    const parts = text.split("#"); // ["", "Wraith", "Julita", "qmr1r4oijq", "Yes "]
+    const [type, name, id, ...messageParts] = parts;
+    text = messageParts;
+    this.wraithReceiver = { id, name };
+    this.players.forEach(player => {
+      if (player.id === playerId) {
+        senderName = player.name;
+        this.wraithReceiver = player;
       }
-      else {
+    });
+    senderName = senderName+` to `+ name;
+    messageShow = false;
+    this.$store.commit("session/sendCard", [
+      id,              
+      [text, type]   
+    ]);
+  }
+  else{
+    if (playerId == "Host" || playerId == "Wraith") {
+      senderName = playerId;
+      this.wraithReceiver = { id: -1, name: 'Storyteller' }
+    } else {
       senderName = "Unknown";
       this.players.forEach(player => {
         if (player.id === playerId) {
           senderName = player.name;
+          this.wraithReceiver = player;
         }
       });
     }
-
-    // Save message using playerId as storage key
-    this.incomingMessage = text;
-    this.saveMessage(`${senderName}: ${text}`, playerId);
-    this.isResponse = true;
-    this.mode = 'response';
-    if(!this.modals.sendCard && senderName != "Wraith")
-      this.toggleModal('sendCard');
-    this.loadMessages(playerId);
-
-  },
+  }
+  // Save message using playerId as storage key
+  this.incomingMessage = text;
+  this.saveMessage(`${senderName}: ${text}`, playerId);
+  this.isResponse = true;
+  this.mode = 'response';
+  if (!this.modals.sendCard && senderName != "Wraith" && messageShow)
+    this.toggleModal('sendCard');
+  this.loadMessages(playerId);
+},
   'modals.sendCard'(isOpen) {
     if (isOpen && this.session.isSpectator) {
-      this.mode = 'response';
+      if(this.isWraith && !this.wraithReceiver)
+        this.mode = 'wraith';
+      else
+        this.mode = 'response';
       this.isResponse = true;
       if (this.fullLog.length > 0) {
         this.incomingMessage = this.fullLog[this.fullLog.length - 1].split(': ').slice(1).join(': ');
@@ -623,6 +736,13 @@ watch: {
 },
 
   mounted() {
+    if (this.session.isSpectator) {
+      if(this.isWraith && !this.wraithReceiver)
+        this.mode = 'wraith';
+      else
+        this.mode = 'response';
+      this.isResponse = true;
+    }
     this.loadMessages(this.player.id);
   }
 };
