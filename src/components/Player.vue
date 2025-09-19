@@ -639,7 +639,7 @@ export default {
   },
   WraithLook(){
     this.isMenuOpen = false;
-  localStorage.removeItem("messages_host");
+    localStorage.removeItem("messages_host");
     this.$store.commit("session/wraithLook", [this.session.playerId, this.player.id]);
   },
   },

@@ -146,6 +146,9 @@
               Co-Storyteller
               <em v-if="!session.isSpectator">{{ session.StorytellerCode }}</em>
             </li>
+            <li @click="LilMonsta" v-if="!session.isSpectator && grimoire.isNight">
+              Start Lil'Monsta Vote<em>[M]</em>
+            </li>
 
             <li @click="leaveSession">
               Leave Session
@@ -401,7 +404,12 @@ export default {
         this.$store.commit("session/StorytellerCode", randomCode.toString());
         }
     },
+    LilMonsta(){
+      if (!confirm("Start Lil’Monsta vote?")) return;
+        this.$store.commit("session/setLilMonstaVote", !this.session.isLilMonstaVote);
+    }
   },
+  
   mounted() {
     window.addEventListener("resize", this.handleResize);
     this.handleResize();

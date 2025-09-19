@@ -162,7 +162,7 @@ export default {
       isFabledOpen: true,
       inviteCount: 0,
       messageCount: 0,
-      position: { x: 15, y: 15 },
+      position: { x: 175, y: 20 },
       isDragging: false,
       offset: { x: 0, y: 0 },
     };
@@ -882,7 +882,7 @@ div.timer {
   display: flex;
   justify-content: center;
   padding: 4px 10px;
-  width: 150px;
+  width: 120px;
 
   background-color: rgba(0, 0, 0, 0.75);
   border-radius: 12px;

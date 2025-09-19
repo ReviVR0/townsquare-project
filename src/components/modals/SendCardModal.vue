@@ -5,7 +5,7 @@
     @close="closeModal"
   >
     <div class="send-cards-wrapper">
-      <h3>Send info to {{ InfoReciver }}</h3>
+      <h3 v-if="mode !== `lilMonstaVote`">Send info to {{ InfoReciver }}</h3>
 
 
     
@@ -102,6 +102,55 @@
 
   <button @click="closeModal">Close</button>
 </div>
+
+
+<div v-if="mode === 'lilMonstaVote'" class="submenu">
+  <h3>Lil’Monsta Selection</h3>
+  <p class="subtitle">
+    Minions, choose a player to become Lil’Monsta
+  </p>
+
+  <!-- Timer -->
+  <div v-if="lilMonstaTimer > 0" class="lilmonsta-timer" style="margin-bottom: 8px; font-weight: bold;">
+    Time remaining: {{ lilMonstaTimer }}s
+  </div>
+
+  <!-- Recent Messages (simplified) -->
+  <div v-if="fullLog.length" class="message-log" style="margin-bottom: 10px; max-height: 120px; overflow-y: auto;">
+    <h5 style="margin: 0 0 4px 0; font-size: 0.9em;">Recent Messages:</h5>
+    <div
+      v-for="(msg, idx) in fullLog.slice(-4)"
+      :key="idx"
+      style="font-size: 0.85em; margin-bottom: 2px;"
+    >
+      {{ msg }}
+    </div>
+  </div>
+
+  <div class="option-b-container" v-if="session.isSpectator">
+    <!-- Players with valid id -->
+    <div
+      v-for="(p, idx) in $store.state.players.players"
+      :key="'lilmonsta-p-' + idx"
+      class="card-small"
+      :class="{ disabled: lilMonstaTimer <= 0 }"
+      @click="lilMonstaTimer > 0 && selectLilMonsta(p)"
+    >
+      <img :src="iconSrc" />
+      <span class="label">{{ p.name }}</span>
+    </div>
+  </div>
+
+  <button @click="closeModal">Close</button>
+</div>
+
+
+
+
+
+
+
+
 
 <div v-else-if="mode === 'wraith'" class="submenu">
   <h4>Select a Wraith Receiver:</h4>
@@ -336,6 +385,8 @@ export default {
       isResponse: false,
       wraithPlayer: null,
       wraithReceiver: null,
+      lilMonstaTimer: 0,
+      lilMonstaInterval: null,
     };
   },
   computed: {
@@ -373,27 +424,39 @@ export default {
   methods: {
     ...mapMutations(["toggleModal"]),
 
-    loadMessages(playerId = null) {
-      const key = this.session.isSpectator
+  loadMessages(playerId = null) {
+    let key;
+
+    if (!this.session.isSpectator && this.session.isLilMonstaVote) {
+      key = "LilMonstaVotes";
+    } else {
+      key = this.session.isSpectator
         ? "host"
-        : playerId || this.player.id; // use passed ID if available
+        : playerId || this.player.id;
+    }
 
-      const saved = localStorage.getItem(`messages_${key}`);
-      let messages = saved ? JSON.parse(saved) : [];
+    const saved = localStorage.getItem(`messages_${key}`);
+    let messages = saved ? JSON.parse(saved) : [];
 
-      if (this.wraithReceiver && this.session.isSpectator) {
-        if (this.wraithReceiver.id !== -1) {
-          // Only keep messages sent to this specific receiver
-          const prefix = `You to ${this.wraithReceiver.name}:`;
-          messages = messages.filter(msg => msg.startsWith(prefix));
-        } else {
-          // Storyteller → keep everything except "You to ..." messages
-          messages = messages.filter(msg => !msg.startsWith("You to"));
-        }
+    if (this.wraithReceiver && this.session.isSpectator) {
+      if (this.wraithReceiver.id !== -1) {
+        const prefix = `You to ${this.wraithReceiver.name}:`;
+        messages = messages.filter(msg => msg.startsWith(prefix));
+      } else {
+        messages = messages.filter(msg => !msg.startsWith("You to"));
       }
+    }
+    if (key === "LilMonstaVotes" && Array.isArray(messages)) {
+      messages = messages.map(v =>
+        typeof v === "object" && v.voterName && v.votedName
+          ? `${v.voterName} voted for ${v.votedName}`
+          : v
+      );
+    }
 
-      this.fullLog = messages;
-    },
+    this.fullLog = messages;
+  },
+
 
 
 
@@ -482,10 +545,12 @@ export default {
       } else {
         this.saveMessage(`You: ${fullMessage}`);
         this.$store.commit("session/sendCard", [this.player.id, [fullMessage, "Host"]]);
+        const wraiths = this.getWraithPlayers();
+        if (wraiths.length > 0) {
+          this.wraithPlayer = wraiths;
+        }
         if(this.wraithPlayer){
           this.wraithPlayer.forEach(wraith=>{
-            if(!wraith.id || this.players.some(p => p.id === wraith.id && p.role?.id === "Wraith"))
-              this.wraithPlayer = this.getWraithPlayers();
             if(wraith.id && wraith.id != this.player.id && !this.hasDisabledAbility(wraith.id)){
               this.$store.commit("session/wraithPeek", [wraith.id, this.player.id]);
               }
@@ -647,8 +712,84 @@ export default {
     setWraithReceiver(params){
       this.wraithReceiver = params;
       this.loadMessages();
-    }
+    },
+    selectLilMonsta(player) {
+      if (this.lilMonstaTimer <= 0) return; // voting locked
+      const message = [player.name, this.session.playerId];
+      this.$store.commit("session/sendCard", [
+        "host",
+        [message, "LilMonsta"]
+      ]);
 
+      // Return to default mode
+      this.closeModal();
+    },
+    startLilMonstaTimer() {
+      this.lilMonstaTimer = 27;
+      if(this.session.isSpectator) this.lilMonstaTimer -= 2;
+      this.mode = "lilMonstaVote"
+      if (this.lilMonstaInterval) clearInterval(this.lilMonstaInterval);
+      this.lilMonstaInterval = setInterval(() => {
+        if (this.lilMonstaTimer > 0) {
+          this.lilMonstaTimer--;
+        } else {
+          clearInterval(this.lilMonstaInterval);
+          this.lilMonstaInterval = null;
+          this.lockLilMonstaVoting();
+        }
+      }, 1000);
+    },
+    resetLilMonstaTimer() {
+      if (this.lilMonstaInterval) clearInterval(this.lilMonstaInterval);
+      this.lilMonstaTimer = 0;
+      if(this.session.isSpectator) this.mode = "response";
+      else this.mode = "default";
+    },
+    lockLilMonstaVoting() {
+      if(this.session.isSpectator) this.mode = "response";
+      this.lilMonstaTimer = 0;
+      if (!this.session.isSpectator) {
+        const key = "messages_LilMonstaVotes";
+        const votes = JSON.parse(localStorage.getItem(key)) || [];
+
+        // Count votes per votedName
+        const count = {};
+        votes.forEach(v => {
+          if (!count[v.votedName]) count[v.votedName] = 0;
+          count[v.votedName]++;
+        });
+
+        // Find highest voted player(s)
+        let maxVotes = 0;
+        let winners = [];
+        for (const name in count) {
+          if (count[name] > maxVotes) {
+            maxVotes = count[name];
+            winners = [name];
+          } else if (count[name] === maxVotes) {
+            winners.push(name);
+          }
+        }
+
+        let resultMessage;
+        if (winners.length === 1) {
+          resultMessage = `Lil’Monsta Vote Result: ${winners[0]} with ${maxVotes} vote(s)`;
+        } else {
+          resultMessage = `Lil’Monsta Vote Result: Tie! Storyteller decides.`;
+        }
+        this.$store.commit("session/setLilMonstaVote", false);
+        this.players.forEach(p => {
+          if (p.role?.team === "minion" && p.id) {
+            this.$store.commit("session/sendCard", [
+              p.id,
+              [resultMessage, "Host"]
+            ]);
+            this.saveMessage(`Host: ${resultMessage}`, p.id);
+          }
+        });
+        this.loadMessages();
+      }
+    },
 
   },
 
@@ -660,7 +801,38 @@ watch: {
   if (!text || !text.length) return;
   let messageShow = true;
 
+  if (!this.session.isSpectator && playerId === "LilMonsta") {
+    const [voted, voterId] = text; // now text is an array of [votedId, voterId]
 
+    const key = "messages_LilMonstaVotes";
+    const saved = JSON.parse(localStorage.getItem(key)) || [];
+
+    const voter = this.players.find(p => p.id === voterId);
+
+    const newVote = {
+      voterId: voterId,
+      voterName: voter?.name || "Unknown",
+      votedName: voted,
+    };
+
+    const updated = saved.filter(v => v.voterId !== voterId);
+    updated.push(newVote);
+
+    // Save locally
+    localStorage.setItem(key, JSON.stringify(updated));
+
+    // Send updated vote list to all minions
+    const minionPlayers = this.players.filter(p => p.role?.team === "minion" && p.id);
+    const readable = updated.map(v => `${v.voterName} voted for ${v.votedName}`);
+    minionPlayers.forEach(minion => {
+      this.$store.commit("session/sendCard", [
+        minion.id,
+        [readable, "LilMonsta"]
+      ]);
+    });
+    this.loadMessages(playerId);
+    return;
+  }
   let senderName;
   if (!this.session.isSpectator && text.startsWith("Wraith#")) {
     const sender = this.players.find(p => p.id === playerId);
@@ -686,7 +858,7 @@ watch: {
     ]);
   }
   else{
-    if (playerId == "Host" || playerId == "Wraith") {
+    if (playerId == "Host" || playerId == "Wraith" || playerId == "LilMonsta") {
       senderName = playerId;
       this.wraithReceiver = { id: -1, name: 'Storyteller' }
     } else {
@@ -698,12 +870,16 @@ watch: {
         }
       });
     }
+    if(playerId == "LilMonsta")
+      localStorage.removeItem("messages_host");
+
   }
   // Save message using playerId as storage key
   this.incomingMessage = text;
   this.saveMessage(`${senderName}: ${text}`, playerId);
   this.isResponse = true;
-  this.mode = 'response';
+  if(this.session.isLilMonstaVote) this.mode = 'lilMonstaVote';
+  else this.mode = 'response';
   if (!this.modals.sendCard && senderName != "Wraith" && messageShow)
     this.toggleModal('sendCard');
   this.loadMessages(playerId);
@@ -712,25 +888,30 @@ watch: {
     if (isOpen && this.session.isSpectator) {
       if(this.isWraith && !this.wraithReceiver)
         this.mode = 'wraith';
-      else
-        this.mode = 'response';
+      else if(this.session.isLilMonstaVote) this.mode = 'lilMonstaVote';
+      else this.mode = 'response';
       this.isResponse = true;
       if (this.fullLog.length > 0) {
         this.incomingMessage = this.fullLog[this.fullLog.length - 1].split(': ').slice(1).join(': ');
       }
     }
-    if(!this.isResponse)
+    if(!this.isResponse){
+      if(this.session.isLilMonstaVote) this.mode = 'lilMonstaVote';
       this.loadMessages(this.player.id);
+    }
   },
   "grimoire.isNight"(newVal) {
-    if (newVal && !this.session.isSpectator) {
-      const wraiths = this.getWraithPlayers();
-      if (wraiths.length > 0) {
-        this.wraithPlayer = wraiths;
-      }
-    }
-    else if(this.session.isSpectator && !newVal){
+    if(this.session.isSpectator && !newVal){
       this.session.wraithPeek = [];
+    }
+  },
+  'session.isLilMonstaVote'(newVal) {
+    if (newVal) {
+      if (!this.modals.sendCard)
+        this.toggleModal('sendCard');
+      this.startLilMonstaTimer();
+    } else {
+      this.resetLilMonstaTimer();
     }
   }
 },

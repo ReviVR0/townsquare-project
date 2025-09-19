@@ -158,6 +158,11 @@ export default {
           if (this.session.isSpectator) return;
           this.$store.commit("toggleModal", "winningTeam");
           break;
+        case "m":
+          if (this.session.isSpectator || !this.grimoire.isNight) return;
+          if (!confirm("Start Lil’Monsta vote?")) return;
+          this.$store.commit("session/setLilMonstaVote", !this.session.isLilMonstaVote);
+          break;
       }
     }
   }

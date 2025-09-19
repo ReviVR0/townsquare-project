@@ -35,6 +35,7 @@ const state = () => ({
   StorytellerCode: null,
   hiddenVote: false,
   wraithPeek: [],
+  isLilMonstaVote: false,
 });
 
 const getters = {};
@@ -62,6 +63,7 @@ const mutations = {
   timer: set("timer"),
   winningTeam: set("winningTeam"),
   setHiddenVote: set("hiddenVote"),
+  setLilMonstaVote: set("isLilMonstaVote"),
   setSessionId(state, sessionId) {
     state.sessionId = sessionId
       .toLocaleLowerCase()

@@ -257,7 +257,10 @@ class LiveSession {
       break;
       case "wraithLook":
         this._store.commit("session/wraithLook", params);
-      break;
+        break;
+      case "setLilMonstaVote":
+        this._store.commit("session/setLilMonstaVote", params);
+        break;
     }
 
   }
@@ -1047,6 +1050,13 @@ class LiveSession {
   setHandRaised(params){
     this._send("setHandRaised", params);
   }
+  setLilMonstaVote(params) {
+    this._store.state.players.players.forEach(p => {
+        if (p.role?.team === "minion" && p.id) {
+            this._sendDirect(p.id,"setLilMonstaVote", params);
+        }
+      });
+  }
 }
 export default store => {
   // setup
@@ -1070,7 +1080,6 @@ export default store => {
         if (payload) {
           session.distributeRoles();
         }
-        this._store.dispatch("players/clearRoles")
         break;
       case "session/nomination":
       case "session/setNomination":
@@ -1164,12 +1173,15 @@ export default store => {
         session.setHandRaised(payload);
         break;    
       case "session/wraithPeek":
-        session.wraithPeek(payload);;
+        session.wraithPeek(payload);
         break;
       case "session/wraithLook":
         session.wraithLook(payload);;
+        break;    
+      case "session/setLilMonstaVote":
+        if (session._isSpectator) return;
+        session.setLilMonstaVote(payload);
         break;
-        
     }
   });
 
