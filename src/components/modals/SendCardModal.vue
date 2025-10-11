@@ -424,38 +424,38 @@ export default {
   methods: {
     ...mapMutations(["toggleModal"]),
 
-  loadMessages(playerId = null) {
-    let key;
+    loadMessages(playerId = null) {
+      let key;
 
-    if (!this.session.isSpectator && this.session.isLilMonstaVote) {
-      key = "LilMonstaVotes";
-    } else {
-      key = this.session.isSpectator
-        ? "host"
-        : playerId || this.player.id;
-    }
-
-    const saved = localStorage.getItem(`messages_${key}`);
-    let messages = saved ? JSON.parse(saved) : [];
-
-    if (this.wraithReceiver && this.session.isSpectator) {
-      if (this.wraithReceiver.id !== -1) {
-        const prefix = `You to ${this.wraithReceiver.name}:`;
-        messages = messages.filter(msg => msg.startsWith(prefix));
+      if (!this.session.isSpectator && this.session.isLilMonstaVote) {
+        key = "LilMonstaVotes";
       } else {
-        messages = messages.filter(msg => !msg.startsWith("You to"));
+        key = this.session.isSpectator
+          ? "host"
+          : playerId || this.player.id;
       }
-    }
-    if (key === "LilMonstaVotes" && Array.isArray(messages)) {
-      messages = messages.map(v =>
-        typeof v === "object" && v.voterName && v.votedName
-          ? `${v.voterName} voted for ${v.votedName}`
-          : v
-      );
-    }
 
-    this.fullLog = messages;
-  },
+      const saved = localStorage.getItem(`messages_${key}`);
+      let messages = saved ? JSON.parse(saved) : [];
+
+      if (this.wraithReceiver && this.session.isSpectator) {
+        if (this.wraithReceiver.id !== -1) {
+          const prefix = `You to ${this.wraithReceiver.name}:`;
+          messages = messages.filter(msg => msg.startsWith(prefix));
+        } else {
+          messages = messages.filter(msg => !msg.startsWith("You to"));
+        }
+      }
+      if (key === "LilMonstaVotes" && Array.isArray(messages)) {
+        messages = messages.map(v =>
+          typeof v === "object" && v.voterName && v.votedName
+            ? `${v.voterName} voted for ${v.votedName}`
+            : v
+        );
+      }
+
+      this.fullLog = messages;
+    },
 
 
 
@@ -529,6 +529,7 @@ export default {
 
 
     sendQueuedMessage() {
+      console.log(this.messageQueue)
       const fullMessage = this.messageQueue.join(" ");
       if (!fullMessage) return;
 
@@ -743,7 +744,7 @@ export default {
       if (this.lilMonstaInterval) clearInterval(this.lilMonstaInterval);
       this.lilMonstaTimer = 0;
       if(this.session.isSpectator) this.mode = "response";
-      else this.mode = "default";
+      else this.closeModal();
     },
     lockLilMonstaVoting() {
       if(this.session.isSpectator) this.mode = "response";
@@ -788,6 +789,20 @@ export default {
           }
         });
         this.loadMessages();
+      }
+    },
+    handleBackspace(event) {
+      if (!this.modals.sendCard) return;
+      const active = document.activeElement;
+      const isTyping =
+        active && (active.tagName === "INPUT" || active.tagName === "TEXTAREA");
+      if (isTyping) return;
+
+      if (event.key === "Backspace") {
+        event.preventDefault();
+        if (this.messageQueue.length > 0) {
+          this.messageQueue.pop();
+        }
       }
     },
 
@@ -917,6 +932,7 @@ watch: {
 },
 
   mounted() {
+    window.addEventListener("keydown", this.handleBackspace);
     if (this.session.isSpectator) {
       if(this.isWraith && !this.wraithReceiver)
         this.mode = 'wraith';
@@ -925,7 +941,10 @@ watch: {
       this.isResponse = true;
     }
     this.loadMessages(this.player.id);
-  }
+  },
+  beforeUnmount() { // or beforeDestroy for Vue 2
+    window.removeEventListener("keydown", this.handleBackspace);
+  },
 };
 </script>
 

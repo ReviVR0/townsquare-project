@@ -59,6 +59,9 @@ module.exports = store => {
       }))
     );
   }
+  if (localStorage.getItem("language")) {
+    store.commit("setLanguage", localStorage.getItem("language"));
+  }
   /**** Session related data *****/
   if (localStorage.getItem("playerId")) {
     store.commit("session/setPlayerId", localStorage.getItem("playerId"));
@@ -71,6 +74,7 @@ module.exports = store => {
   if (!localStorage.invites) {
     localStorage.invites = "";
   }
+
 
   // listen to mutations
   store.subscribe(({ type, payload }, state) => {
@@ -186,6 +190,10 @@ module.exports = store => {
           localStorage.removeItem("playerId");
         }
         break;
+      case "setLanguage":
+        localStorage.setItem("language", state.grimoire.language);
+        break;
+
     }
   });
 };

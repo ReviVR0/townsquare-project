@@ -107,6 +107,18 @@
                 :icon="['fas', grimoire.isMuted ? 'volume-mute' : 'volume-up']"
             /></em>
           </li>
+          <li>
+            Language
+            <em>
+              <select v-model="grimoire.language" @change="setLanguage(grimoire.language)">
+                <option value="ENG">ENG</option>
+                <option value="PL">PL</option>
+              </select>
+            </em>
+          </li>
+
+
+
         </template>
 
         <template v-if="tab === 'session'">
@@ -384,6 +396,7 @@ export default {
       "toggleStatic",
       "setZoom",
       "toggleModal",
+      "setLanguage",
     ]),
     handleResize() {
       this.setZoom(this.grimoire.zoom + 1);

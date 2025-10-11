@@ -5,9 +5,11 @@ import socket from "./socket";
 import players from "./modules/players";
 import session from "./modules/session";
 import editionJSON from "../editions.json";
-import rolesJSON from "../roles.json";
+import rolesEN from "../roles_EN.json";
+import rolesPL from "../roles_PL.json";
 import fabledJSON from "../fabled.json";
 import jinxesJSON from "../jinx.json";
+let rolesJSON = localStorage.getItem("language") === "PL" ? rolesPL : rolesEN;
 
 Vue.use(Vuex);
 // helper functions
@@ -105,7 +107,8 @@ export default new Vuex.Store({
       isMuted: false,
       isImageOptIn: false,
       zoom: 0,
-      background: ""
+      background: "",
+      language: localStorage.getItem("language") || "ENG"
     },
     modals: {
       edition: false,
@@ -178,6 +181,9 @@ export default new Vuex.Store({
     toggleNight: toggle("isNight"),
     toggleGrimoire: toggle("isPublic"),
     toggleImageOptIn: toggle("isImageOptIn"),
+    setLanguage(state, lang) {
+      state.grimoire.language = lang;
+    },
     toggleModal({ modals }, name) {
       if (name) {
         modals[name] = !modals[name];
