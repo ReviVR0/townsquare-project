@@ -307,7 +307,7 @@ ul {
     width: 100%;
     margin-bottom: 3px;
     .icon {
-      width: 6vh;
+      width: 5vh;
       background-size: cover;
       background-position: 0 0;
       flex-grow: 0;
@@ -317,7 +317,7 @@ ul {
       &:after {
         content: " ";
         display: block;
-        padding-top: 66%;
+        padding-top: 75%;
       }
     }
     .name {
@@ -420,7 +420,7 @@ ul {
   margin: 8px 0;
   filter: drop-shadow(0 0 4px rgba(0, 0, 0, 0.6));
   .icon {
-    width: 6vh;
+    width: 5vh;
     background-size: contain;
     background-repeat: no-repeat;
     background-position: center;
