@@ -885,7 +885,7 @@ watch: {
         }
       });
     }
-    if(playerId == "LilMonsta")
+    if(playerId == "LilMonsta") //To change
       localStorage.removeItem("messages_host");
 
   }

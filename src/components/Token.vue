@@ -6,7 +6,7 @@
       :style="{
         backgroundImage: `url(${
           role.image && grimoire.isImageOptIn
-            ? role.image
+            ? role.image 
             : require('../assets/icons/' + (role.imageAlt || role.id) + 
             ((role.team === 'townsfolk' || role.team === 'outsider') ? '_g' : '')+
             ((role.team === 'demon' || role.team === 'minion') ? '_e' : '')

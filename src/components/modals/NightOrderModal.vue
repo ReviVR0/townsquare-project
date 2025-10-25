@@ -10,91 +10,138 @@
       class="toggle"
       title="Show Character Reference"
     />
+    <br>
     <h3>
       Night Order
       <font-awesome-icon icon="cloud-moon" />
       {{ edition.name || "Custom Script" }}
     </h3>
-    <div class="night">
-      <ul class="first">
-        <li class="headline">First Night</li>
-        <li
-          v-for="role in rolesFirstNight"
-          :key="role.name"
-          :class="[role.team]"
-        >
-          <span class="name">
-            {{ role.name }}
-            <span class="player" v-if="role.players.length">
-              <br />
-              <small
-                v-for="(player, index) in role.players"
-                :class="{ dead: player.isDead }"
-                :key="index"
-                >{{
-                  player.name + (role.players.length > index + 1 ? "," : "")
-                }}</small
-              >
-            </span>
-          </span>
-          <span
-            class="icon"
-            v-if="role.id"
-            :style="{
-              backgroundImage: `url(${
-                role.image && grimoire.isImageOptIn
-                  ? role.image
-                  : require('../../assets/icons/Reminder/' +
-                      (role.imageAlt || role.id) +
-                      '.png')
-              })`
-            }"
-          ></span>
-          <span class="reminder" v-if="role.firstNightReminder">
-            {{ role.firstNightReminder }}
-          </span>
-        </li>
-      </ul>
-      <ul class="other">
-        <li class="headline">Other Nights</li>
-        <li
-          v-for="role in rolesOtherNight"
-          :key="role.name"
-          :class="[role.team]"
-        >
-          <span
-            class="icon"
-            v-if="role.id"
-            :style="{
-              backgroundImage: `url(${
-                role.image && grimoire.isImageOptIn
-                  ? role.image
-                  : require('../../assets/icons/Reminder/' +
-                      (role.imageAlt || role.id) +
-                      '.png')
-              })`
-            }"
-          ></span>
-          <span class="name">
-            {{ role.name }}
-            <span class="player" v-if="role.players.length">
-              <br />
-              <small
-                v-for="(player, index) in role.players"
-                :class="{ dead: player.isDead }"
-                :key="index"
-                >{{
-                  player.name + (role.players.length > index + 1 ? "," : "")
-                }}</small
-              >
-            </span>
-          </span>
-          <span class="reminder" v-if="role.otherNightReminder">
-            {{ role.otherNightReminder }}
-          </span>
-        </li>
-      </ul>
-    </div>
+<div class="night">
+  <ul class="first">
+    <li class="headline">First Night</li>
+    <!-- 🌆 Dusk indicator -->
+    <li class="indicator dusk transition">
+      <span class="name">Dusk</span>
+      <span
+        class="icon"
+        :style="{
+          backgroundImage: `url(${require('../../assets/icons/Reminder/Dusk.png')})`
+        }"
+      ></span>
+    </li>
+
+    <!-- Roles for first night -->
+    <li
+      v-for="role in rolesFirstNight"
+      :key="role.name"
+      :class="[role.team]"
+    >
+      <span class="name">
+        {{ role.name }}
+        <span class="player" v-if="role.players.length">
+          <br />
+          <small
+            v-for="(player, index) in role.players"
+            :class="{ dead: player.isDead }"
+            :key="index"
+          >
+            {{ player.name + (role.players.length > index + 1 ? ',' : '') }}
+          </small>
+        </span>
+      </span>
+      <span
+        class="icon"
+        v-if="role.id"
+        :style="{
+          backgroundImage: `url(${
+            role.image && grimoire.isImageOptIn
+              ? role.image
+              : require('../../assets/icons/Reminder/' +
+                  (role.imageAlt || role.id) +
+                  '.png')
+          })`
+        }"
+      ></span>
+      <span class="reminder" v-if="role.firstNightReminder">
+        {{ role.firstNightReminder }}
+      </span>
+    </li>
+    <!-- 🌅 Dawn indicator -->
+    <li class="indicator dawn transition">
+      <span class="name">Dawn</span>
+      <span
+        class="icon"
+        :style="{
+          backgroundImage: `url(${require('../../assets/icons/Reminder/Dawn.png')})`
+        }"
+      ></span>
+    </li>
+  </ul>
+
+  <ul class="other">
+    <li class="headline">Other Nights</li>
+
+    <!-- 🌆 Dusk indicator -->
+    <li class="indicator dusk transition">
+      <span
+        class="icon"
+        :style="{
+          backgroundImage: `url(${require('../../assets/icons/Reminder/Dusk.png')})`
+        }"
+      ></span>
+      <span class="name">Dusk</span>
+    </li> 
+
+    <!-- Roles for other nights -->
+    <li
+      v-for="role in rolesOtherNight"
+      :key="role.name"
+      :class="[role.team]"
+    >
+      <span
+        class="icon"
+        v-if="role.id"
+        :style="{
+          backgroundImage: `url(${
+            role.image && grimoire.isImageOptIn
+              ? role.image
+              : require('../../assets/icons/Reminder/' +
+                  (role.imageAlt || role.id) +
+                  '.png')
+          })`
+        }"
+      ></span>
+      <span class="name">
+        {{ role.name }}
+        <span class="player" v-if="role.players.length">
+          <br />
+          <small
+            v-for="(player, index) in role.players"
+            :class="{ dead: player.isDead }"
+            :key="index"
+          >
+            {{ player.name + (role.players.length > index + 1 ? ',' : '') }}
+          </small>
+        </span>
+      </span>
+      <span class="reminder" v-if="role.otherNightReminder">
+        {{ role.otherNightReminder }}
+      </span>
+    </li>
+
+    <!-- 🌅 Dawn indicator -->
+    <li class="indicator dawn transition">
+      <span
+        class="icon"
+        :style="{
+          backgroundImage: `url(${require('../../assets/icons/Reminder/Dawn.png')})`
+        }"
+      ></span>
+      <span class="name">Dawn</span>
+    </li>
+  </ul>
+</div>
+
   </Modal>
 </template>
 
@@ -367,4 +414,43 @@ ul {
 #townsquare.public ~ .night-reference .modal .player {
   display: none;
 }
+.indicator {
+  text-align: center;
+  opacity: 0.9;
+  margin: 8px 0;
+  filter: drop-shadow(0 0 4px rgba(0, 0, 0, 0.6));
+  .icon {
+    width: 6vh;
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+  }
+}
+ul > li.indicator {
+  margin-top: 2px;  /* tighten the gap above */
+  margin-bottom: 2px; /* tighten the gap below */
+}
+ul > li:not(.indicator):not(.headline) {
+  margin-top: 2px;
+  margin-bottom: 2px;
+}
+
+.indicator + li {
+  margin-top: 0;
+}
+.transition {
+  .name {
+    background: linear-gradient(90deg, #888888, transparent 35%);
+    color: #ccc;
+    // for other nights, reverse gradient
+    .night .other & {
+      background: linear-gradient(-90deg, #888888, transparent 35%);
+    }
+  }
+  .icon {
+    filter: grayscale(20%) brightness(80%); // subtle grayish look
+  }
+}
+
+
 </style>

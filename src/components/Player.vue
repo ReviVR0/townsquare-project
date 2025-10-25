@@ -141,9 +141,9 @@
       <div
         class="name"
         @click="isMenuOpen = !isMenuOpen"
-        :class="{ active: isMenuOpen || messageCount > 0 || session.wraithPeek.includes(player.id)}"
+        :class="{ active: isMenuOpen || (messageCount > 0 && grimoire.isNight) || session.wraithPeek.includes(player.id)}"
       >
-        <span>{{ player.name }}<span v-if="messageCount > 0 && !session.isSpectator">({{ messageCount }})</span></span>
+        <span>{{ player.name }}<span v-if="messageCount > 0 && !session.isSpectator && grimoire.isNight">({{ messageCount }})</span></span>
         <font-awesome-icon icon="venus-mars" v-if="player.pronouns" />
         <font-awesome-icon icon="eye" v-if="session.wraithPeek.includes(player.id)"/>
         <div class="pronouns" v-if="player.pronouns">
@@ -207,7 +207,7 @@
             </template>
             <li
               @click="SendCard"
-              v-if="player.id && grimoire.isNight"
+              v-if="player.id"
             >
                 <font-awesome-icon icon="people-arrows" />
                 Send Card
