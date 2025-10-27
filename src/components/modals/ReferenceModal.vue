@@ -10,6 +10,7 @@
       class="toggle"
       title="Show Night Order"
     />
+    <br>
     <h3>
       Character Reference
       <font-awesome-icon icon="address-card" />
@@ -167,7 +168,7 @@ export default {
 }
 
 h3 {
-  margin: 0 40px;
+  margin: 0 20px;
   svg {
     vertical-align: middle;
   }
@@ -265,7 +266,10 @@ ul {
     display: flex;
     align-items: center;
     flex-grow: 1;
-    width: 420px;
+    width: 320px;
+    @media (max-width: 500px) {
+      width: auto;
+    }
     .icon {
       width: 8vh;
       background-size: cover;
@@ -335,4 +339,6 @@ ul {
 #townsquare.public ~ .characters .modal .player {
   display: none;
 }
+
+
 </style>

@@ -40,8 +40,15 @@
 
 </div>
   <div v-if="messageQueue.length" style="margin-bottom: 10px; text-align: center;">
-<p style="display: flex; flex-wrap: wrap; align-items: center; display: 'inline-flex',
-    alignItems: 'center'," v-if="this.session.isSpectator">
+<p
+  v-if="this.session.isSpectator"
+  :style="{
+    display: 'flex',
+    flexWrap: 'wrap',
+    alignItems: 'center',
+  }"
+>
+
   <strong style="margin-right: 4px;">Current Message:</strong>
 <span
   v-for="(part, i) in parseMessage(messageQueue.join(' '))"
@@ -72,31 +79,21 @@
 
   <h4 v-if="this.session.isSpectator">Respond with:</h4>
   <p class="subtitle" v-if="this.session.isSpectator">Click a token to send a message.</p>
-<div class="option-b-container" v-if="this.session.isSpectator">
-  <div class="card-small" @click="selectOption({ label: 'Player' })">
-    <img :src="iconSrc" alt="token" />
-    <span class="label">Choose Player</span>
-  </div>
-  <div class="card-small" @click="selectOption({ label: 'Character' })">
-    <img :src="iconSrc" alt="token" />
-    <span class="label">Choose Character</span>
-  </div>
-  <div class="card-small" @click="messageQueue.push('Got it ')">
-    <img :src="iconSrc" alt="token" />
-    <span class="label">Got it</span>
-  </div>
-  <div class="card-small" @click="messageQueue.push('Yes ')">
-    <img :src="iconSrc" alt="token" />
-    <span class="label">Yes</span>
-  </div>
-  <div class="card-small" @click="messageQueue.push('No ')">
-    <img :src="iconSrc" alt="token" />
-    <span class="label">No</span>
-  </div>
-  <div class="card-small" @click="selectOption({ label: 'Custom' })">
-    <img :src="iconSrc" alt="token" />
-    <span class="label">Custom Message</span>
-  </div>
+<div class="response-options" v-if="session.isSpectator">
+<div
+  v-for="option in responseOptions"
+  :key="option.label"
+  class="card-small token-wrapper"
+  @click="handleResponse(option)"
+>
+      <img class="token-bg" :src="iconSrc" alt="token" />
+      <img
+        class="role-icon"
+        :src="option.image ? getImage(option.image) : getImage('custom.png')"
+        :alt="option.label"
+      />  
+      <span class="label">{{ option.label }}</span>
+</div>
 </div>
 
 
@@ -247,10 +244,15 @@
     <div
       v-for="(option, index) in optionsA"
       :key="'a-' + index"
-      class="card-large"
+      class="card-large token-wrapper"
       @click="selectOption(option)"
     >
-      <img :src="iconSrc" alt="icon" />
+      <img class="token-bg" :src="iconSrc" alt="token" />
+      <img
+        class="role-icon"
+        :src="option.image ? getImage(option.image) : getImage('custom.png')"
+        :alt="option.label"
+      />
       <span class="label">{{ option.label }}</span>
     </div>
   </div>
@@ -259,10 +261,15 @@
     <div
       v-for="(option, index) in optionsB"
       :key="'b-' + index"
-      class="card-small"
+      class="card-small token-wrapper"
       @click="selectOption(option)"
     >
-      <img :src="iconSrc" alt="icon" />
+      <img class="token-bg" :src="iconSrc" alt="token" />
+      <img
+        class="role-icon"
+        :src="option.image ? getImage(option.image) : getImage('custom.png')"
+        :alt="option.label"
+      />
       <span class="label">{{ option.label }}</span>
     </div>
   </div>
@@ -337,7 +344,7 @@ export default {
     return {
       iconSrc: require("@/assets/token.png"),
       optionsA: [
-        { label: "Use Ability" },
+        { label: "Use Ability"},
         { label: "Make a Choice" },
         { label: "Not in Play" , action: "notInPlay"},
         { label: "This is the Demon", action: "showDemon" },
@@ -351,8 +358,8 @@ export default {
         { label: "Yes" },
         { label: "No" },
         { label: "Good" },
-        { label: "Evil" },
-        { label: "Clockwise" },
+        { label: "Evil" ,image: "evil.png"},
+        { label: "Clockwise", image: "good.png"},
         { label: "Anticlockwise" },
         { label: "Zero" },
         { label: "One" },
@@ -364,6 +371,15 @@ export default {
         { label: "Character" },
         { label: "Custom" },
       ],
+      responseOptions: [
+        { label: "Player" },
+        { label: "Character"},
+        { label: "Got it"},
+        { label: "Yes"},
+        { label: "No"},
+        { label: "Custom"},
+      ],
+
       iconStyle: {
         width: '1.7em',
         height: '1.7em',
@@ -423,7 +439,22 @@ export default {
   },
   methods: {
     ...mapMutations(["toggleModal"]),
-
+    getImage(filename) {
+      try {
+        return require(`@/assets/icons/Reminder/${filename}`);
+      } catch (e) {
+        console.warn(`Missing image: ${filename}`);
+        return "this.iconSrc"; // fallback
+      }
+    },
+    handleResponse(option) {
+      if (option.label === "Choose Player") this.selectOption({ label: "Player" });
+      else if (option.label === "Choose Character") this.selectOption({ label: "Character" });
+      else if (option.label === "Got it") this.messageQueue.push("Got it ");
+      else if (option.label === "Yes") this.messageQueue.push("Yes ");
+      else if (option.label === "No") this.messageQueue.push("No ");
+      else if (option.label === "Custom Message") this.selectOption({ label: "Custom" });
+    },
     loadMessages(playerId = null) {
       let key;
 
@@ -956,7 +987,7 @@ watch: {
     background-color: rgba(0, 0, 0, 0.9);
     padding: 30px;
     border-radius: 12px;
-    max-height: 85vh;
+    max-height: 90vh;
     max-width: 110vw;
     overflow: hidden;
     color: white;
@@ -1017,7 +1048,8 @@ watch: {
   }
 
   .option-a-container {
-    display: flex;
+    display: grid;
+    grid-template-columns: repeat(8, 1fr);
     flex-wrap: wrap;
     justify-content: center;
     gap: 12px 16px;
@@ -1050,7 +1082,9 @@ watch: {
         font-size: 12px;
       }
     }
-
+    @media (max-width: 800px) {
+      grid-template-columns: repeat(4, 1fr);
+    }
     @media (max-width: 800px) {
       .card-large {
         width: 80px;
@@ -1070,14 +1104,14 @@ watch: {
   .option-b-container {
     display: grid;
     grid-template-columns: repeat(8, 1fr);
-    gap: 10px;
+    gap: 4px;
     justify-items: center;
     width: 100%;
 
     .card-small {
       background-color: rgba(255, 255, 255, 0.04);
-      border-radius: 6px;
-      padding: 6px;
+      border-radius: 4px;
+      padding: 5px;
       width: 60px;
       text-align: center;
       cursor: pointer;
@@ -1092,24 +1126,23 @@ watch: {
       }
 
       img {
-        width: 30px;
-        height: 30px;
+        width: 40px;
+        height: 40px;
         margin-bottom: 4px;
       }
 
       .label {
-        font-size: 8px;
+        font-size: 10px;
         word-break: break-word;
       }
-    }
-
-    @media (max-width: 800px) {
-      grid-template-columns: repeat(6, 1fr);
     }
     @media (max-width: 600px) {
       grid-template-columns: repeat(4, 1fr);
     }
   }
+  .response-options {
+  @extend .option-b-container;
+}
 }
 .token-wrapper {
   position: relative;
@@ -1151,5 +1184,64 @@ watch: {
 .demon { color: $demon; }
 .traveler { color: $traveler; }
 .player {color: #ffffffff}
+
+.token-wrapper {
+  position: relative;
+  cursor: pointer;
+}
+.token-wrapper .token-bg {
+  position: absolute;
+  z-index: 0;
+}
+.token-wrapper .role-icon {
+  position: absolute;
+  z-index: 1;
+}
+.token-wrapper .label {
+  position: absolute;
+  width: 100%;
+  text-align: center;
+  font-size: 0.8rem;
+}
+
+
+.card-large.token-wrapper .token-bg {
+  top: 7%;
+  left: 20%;
+  width: 100%;
+  height: 100%;
+}
+
+.card-large.token-wrapper .role-icon {
+  top: 40%;
+  left: 48%;
+  width: 75%;
+  height: 70%;
+}
+
+.card-large.token-wrapper .label {
+  bottom: 4px;
+  font-size: 1rem;
+}
+
+.card-small.token-wrapper .token-bg {
+  top: 15%;
+  left: 16%;
+  width: 70%;
+  height: 70%;
+}
+
+.card-small.token-wrapper .role-icon {
+  top: 43%;
+  left: 50%;
+  width: 50%;
+  height: 50%;
+}
+
+.card-small.token-wrapper .label {
+  bottom: 8px;
+  font-size: 0.7rem;
+}
+
 
 </style>
