@@ -86,12 +86,14 @@
   class="card-small token-wrapper"
   @click="handleResponse(option)"
 >
+    <div class="token-inner">
       <img class="token-bg" :src="iconSrc" alt="token" />
       <img
         class="role-icon"
         :src="option.image ? getImage(option.image) : getImage('custom.png')"
         :alt="option.label"
       />  
+    </div>
       <span class="label">{{ option.label }}</span>
 </div>
 </div>
@@ -247,12 +249,14 @@
       class="card-large token-wrapper"
       @click="selectOption(option)"
     >
+    <div class="token-inner">
       <img class="token-bg" :src="iconSrc" alt="token" />
       <img
         class="role-icon"
         :src="option.image ? getImage(option.image) : getImage('custom.png')"
         :alt="option.label"
       />
+      </div>
       <span class="label">{{ option.label }}</span>
     </div>
   </div>
@@ -264,12 +268,14 @@
       class="card-small token-wrapper"
       @click="selectOption(option)"
     >
-      <img class="token-bg" :src="iconSrc" alt="token" />
-      <img
-        class="role-icon"
-        :src="option.image ? getImage(option.image) : getImage('custom.png')"
-        :alt="option.label"
-      />
+      <div class="token-inner">
+        <img class="token-bg" :src="iconSrc" alt="token" />
+        <img
+          class="role-icon"
+          :src="option.image ? getImage(option.image) : getImage('custom.png')"
+          :alt="option.label"
+        />
+        </div>
       <span class="label">{{ option.label }}</span>
     </div>
   </div>
@@ -302,12 +308,14 @@
         class="card-small token-wrapper"
         @click="selectSubOption('Character', roleEntry.value.id)"
       >
-        <img class="token-bg" :src="iconSrc" alt="token" />
-        <img
-          class="role-icon"
-          :src="getRoleImage(roleEntry.value.id)"
-          :alt="roleEntry.value.name"
-        />
+         <div class="token-inner">
+            <img class="token-bg" :src="iconSrc" alt="token" />
+            <img
+              class="role-icon"
+              :src="getRoleImage(roleEntry.value.id)"
+              :alt="roleEntry.value.name"
+            />
+          </div>
         <span class="label">{{ roleEntry.value.name }}</span>
       </div>
         </div>
@@ -354,29 +362,29 @@ export default {
         { label: "Selected You" },
       ],
       optionsB: [
-        { label: "Got it" },
-        { label: "Yes" },
-        { label: "No" },
-        { label: "Good" },
+        { label: "Got it", image: "gotit.png" },
+        { label: "Yes", image: "yes.png"},
+        { label: "No", image: "no.png" },
+        { label: "Good" , image: "good.png"},
         { label: "Evil" ,image: "evil.png"},
-        { label: "Clockwise", image: "good.png"},
-        { label: "Anticlockwise" },
+        { label: "Clockwise", image: "clockwise.png"},
+        { label: "Anticlockwise", image: "anticlockwise.png"},
         { label: "Zero" },
         { label: "One" },
         { label: "Two" },
         { label: "Three" },
         { label: "Four" },
         { label: "Five" },
-        { label: "Player" },
-        { label: "Character" },
-        { label: "Custom" },
+        { label: "Player", image: "user.png"},
+        { label: "Character", image: "characters.png"},
+        { label: "Custom", image: "custom.png" },
       ],
       responseOptions: [
-        { label: "Player" },
-        { label: "Character"},
-        { label: "Got it"},
-        { label: "Yes"},
-        { label: "No"},
+        { label: "Got it", image: "gotit.png"},
+        { label: "Yes", image: "yes.png"},
+        { label: "No", image: "no.png"},
+        { label: "Player", image: "user.png"},
+        { label: "Character", image: "characters.png"},
         { label: "Custom"},
       ],
 
@@ -441,19 +449,19 @@ export default {
     ...mapMutations(["toggleModal"]),
     getImage(filename) {
       try {
-        return require(`@/assets/icons/Reminder/${filename}`);
+        return require(`@/assets/icons/SendCardIcons/${filename}`);
       } catch (e) {
         console.warn(`Missing image: ${filename}`);
         return "this.iconSrc"; // fallback
       }
     },
     handleResponse(option) {
-      if (option.label === "Choose Player") this.selectOption({ label: "Player" });
-      else if (option.label === "Choose Character") this.selectOption({ label: "Character" });
+      if (option.label === "Player") this.selectOption({ label: "Player" });
+      else if (option.label === "Character") this.selectOption({ label: "Character" });
       else if (option.label === "Got it") this.messageQueue.push("Got it ");
       else if (option.label === "Yes") this.messageQueue.push("Yes ");
       else if (option.label === "No") this.messageQueue.push("No ");
-      else if (option.label === "Custom Message") this.selectOption({ label: "Custom" });
+      else if (option.label === "Custom") this.selectOption({ label: "Custom" });
     },
     loadMessages(playerId = null) {
       let key;
@@ -1206,17 +1214,18 @@ watch: {
 
 
 .card-large.token-wrapper .token-bg {
-  top: 7%;
+  top: 5%;
   left: 20%;
   width: 100%;
   height: 100%;
 }
 
 .card-large.token-wrapper .role-icon {
-  top: 40%;
-  left: 48%;
-  width: 75%;
-  height: 70%;
+  top: 5%;
+  left: 20%;
+  width: 50px;
+  height: 50px;
+  transform: none; /* remove translate if using px */
 }
 
 .card-large.token-wrapper .label {
@@ -1225,17 +1234,18 @@ watch: {
 }
 
 .card-small.token-wrapper .token-bg {
-  top: 15%;
-  left: 16%;
+  top: 10%;
+  left: 15%;
   width: 70%;
   height: 70%;
 }
 
 .card-small.token-wrapper .role-icon {
-  top: 43%;
-  left: 50%;
-  width: 50%;
-  height: 50%;
+  top: 10%;
+  left: 15%;
+  width: 50px;
+  height: 50px;
+  transform: none; /* remove translate if using px */
 }
 
 .card-small.token-wrapper .label {
@@ -1243,5 +1253,10 @@ watch: {
   font-size: 0.7rem;
 }
 
+.token-inner {
+  position: relative;
+  width: 115%;  /* match card-small img size */
+  padding-top: 100%;
+}
 
 </style>

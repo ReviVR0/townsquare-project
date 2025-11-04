@@ -102,7 +102,7 @@ export default new Vuex.Store({
       isNight: false,
       isNightOrder: true,
       isPublic: true,
-      isMenuOpen: false,
+      isMenuOpen: true,
       isStatic: false,
       isMuted: false,
       isImageOptIn: false,
@@ -230,6 +230,9 @@ export default new Vuex.Store({
         // default empty icons and placeholders, clean up firstNight / otherNight
         .map(role => {
           if (rolesJSONbyId.get(role.id)) return role;
+            if (Array.isArray(role.image)) { //TODO Alternate between to "for now fix just chose first"
+              role.image = role.image[0];
+            }
           role.imageAlt = // map team to generic icon
             {
               townsfolk: "good",

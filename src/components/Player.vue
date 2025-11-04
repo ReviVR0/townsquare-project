@@ -53,6 +53,15 @@
         @set-role="$emit('trigger', ['openRoleModal'])"
       />
 
+      <!-- Claim seat overlay -->
+      <div
+        v-if="session.isSpectator && !player.id && !isSittingPlayer"
+        class="claim-seat-overlay"
+        @click="claimSeat"
+        title="Claim this seat"
+      >
+        <font-awesome-icon icon="chair" />
+      </div>
       <!-- Overlay icons -->
       <div class="overlay">
         <font-awesome-icon
@@ -148,13 +157,6 @@
         <font-awesome-icon icon="eye" v-if="session.wraithPeek.includes(player.id)"/>
         <div class="pronouns" v-if="player.pronouns">
           <span>{{ player.pronouns }}</span>
-        </div>
-
-        <div
-            @click="claimSeat"
-            v-if="session.isSpectator && !player.id ">
-          <font-awesome-icon icon="chair" :class="{ disabled: player.id }"
-          />
         </div>
       </div>
 
@@ -376,6 +378,11 @@ export default {
             return "hand-paper"; // fallback
         }
       };
+    },
+    isSittingPlayer() {
+      if (!this.session.isSpectator) return true;
+      const myId = this.session.playerId;
+      return this.players.some(p => p.id && p.id === myId);
     }
 
 },
@@ -560,7 +567,6 @@ export default {
           this.$store.commit("session/setHandRaised", [this.index, newHand]);
           this.updatePlayer('handRaised', newHand);
         }
-
       }
     },
 
@@ -911,7 +917,7 @@ export default {
   transition: all 250ms ease-in-out;
   color: yellow;                /* highlight color */
   filter: drop-shadow(0 0 6px black);
-  z-index: 1;  
+  z-index: 2;  
   transform-origin: center center; /* important for rotation */
 }
 
@@ -1326,7 +1332,8 @@ li.move:not(.from) .player .overlay svg.move {
   opacity: 0.5 !important;
   animation: pulse 1s infinite;
   transform: scale(1.15);
-  z-index: 5;
+  z-index: 1;
+  pointer-events: none;
 }
 
 
@@ -1335,6 +1342,35 @@ li.move:not(.from) .player .overlay svg.move {
   0% { transform: scale(1); }
   50% { transform: scale(1.15); }
   100% { transform: scale(1); }
+}
+
+.claim-seat-overlay {
+  position: absolute;
+  top: 40%;
+  left: 50%;
+  width: 60%;
+  height: 60%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 500%; /* scales with width */
+  transform: translate(-50%, -50%);
+  z-index: 2;
+  color: rgba(255, 255, 255, 0.85);
+  border-radius: 50%;
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  &:hover {
+    color: white;
+    background: rgba(255, 255, 255, 0.15);
+    transform: translate(-50%, -50%) scale(1.1);
+  }
+
+  svg {
+    width: 60%;
+    height: 60%;
+  }
 }
 
 

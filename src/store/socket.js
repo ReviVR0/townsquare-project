@@ -242,6 +242,9 @@ class LiveSession {
         break;
       case "setHandRaised": {
         if (this._isSpectator) return;
+        const { session } = this._store.state;
+        console.log(session.nomination);
+        if (session.nomination) return;
         const player = this._store.state.players.players[params[0]]; 
         if (player) {
           this._store.commit("players/update", {
@@ -764,7 +767,7 @@ class LiveSession {
   setIsNight() {
     for (let i = 0; i < localStorage.length; i++) {
       const key = localStorage.key(i);
-      if (key.startsWith("messages_")) {
+      if (key.startsWith("messages_") && this._store.state.grimoire.isNight) {
         localStorage.removeItem(key);
         i--;
       }
