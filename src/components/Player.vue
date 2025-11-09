@@ -1346,10 +1346,10 @@ li.move:not(.from) .player .overlay svg.move {
 
 .claim-seat-overlay {
   position: absolute;
-  top: 40%;
+  top: 38%;
   left: 50%;
   width: 60%;
-  height: 60%;
+  height: 55%;
   display: flex;
   align-items: center;
   justify-content: center;

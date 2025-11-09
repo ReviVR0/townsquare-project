@@ -102,7 +102,7 @@ export default new Vuex.Store({
       isNight: false,
       isNightOrder: true,
       isPublic: true,
-      isMenuOpen: true,
+      isMenuOpen: false,
       isStatic: false,
       isMuted: false,
       isImageOptIn: false,

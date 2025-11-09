@@ -27,7 +27,11 @@
       {{ session.playerCount }}
     </span>
     <div class="menu" :class="{ open: grimoire.isMenuOpen }">
-      <font-awesome-icon icon="cog" @click="toggleMenu" />
+      <font-awesome-icon
+        icon="cog"
+        @click="handleMenuClick"
+        :class="{ 'cog-flicker': !menuOpenedOnce }"
+      />
       <ul>
         <li class="tabs" :class="tab">
           <font-awesome-icon icon="book-open" @click="tab = 'grimoire'" />
@@ -262,6 +266,7 @@ export default {
     return {
       tab: "grimoire",
       banNames: ["wraith", "st", "host", "you", "storyteller", "player"],
+      menuOpenedOnce: localStorage.getItem("menuOpenedOnce") === 'true',
     };
   },
   methods: {
@@ -420,7 +425,15 @@ export default {
     LilMonsta(){
       if (!confirm("Start Lil’Monsta vote?")) return;
         this.$store.commit("session/setLilMonstaVote", !this.session.isLilMonstaVote);
-    }
+    },
+    handleMenuClick() {
+      if (!this.menuOpenedOnce) {
+        this.menuOpenedOnce = true;
+        localStorage.setItem("menuOpenedOnce", "true");
+      }
+      this.toggleMenu();
+    },
+
   },
   
   mounted() {
@@ -605,4 +618,13 @@ export default {
     }
   }
 }
+@keyframes flicker {
+  0%, 100% { color: rgba(255, 0, 0, 1); }
+  50% { color: rgba(255, 255, 255, 1);}
+}
+
+.cog-flicker {
+  animation: flicker 1s infinite;
+}
+
 </style>
