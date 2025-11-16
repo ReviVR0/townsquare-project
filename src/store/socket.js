@@ -988,7 +988,6 @@ class LiveSession {
     if (!this._isSpectator) {
       const fromId = params[0]; // Wraith
       const ofWhoId = params[1]; // Player being looked at
-
       const key = `messages_${ofWhoId}`;
       const stored = localStorage.getItem(key);
 
@@ -1022,11 +1021,12 @@ class LiveSession {
           ofWhoId,              
           ["Looked at you", "Wraith"]   
         ]);
+        messages.push("Wraith: Looked at You")
+        localStorage.setItem(key, JSON.stringify(messages));
       } else {
         console.log(`No messages found for ${ofWhoId}`);
       }
-
-      return;
+      
     }
 
     // spectators still notify host

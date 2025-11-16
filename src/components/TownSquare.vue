@@ -376,9 +376,10 @@ onDrag(event) {
 
     startTimer() {
   this.timerInterval = setInterval(() => {
-    if (this.session.timer > 0) {
+    if (this.session.timer > 0 && !this.session.nomination) {
       this.session.timer--;
-    } else {
+    } else 
+    if (this.session.timer <= 0){
       clearInterval(this.timerInterval);
       this.timerInterval = null;
       if (!this.grimoire.isMuted && this.$refs.countdownSound) {
