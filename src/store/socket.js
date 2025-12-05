@@ -382,6 +382,7 @@ class LiveSession {
       lockedVote,
       isVoteInProgress,
       markedPlayer,
+      botId,
       fabled
     } = data;
     const players = this._store.state.players.players;
@@ -437,6 +438,7 @@ class LiveSession {
         isVoteInProgress
       });
       this._store.commit("session/setMarkedPlayer", markedPlayer);
+      this._store.commit("session/setBotId", botId);
       this._store.commit("players/setFabled", {
         fabled: fabled.map(f => this._store.state.fabled.get(f.id) || f)
       });
