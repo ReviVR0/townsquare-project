@@ -357,6 +357,7 @@ class LiveSession {
         lockedVote: session.lockedVote,
         isVoteInProgress: session.isVoteInProgress,
         markedPlayer: session.markedPlayer,
+        botId: session.botId,
         fabled: fabled.map(f => (f.isCustom ? f : { id: f.id })),
         ...(session.nomination ? { votes: session.votes } : {})
       });
