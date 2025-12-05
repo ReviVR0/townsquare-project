@@ -362,7 +362,6 @@ export default {
         { label: "Selected You" },
       ],
       optionsB: [
-        { label: "Got it", image: "gotit.png" },
         { label: "Yes", image: "yes.png"},
         { label: "No", image: "no.png" },
         { label: "Good" , image: "good.png"},
@@ -377,14 +376,15 @@ export default {
         { label: "Five", image: "Five.png"},
         { label: "Player", image: "user.png"},
         { label: "Character", image: "characters.png"},
+        { label: "Got it", image: "gotit.png" },
         { label: "Custom", image: "custom.png" },
       ],
       responseOptions: [
-        { label: "Got it", image: "gotit.png"},
         { label: "Yes", image: "yes.png"},
         { label: "No", image: "no.png"},
         { label: "Player", image: "user.png"},
         { label: "Character", image: "characters.png"},
+        { label: "Got it", image: "gotit.png"},
         { label: "Custom"},
       ],
 
@@ -972,6 +972,7 @@ watch: {
 
   mounted() {
     window.addEventListener("keydown", this.handleBackspace);
+    if (!this.player) return;
     if (this.session.isSpectator) {
       if(this.isWraith && !this.wraithReceiver)
         this.mode = 'wraith';

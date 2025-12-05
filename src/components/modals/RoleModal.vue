@@ -8,79 +8,42 @@
           : "bluffing"
       }}
     </h3>
-    <ul class="tokens" v-if="tab === 'editionRoles' || !otherTravelers.size">
+
+    <!-- Roles Display -->
+    <ul class="tokens">
       <li
-        v-for="role in availableRoles"
+        v-for="role in displayedRoles"
         :class="[role.team]"
         :key="role.id"
         @click="setRole(role)"
       >
-        <Token :role="role" />
-      </li>
-    </ul>
-    <ul class="tokens" v-if="tab === 'otherTravelers' && otherTravelers.size">
-      <li
-        v-for="role in otherTravelers.values()"
-        :class="[role.team]"
-        :key="role.id"
-        @click="setRole(role)"
-      >
-        <Token :role="role" />
-      </li>
-    </ul>
-    <ul class="tokens" v-if="tab === 'GoodRoles' || !otherTravelers.size">
-      <li
-        v-for="role in availableRoles"
-        class=townsfolk
-        :key="role.id"
-        @click="setRole(role)"
-      >
-        <Token :role="role" />
+      <Token :role="{ ...role, alignmentIndex: role.alignmentIndex }" :alignment-index="role.alignmentIndex" />
       </li>
     </ul>
 
-    <ul class="tokens" v-if="tab === 'EvilRoles' || !otherTravelers.size">
-      <li
-        v-for="role in availableRoles"
-        class=demon
-        :key="role.id"
-        @click="setRole(role)"
-      >
-        <Token :role="role" />
-      </li>
-    </ul>
-
-
-
-
-    <div
-      class="button-group"
-      v-if="playerIndex >= 0 && otherTravelers.size"
-    >
+    <!-- Tab Buttons -->
+    <div class="button-group" v-if="playerIndex >= 0 && otherTravelers.size">
       <span
         class="button"
         :class="{ townsfolk: tab === 'editionRoles' }"
         @click="tab = 'editionRoles'"
-        >Edition Roles</span
-      >
-      <span  v-if="!session.isSpectator"
+      >Edition Roles</span>
+      <span
+        v-if="!session.isSpectator"
         class="button"
         :class="{ townsfolk: tab === 'otherTravelers' }"
         @click="tab = 'otherTravelers'"
-        >Other Travelers</span 
-      >
-        <span
+      >Other Travelers</span>
+      <span
         class="button"
         :class="{ townsfolk: tab === 'GoodRoles' }"
         @click="tab = 'GoodRoles'"
-        >Good Roles</span
-      >
-        <span
+      >Good Roles</span>
+      <span
         class="button"
         :class="{ townsfolk: tab === 'EvilRoles' }"
         @click="tab = 'EvilRoles'"
-        >Evil Roles</span
-      >
+      >Evil Roles</span>
     </div>
   </Modal>
 </template>
@@ -90,82 +53,97 @@ import { mapMutations, mapState } from "vuex";
 import Modal from "./Modal";
 import Token from "../Token";
 
-export default { // Maybe here!!!!!!!!!!!!!!!!!!
+export default {
   components: { Token, Modal },
   props: ["playerIndex"],
-  computed: {
-    availableRoles() {
-      const availableRoles = [];
-      const players = this.$store.state.players.players;
-      this.$store.state.roles.forEach(role => {
-        // don't show bluff roles that are already assigned to players
-        if (
-          ((this.playerIndex >= 0 && this.tab === "editionRoles") || ((this.tab === "GoodRoles" || this.tab === "EvilRoles") && !(role.team === "traveler"))) ||
-          (this.playerIndex < 0 &&
-            !players.some(player => player.role.id === role.id) 
-            )
-        ) {
-
-var role_r = structuredClone(role);
-
-
-        if (this.tab === "GoodRoles"){
-          role_r.team = "townsfolk";
-          } //THIS add relation
-        if (this.tab === 'EvilRoles'){
-          role_r.team = "minion"; //THIS add relation
-        }
-        availableRoles.push(role_r);
-        }
-
-      });
-      availableRoles.push({});
-      return availableRoles;
-    },
-    ...mapState(["modals", "roles", "session"]),
-    ...mapState("players", ["players"]),
-    ...mapState(["otherTravelers"])
-  },
   data() {
     return {
-      tab: "editionRoles"
+      tab: "editionRoles",
     };
   },
+  computed: {
+    ...mapState(["modals", "roles", "session", "otherTravelers"]),
+    ...mapState("players", ["players"]),
+
+    availableRoles() {
+      const availableRoles = [];
+      const players = this.players;
+
+      this.roles.forEach((role) => {
+        // Skip already assigned roles if bluff
+        if (
+          this.playerIndex >= 0 ||
+          (this.playerIndex < 0 && !players.some((p) => p.role.id === role.id))
+        ) {
+          const roleCopy = { ...role };
+
+          // Set alignmentIndex based on current tab
+          if (this.tab === "GoodRoles") roleCopy.alignmentIndex = 1;
+          else if (this.tab === "EvilRoles") roleCopy.alignmentIndex = 2;
+          else roleCopy.alignmentIndex = 0;
+
+          availableRoles.push(roleCopy);
+        }
+      });
+
+      return availableRoles;
+    },
+
+    // Filter roles displayed in UI
+    displayedRoles() {
+      if (this.tab === "editionRoles" || !this.otherTravelers.size) {
+        return this.availableRoles;
+      } else if (this.tab === "otherTravelers") {
+        return [...this.otherTravelers.values()].map((role) => ({
+          ...role,
+        }));
+      } else {
+        return this.availableRoles;
+      }
+    },
+  },
   methods: {
-    setRole(role) {  
+    ...mapMutations(["toggleModal"]),
+
+    setRole(role) {
+      const alignment = role.alignmentIndex ?? 0;
       if (this.playerIndex < 0) {
-        // assign to bluff slot (index < 0)
+        // assign to bluff slot
         this.$store.commit("players/setBluff", {
           index: this.playerIndex * -1 - 1,
-          role
+          role,
+          alignmentIndex: alignment,
         });
       } else {
         if (this.session.isSpectator && role.team === "traveler") return;
-        // assign to player
-        const player = this.$store.state.players.players[this.playerIndex];          
-        var role_r = structuredClone(role);
-        if (this.tab === "GoodRoles"){
-          role_r.team = "townsfolk";
-          } //THIS add relation
-        if (this.tab === 'EvilRoles'){
-          role_r.team = "minion"; //THIS add relation
-        }
-        this.$store.commit("players/update", { 
+
+        const player = this.players[this.playerIndex];
+        const roleCopy = structuredClone(role);
+        if (this.tab === "GoodRoles") roleCopy.team = "townsfolk";
+        if (this.tab === "EvilRoles") roleCopy.team = "minion";
+        this.$store.commit("players/update", {
           player,
           property: "role",
-          value: role,
-          team: role_r.team
+          value: roleCopy,
+        });
+
+        // Commit alignment index
+        this.$store.commit("players/update", {
+          player,
+          property: "alignmentIndex",
+          value: alignment,
         });
       }
+
       this.tab = "editionRoles";
-      this.$store.commit("toggleModal", "role");
+      this.toggleModal("role");
     },
+
     close() {
       this.tab = "editionRoles";
       this.toggleModal("role");
     },
-    ...mapMutations(["toggleModal"])
-  }
+  },
 };
 </script>
 
@@ -193,6 +171,7 @@ ul.tokens li {
   &.traveler {
     box-shadow: 0 0 10px $traveler, 0 0 10px $traveler;
   }
+
   &:hover {
     transform: scale(1.2);
     z-index: 10;

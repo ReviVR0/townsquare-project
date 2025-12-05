@@ -108,7 +108,7 @@ export default new Vuex.Store({
       isImageOptIn: false,
       zoom: 0,
       background: "",
-      language: localStorage.getItem("language") || "ENG"
+      language: localStorage.getItem("language") || "ENG",
     },
     modals: {
       edition: false,
@@ -127,6 +127,7 @@ export default new Vuex.Store({
       form: false,
       sendCard: false,
       winningTeam: false,
+      moveChat: false,
     },
     edition: editionJSONbyId.get("tb"),
     roles: getRolesByEdition(),

@@ -48,7 +48,7 @@
         class="Invitation"
         @click="toggleModal('invitation')"
         :class="{ active: inviteCount > 0, disabled: !isSittingPlayer }"
-
+        v-if="session.botId" 
       >
         <h3>
           <span>
@@ -70,11 +70,48 @@
     </span>
   </h3>
 </div>
-<div  class="timer" v-if="session.timer!=0"  :style="{ top: position.y + 'px', left: position.x + 'px' }"
-    @mousedown="startDrag"
-    :class="{ blinking: session.timer > 0 && session.timer < 10 }">
-  {{ Math.floor(session.timer / 60) }}:{{ String(session.timer % 60).padStart(2, '0') }}
-  </div>
+<div
+    class="moveChat"
+    @click="toggleModal('moveChat')"
+    v-if="session.botId"
+      >
+        <h3>
+          <span>
+            Move Chat
+          </span>
+        </h3>      
+        </div>
+<div
+  class="timer"
+  v-if="session.timer != 0"
+  :style="{ top: position.y + 'px', left: position.x + 'px' }"
+  @mousedown="startDrag"
+  :class="{ blinking: session.timer > 0 && session.timer < 10 }"
+>
+  <!-- Cancel icon -->
+  <font-awesome-icon
+    v-if="!session.isSpectator"
+    icon="times-circle"
+    class="timer-icon cancel-icon"
+    @click.stop="cancelTimer"
+  />
+  
+  <!-- Timer text -->
+  <span class="timer-text">
+    {{ Math.floor(session.timer / 60) }}:{{
+      String(session.timer % 60).padStart(2, "0")
+    }}
+  </span>
+  
+  <!-- Pause/Start icon -->
+  <font-awesome-icon
+    v-if="!session.isSpectator"
+    :icon="isTimerPaused ? 'play-circle' : 'pause-circle'"
+    class="timer-icon pause-icon"
+    @click.stop="stopTimer"
+  />
+</div>
+
 <audio ref="countdownSound" src="../assets/sounds/hells_bell_hit.mp3"></audio>
 
 
@@ -165,6 +202,7 @@ export default {
       position: { x: 175, y: 20 },
       isDragging: false,
       offset: { x: 0, y: 0 },
+      isTimerPaused: false,
     };
   },
   methods: {
@@ -374,22 +412,40 @@ onDrag(event) {
     },
 
 
-    startTimer() {
-  this.timerInterval = setInterval(() => {
-    if (this.session.timer > 0 && !this.session.nomination) {
-      this.session.timer--;
-    } else 
-    if (this.session.timer <= 0){
-      clearInterval(this.timerInterval);
-      this.timerInterval = null;
-      if (!this.grimoire.isMuted && this.$refs.countdownSound) {
-        this.$refs.countdownSound.play().catch(err => {
-          console.warn("Sound failed to play:", err);
-        });
+  startTimer() {
+    this.timerInterval = setInterval(() => {
+      if (this.session.timer > 0 && !this.session.nomination && !this.timerPause) {
+        this.session.timer--;
+      } else 
+      if (this.session.timer <= 0){
+        clearInterval(this.timerInterval);
+        this.timerInterval = null;
+        if (!this.grimoire.isMuted && this.$refs.countdownSound && this.timerPause==false) {
+          this.$refs.countdownSound.play().catch(err => {
+            console.warn("Sound failed to play:", err);
+          });
+        }
+        this.session.timer = 0;
       }
+    }, 1000);
+    this.$store.commit("session/timerPause", false);
+    this.isTimerPaused = false;
+  },
+  stopTimer() {
+    if (!this.isTimerPaused) {
+      this.$store.commit("session/timerPause", true);
+      this.isTimerPaused = true;
     }
-  }, 1000);
-},
+    else{
+      this.isTimerPaused = false;
+      this.$store.commit("session/timerPause", false);
+      this.$store.commit("session/timer", this.session.timer);
+      }
+  },
+  cancelTimer(){
+    this.$store.commit("session/timerPause", true);
+    this.$store.commit("session/timer", 0);
+  }
   },
   mounted() {
     window.addEventListener('resize', this.handleResize);
@@ -434,9 +490,13 @@ onDrag(event) {
   },
   watch: {
   'session.timer'(newVal) {
+    this.timerPause = false;
     if (newVal > 0 && !this.timerInterval) {
       this.startTimer();
     }
+  },
+  'session.timerPause'(newVal) {
+    this.timerPause = newVal
   },
   messageCount(newCount) {
     const siteNameMeta = document.querySelector('meta[property="og:site_name"]');
@@ -848,7 +908,7 @@ onDrag(event) {
 }
 #townsquare > .Invitation {
   position: absolute;
-  bottom: 5%;
+  bottom: 13%;
   right: 20px;
   background: rgba(0, 0, 0, 0.5);
   border-radius: 10px;
@@ -876,28 +936,6 @@ onDrag(event) {
   opacity: 0.5;
   cursor: not-allowed;
 }
-div.timer {
-  position: fixed;
-    font-weight: bold;
-  cursor: grab;
-  display: flex;
-  justify-content: center;
-  padding: 4px 10px;
-  width: 120px;
-
-  background-color: rgba(0, 0, 0, 0.75);
-  border-radius: 12px;
-  border: 3px solid $townsfolk;
-
-  white-space: nowrap;
-  z-index: 10;
-  user-select: none;
-
-}
-
-.blinking {
-  animation: blink-red-white 1s infinite;
-}
 @keyframes blink-red-white {
   0% { color: red; border-color: red}
   50% { color: white; border-color: $townsfolk}
@@ -905,14 +943,25 @@ div.timer {
 }
 #townsquare > .Messages {
   position: absolute;
-  bottom: 12%; /* slightly above Invitation */
+  bottom: 21%;
   right: 20px;
   background: rgba(0, 0, 0, 0.5);
   border-radius: 10px;
   border: 3px solid black;
   filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.5));
 }
-
+#townsquare > .moveChat {
+  position: absolute;
+  bottom: 5%;
+  right: 20px;
+  background: rgba(0, 0, 0, 0.5);
+  border-radius: 10px;
+  border: 3px solid black;
+  filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.5));
+}
+#townsquare > .moveChat:hover h3 span {
+  color: red;
+}
 #townsquare > .Messages h3 {
   margin: 5px 1vh 0;
   display: flex;
@@ -938,5 +987,63 @@ div.timer {
 #townsquare > .Messages:hover h3 span {
   color: red;
 }
+div.timer {
+  position: fixed;
+  font-weight: bold;
+  cursor: grab;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+
+  padding: 4px 10px;
+  width: auto; // auto width so icons fit naturally
+
+  background-color: rgba(0, 0, 0, 0.75);
+  border-radius: 12px;
+  border: 3px solid $townsfolk;
+
+  white-space: nowrap;
+  z-index: 10;
+  user-select: none;
+}
+
+.timer-text {
+  font-size: 20px;
+  min-width: 50px;
+  text-align: center;
+}
+
+.timer-icon {
+  font-size: 24px;
+  cursor: pointer;
+  transition: transform 0.15s ease, opacity 0.15s ease;
+  opacity: 0.85;
+}
+
+.timer-icon:hover {
+  transform: scale(1.10);
+  opacity: 1;
+}
+
+.cancel-icon {
+  color: $townsfolk;
+}
+
+.pause-icon {
+  color: $townsfolk;
+}
+
+/* Keep blinking effect exactly as before */
+.blinking {
+  animation: blink-red-white 1s infinite;
+}
+
+@keyframes blink-red-white {
+  0%   { color: red; border-color: red; }
+  50%  { color: white; border-color: $townsfolk; }
+  100% { color: red; border-color: red; }
+}
+
 
 </style>

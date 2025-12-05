@@ -130,7 +130,7 @@
     "reminders": ["Safe"],
     "setup": false,
     "name": "Storm Catcher",
-    "team": "fabled",
+    "team": "loric",
     "ability": "Name a good character. If in play, they can only die by execution, but evil players learn which player it is."
   },
   {
@@ -151,7 +151,7 @@
       "reminders": [],
       "setup": false,
       "name": "Bootlegger",
-      "team": "fabled",
+      "team": "loric",
       "ability": "This script has homebrew characters or rules."
   },
   {
@@ -171,7 +171,37 @@
       "reminders": [],
       "setup": false,
       "name": "Gardener",
-      "team": "fabled",
+      "team": "loric",
       "ability": "The Storyteller assigns 1 or more players' characters."
+  },
+  {
+      "id": "tor",
+      "firstNightReminder": "",
+      "otherNightReminder": "",
+      "reminders": [],
+      "setup": false,
+      "name": "Tor",
+      "team": "loric",
+      "ability": "Players don't know their character or alignment. They learn them when they die."
+  },
+  {
+      "id": "bigwig",
+      "firstNightReminder": "",
+      "otherNightReminder": "",
+      "reminders": [],
+      "setup": false,
+      "name": "Big Wig",
+      "team": "loric",
+      "ability": "Each nominee chooses a player: until voting, only they may speak & they are mad the nominee is good or they might die."
+  },
+  {
+      "id": "zenomancer",
+      "firstNightReminder": "",
+      "otherNightReminder": "",
+      "reminders": [],
+      "setup": false,
+      "name": "Zenomancer",
+      "team": "loric",
+      "ability": "One or more players each have a goal. When achieved, that player learns a piece of true info."
   }
 ]

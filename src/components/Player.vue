@@ -50,8 +50,10 @@
 
       <Token
         :role="player.role"
+        :alignment-index="player.alignmentIndex"
         @set-role="$emit('trigger', ['openRoleModal'])"
       />
+
 
       <!-- Claim seat overlay -->
       <div

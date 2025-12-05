@@ -40,6 +40,7 @@
     <GameStateModal />
     <Gradients />
     <WinningTeamModal />
+    <MoveToChatModal />
     <span id="version">v{{ version }}</span>
   </div>
 </template>
@@ -65,7 +66,7 @@ import GameStateModal from "@/components/modals/GameStateModal";
 import Canvas from "@/components/modals/Canvas.vue";
 import InvitationModal from "@/components/modals/InvitationModal.vue";
 import WinningTeamModal from "@/components/modals/WinningTeamModal.vue";
-
+import MoveToChatModal from "@/components/modals/MoveToChatModal.vue";
 
 import { EventBus } from "./event-bus.js";
 
@@ -88,6 +89,7 @@ export default {
     RolesModal,
     Gradients,
     WinningTeamModal,
+    MoveToChatModal
   },
   computed: {
     ...mapState(["grimoire", "session"]),

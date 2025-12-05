@@ -1,7 +1,7 @@
 class LiveSession {
   constructor(store) {
   this._wss = "wss://townsquare-project-back.onrender.com/";
-    //this._wss = "ws://localhost:8081/"; // uncomment if using local server with NODE_ENV=development
+    this._wss = "ws://localhost:8081/"; // uncomment if using local server with NODE_ENV=development
     this._socket = null;
     this._isSpectator = true;
     this._gamestate = [];
@@ -209,6 +209,10 @@ class LiveSession {
         if (!this._isSpectator) return;
         this._store.commit("session/timer", params);
         break;
+      case "timerPause":
+        if (!this._isSpectator) return;
+        this._store.commit("session/timerPause", params);
+        break;
       case "inviteChat":
         if (this._isSpectator) return;
         this._store.commit("session/inviteChat", params);
@@ -263,6 +267,15 @@ class LiveSession {
         break;
       case "setLilMonstaVote":
         this._store.commit("session/setLilMonstaVote", params);
+        break;
+      case "BotConnected":
+        this._store.commit("session/setBotId", params);
+        break;
+      case  "MoveToChat":
+        this.MoveToChat(params);
+        break;
+      case "ConfirmMoveChat":
+        this._store.commit("session/ConfirmMoveChat", params);
         break;
     }
 
@@ -506,7 +519,8 @@ class LiveSession {
    * @param value
    */
   sendPlayer({ player, property, value }) {
-    if (this._isSpectator || property === "reminders") return;
+    if (this._isSpectator || property === "reminders" ||
+        property === "alignmentIndex") return;
     const index = this._store.state.players.players.indexOf(player);
     if (property === "role") {
       if (value.team && value.team === "traveler") {
@@ -910,39 +924,45 @@ class LiveSession {
   timer(payload){
     this._send("timer", payload);
   }
-  inviteChat(payload){
-    //this._send("inviteChat", payload);
-      console.log(`${payload[0]}, ${payload[1]}`);
-      if (payload[1][1]=="ST") {
-        this._sendDirect("host", 'ConfirmChat', payload);
-        return;
-      }
-      this._sendDirect(payload[1][1], 'ConfirmChat', payload);
+  timerPause(payload){
+    this._send("timerPause", payload);
   }
-  ConfirmChat(params){
-    let invites = JSON.parse(localStorage.getItem("invites") || "[]");
-    if (!invites.some(invite => {
-      const [[senderName, senderId], [receiverName, receiverId]] = invite;
-      const [
-        [newSenderName, newSenderId],
-        [newReceiverName, newReceiverId],
-      ] = params;
-      return (
-          senderId === newSenderId &&
-          receiverId === newReceiverId &&
-          senderName === newSenderName &&
-          receiverName === newReceiverName
-      );
-    })) {
-      invites.push(params);
-      localStorage.setItem("invites", JSON.stringify(invites));
+  inviteChat(payload) {
+  const { session } = this._store.state;
+
+  // Send invite to receiver
+  if(payload.receiverId === "ST"){
+    this._sendDirect("host", "ConfirmChat", payload);
+  } else {
+    this._sendDirect(payload.receiverId, "ConfirmChat", payload);
+  }
+
+  // Optional bot handling
+  if(session.botId){
+    this._sendDirect(session.botId, "BotInvite", [payload]);
+  }
+}
+
+ConfirmChat(params) {
+  // store invite locally
+  let invites = JSON.parse(localStorage.getItem("invites") || "[]");
+
+  // Check if invite already exists
+  if(!invites.some(invite => invite.senderId === params.senderId && invite.receiverId === params.receiverId)){
+    invites.push(params);
+    localStorage.setItem("invites", JSON.stringify(invites));
+    window.dispatchEvent(new Event("storage"));
+
+    // auto-expire invite after 15 seconds
+    setTimeout(() => {
+      let invitesNow = JSON.parse(localStorage.getItem("invites") || "[]");
+      invitesNow = invitesNow.filter(i => !(i.senderId === params.senderId && i.receiverId === params.receiverId));
+      localStorage.setItem("invites", JSON.stringify(invitesNow));
       window.dispatchEvent(new Event("storage"));
-    }
-    for (const invite of invites) {
-      const [[senderName, senderId], [receiverName, receiverId]] = invite;
-      console.log(senderName, senderId, receiverName, receiverId);
-    }
+    }, 30000);
   }
+}
+
   SendGrim(params) {
     if (params[1] == "all")
       this._send("SendGrim", params[0]);
@@ -1060,6 +1080,24 @@ class LiveSession {
         }
       });
   }
+  setBotId(botId) {
+    this._send("BotConnected", botId);
+  }
+MoveToChat(params) {
+  const { session } = this._store.state;
+  if (!session.botId) return;
+  if (Array.isArray(params[0])) {
+    this._sendDirect(session.botId, "MoveToChat", params);
+  } else {
+    this._sendDirect(session.botId, "MoveToChat", [params[0], params[1], params[2]]);
+  }
+}
+  ConfirmMoveChat(params){
+    const { session } = this._store.state;
+    if(session.botId){
+      this._send("ConfirmMoveChat", params)
+    }  
+  }
 }
 export default store => {
   // setup
@@ -1143,6 +1181,10 @@ export default store => {
         if (session._isSpectator) return;
         session.timer(payload);
         break;
+      case "session/timerPause":
+        if (session._isSpectator) return;
+        session.timerPause(payload);
+        break;
       case "session/inviteChat":
         session.inviteChat(payload);
         break;
@@ -1179,11 +1221,22 @@ export default store => {
         session.wraithPeek(payload);
         break;
       case "session/wraithLook":
-        session.wraithLook(payload);;
+        session.wraithLook(payload);
         break;    
       case "session/setLilMonstaVote":
         if (session._isSpectator) return;
         session.setLilMonstaVote(payload);
+        break;
+      case "session/setBotId":
+        if (session._isSpectator) return;
+        session.setBotId(payload);
+        break;
+      case "session/MoveToChat":
+        session.MoveToChat(payload);
+        break;
+      case "session/ConfirmMoveChat":
+        if (session._isSpectator) return;
+        session.ConfirmMoveChat(payload);
         break;
     }
   });

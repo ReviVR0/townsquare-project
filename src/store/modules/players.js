@@ -6,7 +6,7 @@ const NEWPLAYER = {
   isVoteless: false,
   isDead: false,
   pronouns: "",
-  team: "",
+  alignmentIndex: 0,
   handRaised: null,
 };
 

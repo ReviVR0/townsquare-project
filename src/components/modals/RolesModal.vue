@@ -167,6 +167,11 @@ export default {
               property: "role",
               value
             });
+            this.$store.commit("players/update", {
+              player,
+              property: "alignmentIndex",
+              value: 0
+            });
           }
         });
         this.$store.commit("toggleModal", "roles");

@@ -1,52 +1,41 @@
 <template>
   <div class="token" @click="setRole" :class="[role.id]">
+    <!-- Icon / image -->
     <span
       class="icon"
       v-if="role.id"
-      :style="{
-        backgroundImage: `url(${
-          role.image && grimoire.isImageOptIn
-            ? role.image 
-            : require('../assets/icons/' + (role.imageAlt || role.id) + 
-            ((role.team === 'townsfolk' || role.team === 'outsider') ? '_g' : '')+
-            ((role.team === 'demon' || role.team === 'minion') ? '_e' : '')
-            + '.png')
-        })`
+      :style="{ backgroundImage: `url(${getImage()})` }"
+    ></span>
 
-      }"
-    ></span>
-    <span
-      class="leaf-left"
-      v-if="role.firstNight || role.firstNightReminder"
-    ></span>
-    <span
-      class="leaf-right"
-      v-if="role.otherNight || role.otherNightReminder"
-    ></span>
+    <!-- Leaves -->
+    <span class="leaf-left" v-if="role.firstNight || role.firstNightReminder"></span>
+    <span class="leaf-right" v-if="role.otherNight || role.otherNightReminder"></span>
     <span v-if="reminderLeaves" :class="['leaf-top' + reminderLeaves]"></span>
     <span class="leaf-orange" v-if="role.setup"></span>
+
+    <!-- Name -->
     <svg viewBox="0 0 150 150" class="name">
-      <path
-        d="M 13 75 C 13 160, 138 160, 138 75"
-        id="curve"
-        fill="transparent"
-      />
-      <text
-        width="150"
-        x="66.6%"
-        text-anchor="middle"
-        class="label mozilla"
-        :font-size="role.name | nameToFontSize"
+      <path d="M 13 75 C 13 160, 138 160, 138 75" fill="transparent" id="curve"/>
+      <text width="150" x="66.6%" text-anchor="middle"
+            :font-size="role.name | nameToFontSize"
+            style="
+            font-size: 24px;
+            font-family: 'Papyrus', serif;
+            font-weight: bold;
+            fill: black;
+            stroke: white; stroke-width: 2px;
+            paint-order: stroke;
+            text-shadow: 0 2px 2px rgba(0,0,0,0.2);"
       >
-        <textPath xlink:href="#curve">
-          {{ role.name }} 
-        </textPath>
+        <textPath xlink:href="#curve">{{ role.name }}</textPath>
       </text>
     </svg>
+
+    <!-- Edition & Team -->
     <div class="edition" :class="[`edition-${role.edition}`, role.team]"></div>
-    <div class="ability" v-if="role.ability">
-      {{ role.ability }}
-    </div>
+
+    <!-- Ability description -->
+    <div class="ability" v-if="role.ability">{{ role.ability }}</div>
   </div>
 </template>
 
@@ -58,29 +47,49 @@ export default {
   props: {
     role: {
       type: Object,
-      default: () => ({})
-    }
+      default: () => ({}),
+    },
+    alignmentIndex: {
+      type: Number,
+      default: 0,
+    },
   },
   computed: {
-    reminderLeaves: function() {
-      return (
-        (this.role.reminders || []).length +
-        (this.role.remindersGlobal || []).length
-      );
+    reminderLeaves() {
+      return (this.role.reminders || []).length + (this.role.remindersGlobal || []).length;
     },
-    ...mapState(["grimoire"])
-  },
-  data() {
-    return {};
-  },
-  filters: {
-    nameToFontSize: name => (name && name.length > 10 ? "90%" : "110%")
+    ...mapState(["grimoire"]),
   },
   methods: {
+    getImage() {
+      // Use custom images if opted-in
+      if (this.role.image && this.grimoire.isImageOptIn) {
+        if (Array.isArray(this.role.image)) return this.role.image[this.alignmentIndex] || this.role.image[0];
+        return this.role.image;
+      }
+      let folder = "Reminder/";
+      let suffix = "";
+
+      if (this.alignmentIndex === 1) {
+        folder = "Images_g/";
+        suffix = "_g";
+      } else if (this.alignmentIndex === 2) {
+        folder = "Images_e/";
+        suffix = "_e";
+      }
+
+      // Fallback to default image
+      const filename = this.role.imageAlt || this.role.id;
+      return require(`../assets/icons/${folder}${filename}${suffix}.png`);
+    },
     setRole() {
       this.$emit("set-role");
-    }
-  }
+    },
+  },
+  filters: {
+    nameToFontSize: (name) => (name && name.length > 10 ? "90%" : "110%"),
+  },
+
 };
 </script>
 
@@ -102,102 +111,16 @@ export default {
   &:hover .name .label {
     stroke: black;
     fill: white;
-    @-moz-document url-prefix() {
-      &.mozilla {
-        stroke: none;
-        filter: drop-shadow(0 1.5px 0 black) drop-shadow(0 -1.5px 0 black)
-          drop-shadow(1.5px 0 0 black) drop-shadow(-1.5px 0 0 black)
-          drop-shadow(0 2px 2px rgba(0, 0, 0, 0.5));
-      }
-    }
   }
 
-  .icon,
-  &:before {
+  .icon {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    top: 4px;
     background-size: 100%;
     background-repeat: no-repeat;
     background-position: center 30%;
-    position: absolute;
-    width: 100%;
-    height: 100%;
-    margin-top: 3%;
-  }
-
-  span {
-    position: absolute;
-    width: 100%;
-    height: 100%;
-    background-size: 100%;
-    pointer-events: none;
-
-    &.leaf-left {
-      background-image: url("../assets/leaf-left.png");
-    }
-
-    &.leaf-orange {
-      background-image: url("../assets/leaf-orange.png");
-    }
-
-    &.leaf-right {
-      background-image: url("../assets/leaf-right.png");
-    }
-
-    &.leaf-top1 {
-      background-image: url("../assets/leaf-top1.png");
-    }
-
-    &.leaf-top2 {
-      background-image: url("../assets/leaf-top2.png");
-    }
-
-    &.leaf-top3 {
-      background-image: url("../assets/leaf-top3.png");
-    }
-
-    &.leaf-top4 {
-      background-image: url("../assets/leaf-top4.png");
-    }
-
-    &.leaf-top5 {
-      background-image: url("../assets/leaf-top5.png");
-    }
-  }
-
-  .name {
-    width: 100%;
-    height: 100%;
-    font-size: 24px; // svg fonts are relative to document font size
-    .label {
-      fill: black;
-      stroke: white;
-      stroke-width: 2px;
-      paint-order: stroke;
-      font-family: "Papyrus", serif;
-      font-weight: bold;
-      text-shadow: 0 2px 2px rgba(0, 0, 0, 0.2);
-      letter-spacing: 1px;
-
-      @-moz-document url-prefix() {
-        &.mozilla {
-          // Vue doesn't support scoped media queries, so we have to use a second css class
-          stroke: none;
-          text-shadow: none;
-          filter: drop-shadow(0 1.5px 0 white) drop-shadow(0 -1.5px 0 white)
-            drop-shadow(1.5px 0 0 white) drop-shadow(-1.5px 0 0 white)
-            drop-shadow(0 2px 2px rgba(0, 0, 0, 0.5));
-        }
-      }
-    }
-  }
-
-  .edition {
-    position: absolute;
-    right: 0;
-    bottom: 5px;
-    width: 30px;
-    height: 30px;
-    background-size: 100%;
-    display: none;
   }
 
   .ability {
@@ -211,25 +134,9 @@ export default {
     background: rgba(0, 0, 0, 0.5);
     border-radius: 10px;
     border: 3px solid black;
-    filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.5));
-    text-align: left;
-    justify-items: center;
-    align-content: center;
-    align-items: center;
-    pointer-events: none;
     opacity: 0;
+    pointer-events: none;
     transition: opacity 200ms ease-in-out;
-
-    &:before {
-      content: " ";
-      border: 10px solid transparent;
-      width: 0;
-      height: 0;
-      border-right-color: black;
-      position: absolute;
-      margin-right: 2px;
-      right: 100%;
-    }
   }
 
   &:hover .ability {

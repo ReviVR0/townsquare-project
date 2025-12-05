@@ -29,6 +29,7 @@ const state = () => ({
   isVoteHistoryAllowed: true,
   isRolesDistributed: false,
   timer: 0,
+  timerPause: false,
   receivedGrim: null,
   recivedMessage: null,
   winningTeam: null,
@@ -36,6 +37,8 @@ const state = () => ({
   hiddenVote: false,
   wraithPeek: [],
   isLilMonstaVote: false,
+  botId: null,
+  discordChats: [],
 });
 
 const getters = {};
@@ -61,6 +64,7 @@ const mutations = {
   claimSeat: set("claimedSeat"),
   distributeRoles: set("isRolesDistributed"),
   timer: set("timer"),
+  timerPause: set("timerPause"),
   winningTeam: set("winningTeam"),
   setHiddenVote: set("hiddenVote"),
   setLilMonstaVote: set("isLilMonstaVote"),
@@ -142,6 +146,22 @@ const mutations = {
     }  
   },
   wraithLook(){},
+  setBotId(state, botId) {
+    state.botId = botId.botId;
+  },
+  MoveToChat(){},
+  ConfirmMoveChat(state, [chatNumber, playerId]) {
+    const existing = state.discordChats.find(c => c.playerId === playerId);
+    if (existing) {
+      existing.chatNumber = chatNumber;
+    } else {
+      state.discordChats.push({
+        playerId,
+        chatNumber
+      });
+    }
+  }
+
 };
 
 export default {

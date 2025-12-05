@@ -3,13 +3,34 @@
     <h3>
       Choose a fabled character to add to the game
     </h3>
+
+    <!-- Tokens list -->
     <ul class="tokens">
       <li v-for="role in fabled" :key="role.id" @click="setFabled(role)">
         <Token :role="role" />
       </li>
     </ul>
+
+    <!-- Tab buttons -->
+    <div class="button-group">
+      <span
+        class="button"
+        :class="{ townsfolk: tab === 'fabled' }"
+        @click="tab = 'fabled'"
+      >
+        Fabled
+      </span>
+      <span
+        class="button"
+        :class="{ townsfolk: tab === 'loric' }"
+        @click="tab = 'loric'"
+      >
+        Loric
+      </span>
+    </div>
   </Modal>
 </template>
+
 
 <script>
 import { mapMutations, mapState } from "vuex";
@@ -23,9 +44,9 @@ export default {
     fabled() {
       const fabled = [];
       this.$store.state.fabled.forEach(role => {
-        // don't show fabled that are already in play
         if (
-          !this.$store.state.players.fabled.some(fable => fable.id === role.id)
+          !this.$store.state.players.fabled.some(fable => fable.id === role.id) &&
+          role.team === this.tab
         ) {
           fabled.push(role);
         }
@@ -33,17 +54,21 @@ export default {
       return fabled;
     }
   },
+  data() {
+    return {
+      tab: "fabled"
+    };
+  },
   methods: {
     setFabled(role) {
-      this.$store.commit("players/setFabled", {
-        fabled: role
-      });
-      this.$store.commit("toggleModal", "fabled");
+      this.$store.commit("players/setFabled", { fabled: role });
+      this.toggleModal("fabled");
     },
     ...mapMutations(["toggleModal"])
   }
 };
 </script>
+
 
 <style scoped lang="scss">
 @import "../../vars.scss";
@@ -59,4 +84,5 @@ ul.tokens li {
     z-index: 10;
   }
 }
+
 </style>
