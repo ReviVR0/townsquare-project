@@ -157,9 +157,16 @@ export default {
       if (pid === "ST") return null;
 
       const player = this.players.find(p => p.id == pid);
-      if (!player || !player.role) return null;
-      return require(`../../assets/icons/Reminder/${player.role.id}.png`);
+      if (!player || !player.role || !player.role.id) return null;
+
+      try {
+        return require(`../../assets/icons/Reminder/${player.role.id}.png`);
+      } catch (e) {
+        console.warn(`Missing role image for ${player.role.id}`);
+        return null;
+      }
     },
+
 
     moveToChat(to) {
       if (this.hideNames) return;
