@@ -136,27 +136,31 @@ export default {
 
       this.discordChats.forEach(entry => {
         if (entry.chatNumber in map) {
-          map[entry.chatNumber].push(entry.playerId);
+          map[entry.chatNumber].push(entry.discordID); // <-- use DiscordID
         }
       });
 
       return map;
     }
+
   },
 
   methods: {
     ...mapMutations(["toggleModal"]),
 
-    resolveName(pid) {
-      if (pid === "ST") return "ST";
-      const player = this.players.find(p => p.id == pid);
+    resolveName(discordID) {
+      if (!discordID) return "?";
+      if (this.session.discordST?.includes(discordID)) return "ST";
+      const player = this.players.find(p => p.discordID === discordID);
       return player ? player.name : "?";
     },
 
-    playerRoleIcon(pid) {
-      if (pid === "ST") return null;
 
-      const player = this.players.find(p => p.id == pid);
+
+    playerRoleIcon(discordID) {
+      if (this.session.discordST?.includes(discordID)) return null;
+
+      const player = this.players.find(p => p.discordID === discordID);
       if (!player || !player.role || !player.role.id) return null;
 
       try {
@@ -168,31 +172,46 @@ export default {
     },
 
 
+
     moveToChat(to) {
       if (this.hideNames) return;
 
-      const isST = !this.session.isSpectator;
-      const playerId = isST ? 0 : this.session.playerId;
-      const playerName = isST
-        ? "ST"
-        : this.players.find(p => p.id == this.session.playerId)?.name;
+      let payload = [];
 
-      const payload = [[to, playerName, playerId]];
+      if (!this.session.isSpectator) {
+        // ST: send all DiscordIDs of ST
+        (this.session.discordST || []).forEach(discordID => {
+          payload.push([to, discordID]);
+        });
+      } else {
+        // normal player: send only their DiscordID
+        const player = this.players.find(p => p.id === this.session.playerId);
+        if (player?.discordID) payload.push([to, player.discordID]);
+      }
+
       this.$store.commit("session/MoveToChat", payload);
     },
 
-
     sendAllToTownSquare() {
-      const moves = this.players.map(p => [21, p.name, p.id]);
-      moves.push([21, "ST"]);
+      const moves = this.players
+        .filter(p => p.discordID)
+        .map(p => [21, p.discordID]);
+
+      (this.session.discordST || []).forEach(discordID => moves.push([21, discordID]));
+
       this.$store.commit("session/MoveToChat", moves);
     },
 
     sendAllToTheirRooms() {
-      const moves = this.players.map((p, idx) => [idx + 1, p.name, p.id]);
-      moves.push([22, "ST"]);
+      const moves = this.players
+        .filter(p => p.discordID)
+        .map((p, idx) => [idx + 1, p.discordID]);
+
+      (this.session.discordST || []).forEach(discordID => moves.push([22, discordID]));
+
       this.$store.commit("session/MoveToChat", moves);
     }
+
   }
 };
 </script>

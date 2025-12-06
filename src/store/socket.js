@@ -1,7 +1,7 @@
 class LiveSession {
   constructor(store) {
   this._wss = "wss://townsquare-project-back.onrender.com/";
-    //this._wss = "ws://localhost:8081/"; // uncomment if using local server with NODE_ENV=development
+    this._wss = "ws://localhost:8081/"; // uncomment if using local server with NODE_ENV=development
     this._socket = null;
     this._isSpectator = true;
     this._gamestate = [];
@@ -247,7 +247,6 @@ class LiveSession {
       case "setHandRaised": {
         if (this._isSpectator) return;
         const { session } = this._store.state;
-        console.log(session.nomination);
         if (session.nomination) return;
         const player = this._store.state.players.players[params[0]]; 
         if (player) {
@@ -268,9 +267,55 @@ class LiveSession {
       case "setLilMonstaVote":
         this._store.commit("session/setLilMonstaVote", params);
         break;
-      case "BotConnected":
-        this._store.commit("session/setBotId", params);
-        break;
+case "BotConnected": {
+  const { session } = this._store.state;
+  const { botId, members } = params;
+
+  // Only accept if no bot yet or same bot
+  if (session.botId && session.botId !== botId) return;
+
+  if (Array.isArray(members)) {
+    members.forEach(member => {
+      const [nickname, discordId, isST] = member;
+
+      // ❌ Skip ST completely — they are not players
+      if (isST) return;
+
+      // Find existing player
+      let player = this._store.state.players.players.find(
+        p => p.name === nickname
+      );
+
+      // If not found, add the player
+      if (!player) {
+        this._store.commit("players/add", nickname);
+        player = this._store.state.players.players.find(
+          p => p.name === nickname
+        );
+      }
+
+      // Update discordID
+      if (player) {
+        this._store.commit("players/update", {
+          player,
+          property: "discordID",
+          value: discordId
+        });
+      }
+    });
+  }
+
+  // Store botId + ST IDs in session
+  this._store.commit("session/setBotId", {
+    botId,
+    members
+  });
+
+  break;
+}
+
+
+
       case  "MoveToChat":
         this.MoveToChat(params);
         break;
@@ -357,6 +402,8 @@ class LiveSession {
         lockedVote: session.lockedVote,
         isVoteInProgress: session.isVoteInProgress,
         markedPlayer: session.markedPlayer,
+        botId: session.botId,
+        discordST: session.discordST,
         fabled: fabled.map(f => (f.isCustom ? f : { id: f.id })),
         ...(session.nomination ? { votes: session.votes } : {})
       });
@@ -381,6 +428,8 @@ class LiveSession {
       lockedVote,
       isVoteInProgress,
       markedPlayer,
+      botId,
+      discordST,
       fabled
     } = data;
     const players = this._store.state.players.players;
@@ -436,6 +485,10 @@ class LiveSession {
         isVoteInProgress
       });
       this._store.commit("session/setMarkedPlayer", markedPlayer);
+      this._store.commit("session/setBotId", {
+        botId,
+        discordST
+      });
       this._store.commit("players/setFabled", {
         fabled: fabled.map(f => this._store.state.fabled.get(f.id) || f)
       });
@@ -928,18 +981,11 @@ class LiveSession {
     this._send("timerPause", payload);
   }
   inviteChat(payload) {
-  const { session } = this._store.state;
-
   // Send invite to receiver
   if(payload.receiverId === "ST"){
     this._sendDirect("host", "ConfirmChat", payload);
   } else {
     this._sendDirect(payload.receiverId, "ConfirmChat", payload);
-  }
-
-  // Optional bot handling
-  if(session.botId){
-    this._sendDirect(session.botId, "BotInvite", [payload]);
   }
 }
 

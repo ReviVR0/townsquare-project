@@ -8,6 +8,7 @@ const NEWPLAYER = {
   pronouns: "",
   alignmentIndex: 0,
   handRaised: null,
+  discordID: null,
 };
 
 const state = () => ({

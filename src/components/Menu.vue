@@ -165,7 +165,9 @@
             <li @click="LilMonsta" v-if="!session.isSpectator && grimoire.isNight">
               Start Lil'Monsta Vote<em>[M]</em>
             </li>
-
+            <li @click="RemoveBot" v-if="!session.isSpectator && session.botId">
+              Remove Bot
+            </li>
             <li @click="leaveSession">
               Leave Session
               <em>{{ session.sessionId }}</em>
@@ -425,6 +427,9 @@ export default {
     LilMonsta(){
       if (!confirm("Start Lil’Monsta vote?")) return;
         this.$store.commit("session/setLilMonstaVote", !this.session.isLilMonstaVote);
+    },
+    RemoveBot(){
+      this.$store.commit("session/setBotId", { botId: null });
     },
     handleMenuClick() {
       if (!this.menuOpenedOnce) {

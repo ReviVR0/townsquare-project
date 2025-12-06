@@ -77,8 +77,19 @@ export default {
   methods: {
     ...mapMutations(["toggleModal"]),
     getChatNumber(playerId) {
-      const record = this.session.discordChats.find(c => c.playerId === playerId);
-      return record ? record.chatNumber : 0;
+        
+      if (playerId === "ST") {
+        const discordID = this.session.discordST[0];
+        const record = this.session.discordChats.find(c => c.discordID === discordID);
+        return record ? record.chatNumber : 21;
+      }
+      else{
+        const player = this.players.players.find(p => p.id === playerId);
+        const discordID = player ? player.discordID : playerId;
+        const record = this.session.discordChats.find(c => c.discordID === discordID);
+        return record ? record.chatNumber : 21;
+
+      }
     },
     updateLocalInvites() {
       this.localInvites = JSON.parse(localStorage.getItem("invites") || "[]");
@@ -105,31 +116,38 @@ export default {
       this.$store.commit("session/inviteChat", payload);
     },
 
-    acceptInvite(senderId) {
-      const invite = this.localInvites.find(i => i.senderId === senderId);
-      if (!invite) return;
+acceptInvite(senderId) {
+  const invite = this.localInvites.find(i => i.senderId === senderId);
+  if (!invite) return;
 
-      let destination = invite.senderChat;
+  let destination = invite.senderChat;
 
-      // Special case: if senderChat is 21, move both
-      if (destination == 21) {
-        destination = this.findFreeChat();
+  // Special case: if senderChat is 21, move both
+  if (destination == 21) {
+    destination = this.findFreeChat();
 
-        // Move sender
-        this.$store.commit("session/MoveToChat", [[destination, invite.senderName, invite.senderId]]);
-        if (this.session.botId) {
-          this.$store.commit("session/MoveToChat", [[destination, invite.senderName, invite.senderId]]);
-        }
-      }
+    if (this.session.botId) {
+      const senderDiscordID =
+        invite.senderId === "ST"
+          ? this.session.discordST[0]
+          : this.players.players.find(p => p.id === invite.senderId)?.discordID || "";
 
-      // Move receiver
-      this.$store.commit("session/MoveToChat", [[destination, invite.receiverName, invite.receiverId]]);
-      if (this.session.botId) {
-        this.$store.commit("session/MoveToChat", [[destination, invite.receiverName, invite.receiverId]]);
-      }
+      this.$store.commit("session/MoveToChat", [[destination, senderDiscordID]]);
+    }
+  }
 
-      this.removeInvite(invite);
-    },
+  if (this.session.botId) {
+    const receiverDiscordID =
+      invite.receiverId === "ST"
+        ? this.session.discordST[0]
+        : this.players.players.find(p => p.id === invite.receiverId)?.discordID || "";
+
+    this.$store.commit("session/MoveToChat", [[destination, receiverDiscordID]]);
+  }
+
+  this.removeInvite(invite);
+},
+
 
 
 

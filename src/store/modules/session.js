@@ -39,6 +39,7 @@ const state = () => ({
   isLilMonstaVote: false,
   botId: null,
   discordChats: [],
+  DiscordST: null,
 });
 
 const getters = {};
@@ -146,21 +147,45 @@ const mutations = {
     }  
   },
   wraithLook(){},
-  setBotId(state, botId) {
-    state.botId = botId.botId;
+  setBotId(state, payload) {
+    state.botId = payload.botId;
+
+    // Determine ST Discord IDs
+    const stDiscordIds = Array.isArray(payload.members)
+      ? payload.members.filter(m => m[2]).map(m => m[1])
+      : [];
+    state.discordST = stDiscordIds || [];
+
+    // Put all members into chat number 21
+    if (Array.isArray(payload.members)) {
+      payload.members.forEach(member => {
+        const discordID = member[1]; // second item is DiscordID
+        const existing = state.discordChats.find(c => c.discordID === discordID);
+        if (existing) {
+          existing.chatNumber = 21;
+        } else {
+          state.discordChats.push({
+            discordID,
+            chatNumber: 21
+          });
+        }
+      });
+    }
   },
+
   MoveToChat(){},
-  ConfirmMoveChat(state, [chatNumber, playerId]) {
-    const existing = state.discordChats.find(c => c.playerId === playerId);
+  ConfirmMoveChat(state, [chatNumber, discordID]) {
+    const existing = state.discordChats.find(c => c.discordID === discordID);
     if (existing) {
       existing.chatNumber = chatNumber;
     } else {
       state.discordChats.push({
-        playerId,
+        discordID,
         chatNumber
       });
     }
   }
+
 
 };
 

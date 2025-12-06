@@ -118,13 +118,10 @@ export default {
         if (this.session.isSpectator && role.team === "traveler") return;
 
         const player = this.players[this.playerIndex];
-        const roleCopy = structuredClone(role);
-        if (this.tab === "GoodRoles") roleCopy.team = "townsfolk";
-        if (this.tab === "EvilRoles") roleCopy.team = "minion";
         this.$store.commit("players/update", {
           player,
           property: "role",
-          value: roleCopy,
+          value: role,
         });
 
         // Commit alignment index
