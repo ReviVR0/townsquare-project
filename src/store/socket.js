@@ -1,7 +1,7 @@
 class LiveSession {
   constructor(store) {
   this._wss = "wss://townsquare-project-back.onrender.com/";
-    //this._wss = "ws://localhost:8081/"; // uncomment if using local server with NODE_ENV=development
+    this._wss = "ws://localhost:8081/"; // uncomment if using local server with NODE_ENV=development
     this._socket = null;
     this._isSpectator = true;
     this._gamestate = [];
@@ -267,60 +267,60 @@ class LiveSession {
       case "setLilMonstaVote":
         this._store.commit("session/setLilMonstaVote", params);
         break;
-case "BotConnected": {
-  const { session } = this._store.state;
-  const { botId, members } = params;
+      case "BotConnected": {
+        const { session } = this._store.state;
+        const { botId, members } = params;
 
-  // Only accept if no bot yet or same bot
-  if (session.botId && session.botId !== botId) return;
+        // Only accept if no bot yet or same bot
+        if (session.botId && session.botId !== botId) return;
 
-  if (Array.isArray(members)) {
-    members.forEach(member => {
-      const [nickname, discordId, isST] = member;
+        if (Array.isArray(members)) {
+          members.forEach(member => {
+            const [nickname, discordId, isST] = member;
 
-      // ❌ Skip ST completely — they are not players
-      if (isST) return;
+            // Skip ST
+            if (isST) return;
 
-      // Find existing player
-      let player = this._store.state.players.players.find(
-        p => p.name === nickname
-      );
+            // Find existing player
+            let player = this._store.state.players.players.find(
+              p => p.name === nickname
+            );
 
-      // If not found, add the player
-      if (!player) {
-        this._store.commit("players/add", nickname);
-        player = this._store.state.players.players.find(
-          p => p.name === nickname
-        );
-      }
+            // If not found, add the player
+            if (!player) {
+              this._store.commit("players/add", nickname);
+              player = this._store.state.players.players.find(
+                p => p.name === nickname
+              );
+            }
 
-      // Update discordID
-      if (player) {
-        this._store.commit("players/update", {
-          player,
-          property: "discordID",
-          value: discordId
+            // Update discordID
+            if (player) {
+              this._store.commit("players/update", {
+                player,
+                property: "discordID",
+                value: discordId
+              });
+            }
+          });
+        }
+
+        // Store botId + ST IDs in session
+        this._store.commit("session/setBotId", {
+          botId,
+          members
         });
+
+        break;
       }
-    });
-  }
-
-  // Store botId + ST IDs in session
-  this._store.commit("session/setBotId", {
-    botId,
-    members
-  });
-
-  break;
-}
-
-
-
       case  "MoveToChat":
         this.MoveToChat(params);
         break;
       case "ConfirmMoveChat":
         this._store.commit("session/ConfirmMoveChat", params);
+        break;
+      case "setLockRoom":
+        this._store.commit("session/setLockRoom", params);
         break;
     }
 
@@ -1144,6 +1144,12 @@ MoveToChat(params) {
       this._send("ConfirmMoveChat", params)
     }  
   }
+  setLockRoom(params){
+    const { session } = this._store.state;
+    if(session.botId){
+      this._send("setLockRoom", params)
+    }  
+  }
 }
 export default store => {
   // setup
@@ -1283,6 +1289,10 @@ export default store => {
       case "session/ConfirmMoveChat":
         if (session._isSpectator) return;
         session.ConfirmMoveChat(payload);
+        break;
+      case "session/setLockRoom":
+        if (session._isSpectator) return;
+        session.setLockRoom(payload);
         break;
     }
   });

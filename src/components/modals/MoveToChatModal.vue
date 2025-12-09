@@ -14,6 +14,7 @@
           v-for="n in numberOfPlayers"
           :key="n"
           @click="moveToChat(n)"
+          :class="{ locked: isRoomLocked(n) }"
         >
           <div class="room-label">{{ n }}</div>
 
@@ -42,7 +43,7 @@
         </button>
 
         <!-- TOWN SQUARE -->
-        <button @click="moveToChat(21)">
+        <button @click="moveToChat(21)"   :class="{ locked: isRoomLocked(21) }">
           <div class="room-label">Townsquare</div>
           <div class="chat-users">
             <template v-if="!hideNames">
@@ -69,7 +70,7 @@
         </button>
 
         <!-- STORYTELLER DEN -->
-        <button @click="moveToChat(22)">
+        <button @click="moveToChat(22)"   :class="{ locked: isRoomLocked(22) }">
           <div class="room-label">Storyteller Den</div>
           <div class="chat-users">
             <template v-if="!hideNames">
@@ -115,6 +116,11 @@ import { mapMutations, mapState } from "vuex";
 
 export default {
   components: { Modal },
+  data() {
+    return {
+      lockTimers: {} // { roomNumber: timeoutId }
+    };
+  },
 
   computed: {
     ...mapState(["modals", "session", "grimoire"]),
@@ -141,8 +147,19 @@ export default {
       });
 
       return map;
-    }
+    },
+    isRoomLocked() {
+      return (roomNumber) => {
+        const count = this.playersInChats[roomNumber]?.length || 0;
+        if (roomNumber === 21) return false;
 
+        // Auto-unlock when < 2 players
+        if (count < 2) return false;
+
+        // Otherwise rely on server lock state
+        return this.session.lockedRooms?.[roomNumber] || false;
+      };
+    },
   },
 
   methods: {
@@ -175,7 +192,12 @@ export default {
 
     moveToChat(to) {
       if (this.hideNames) return;
+      const isLocked = this.isRoomLocked(to);
+      const isST = !this.session.isSpectator;
 
+      if (isLocked && !isST) {
+        return; // silently block (recommended)
+      }
       let payload = [];
 
       if (!this.session.isSpectator) {
@@ -212,7 +234,43 @@ export default {
       this.$store.commit("session/MoveToChat", moves);
     }
 
+  },
+  watch: {
+    playersInChats: {
+      handler(newVal) {
+        Object.keys(newVal).forEach((room) => {
+          const roomNumber = Number(room);
+
+          if (roomNumber === 21) return;
+
+          const count = newVal[roomNumber]?.length || 0;
+
+          // 1. If < 2 players → unlock & clear timer
+          if (count < 2) {
+            clearTimeout(this.lockTimers[roomNumber]);
+            delete this.lockTimers[roomNumber];
+
+            this.$store.commit("session/setLockRoom", [roomNumber, false]);
+            return;
+          }
+
+          // 2. If 2+ players → start lock timer only if not already running or locked
+          const isLocked = this.session.lockedRooms?.[roomNumber] || false;
+
+          if (!isLocked && !this.lockTimers[roomNumber]) {
+            // Start 10 second lock countdown
+            this.lockTimers[roomNumber] = setTimeout(() => {
+              this.$store.commit("session/setLockRoom", [roomNumber, true]);
+              delete this.lockTimers[roomNumber]; // cleanup
+            }, 10000);
+          }
+        });
+      },
+      deep: true, // important — watches array changes inside playersInChats
+      immediate: true,
+    },
   }
+
 };
 </script>
 
@@ -272,6 +330,15 @@ button {
 button:hover {
   background-color: #fff;
   color: #222;
+}
+button.locked {
+  opacity: 0.55;
+  cursor: not-allowed;
+  border: 2px solid #ff4444;
+}
+
+button.locked .room-label::after {
+  content: " Locked";
 }
 
 .room-label {
