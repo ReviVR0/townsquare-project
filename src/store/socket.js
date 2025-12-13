@@ -267,6 +267,9 @@ class LiveSession {
       case "setLilMonstaVote":
         this._store.commit("session/setLilMonstaVote", params);
         break;
+      case "setDiscordChats":
+        this._store.commit("session/setDiscordChats", params);
+        break;
       case "BotConnected": {
         const { session } = this._store.state;
         const { botId, members } = params;
@@ -321,6 +324,9 @@ class LiveSession {
         break;
       case "setLockRoom":
         this._store.commit("session/setLockRoom", params);
+        break;
+      case "setLockRooms":
+        this._store.commit("session/setLockRooms", params);
         break;
     }
 
@@ -404,6 +410,8 @@ class LiveSession {
         markedPlayer: session.markedPlayer,
         botId: session.botId,
         discordST: session.discordST,
+        discordChats: session.discordChats,
+        lockedRooms: session.lockedRooms,
         fabled: fabled.map(f => (f.isCustom ? f : { id: f.id })),
         ...(session.nomination ? { votes: session.votes } : {})
       });
@@ -430,7 +438,9 @@ class LiveSession {
       markedPlayer,
       botId,
       discordST,
-      fabled
+      fabled,
+      discordChats,
+      lockedRooms
     } = data;
     const players = this._store.state.players.players;
     // adjust number of players
@@ -485,10 +495,14 @@ class LiveSession {
         isVoteInProgress
       });
       this._store.commit("session/setMarkedPlayer", markedPlayer);
-      this._store.commit("session/setBotId", {
-        botId,
-        discordST
-      });
+      if(botId){
+        this._store.commit("session/setBotId", {
+          botId,
+          members: [["ST", discordST[0], true]]
+        });
+        this._store.commit("session/setLockRooms", lockedRooms);
+        this._store.commit("session/setDiscordChats", discordChats);
+      }
       this._store.commit("players/setFabled", {
         fabled: fabled.map(f => this._store.state.fabled.get(f.id) || f)
       });
@@ -1126,6 +1140,9 @@ ConfirmChat(params) {
         }
       });
   }
+  setDiscordChats(params) {
+    this._send("setDiscordChats", params);
+  }
   setBotId(botId) {
     this._send("BotConnected", botId);
   }
@@ -1148,6 +1165,12 @@ MoveToChat(params) {
     const { session } = this._store.state;
     if(session.botId){
       this._send("setLockRoom", params)
+    }  
+  }
+    setLockRooms(params){
+    const { session } = this._store.state;
+    if(session.botId){
+      this._send("setLockRooms", params)
     }  
   }
 }
@@ -1279,6 +1302,10 @@ export default store => {
         if (session._isSpectator) return;
         session.setLilMonstaVote(payload);
         break;
+      case "session/setDiscordChats":
+        if (session._isSpectator) return;
+        session.setDiscordChats(payload);
+        break;
       case "session/setBotId":
         if (session._isSpectator) return;
         session.setBotId(payload);
@@ -1293,6 +1320,10 @@ export default store => {
       case "session/setLockRoom":
         if (session._isSpectator) return;
         session.setLockRoom(payload);
+        break;
+      case "session/setLockRooms":
+        if (session._isSpectator) return;
+        session.setLockRooms(payload);
         break;
     }
   });

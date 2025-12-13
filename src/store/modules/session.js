@@ -39,7 +39,7 @@ const state = () => ({
   isLilMonstaVote: false,
   botId: null,
   discordChats: [],
-  DiscordST: null,
+  discordST: null,
   lockedRooms: {
   1: false,
   2: false,
@@ -93,6 +93,8 @@ const mutations = {
   winningTeam: set("winningTeam"),
   setHiddenVote: set("hiddenVote"),
   setLilMonstaVote: set("isLilMonstaVote"),
+  setDiscordChats: set("discordChats"),
+  setLockRooms: set("lockedRooms"),
   setSessionId(state, sessionId) {
     state.sessionId = sessionId
       .toLocaleLowerCase()
@@ -179,7 +181,7 @@ const mutations = {
       ? payload.members.filter(m => m[2]).map(m => m[1])
       : [];
     state.discordST = stDiscordIds || [];
-
+    console.log(payload)
     // Put all members into chat number 21
     if (Array.isArray(payload.members)) {
       payload.members.forEach(member => {
@@ -195,6 +197,9 @@ const mutations = {
         }
       });
     }
+    console.log(state.discordST)
+    console.log(state.discordChats)
+
   },
 
   MoveToChat(){},

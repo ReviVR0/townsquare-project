@@ -45,6 +45,10 @@
 <script>
 import Modal from "./Modal";
 import { mapState, mapMutations } from "vuex";
+const inviteSound = new Audio(
+  require("@/assets/sounds/invite.mp3")
+);
+inviteSound.volume = 0.6;
 
 export default {
   components: { Modal },
@@ -92,7 +96,22 @@ export default {
       }
     },
     updateLocalInvites() {
-      this.localInvites = JSON.parse(localStorage.getItem("invites") || "[]");
+      const oldInvites = this.localInvites;
+      const newInvites = JSON.parse(localStorage.getItem("invites") || "[]");
+
+      // Detect newly received invite
+      const hasNewInvite =
+        newInvites.length > oldInvites.length &&
+        newInvites.some(
+          ni => !oldInvites.find(oi => oi.senderId === ni.senderId)
+        );
+
+      this.localInvites = newInvites;
+
+      if (hasNewInvite) {
+        inviteSound.currentTime = 0;
+        inviteSound.play().catch(() => {});
+      }
     },
 
     hasInviteFrom(senderId) {
