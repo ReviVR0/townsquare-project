@@ -14,10 +14,9 @@
           v-for="n in numberOfPlayers"
           :key="n"
           @click="moveToChat(n)"
-          :class="{ locked: isRoomLocked(n) }"
+          :class="{ locked: grimoire.isNight ? false : isRoomLocked(n) }"
         >
-          <div class="room-label">{{ n }}</div>
-
+        <div class="room-label">{{ getRoomLabel(n) }}</div>
           <div class="chat-users">
             <template v-if="!hideNames">
               <template v-if="playersInChats[n].length">
@@ -43,7 +42,7 @@
         </button>
 
         <!-- TOWN SQUARE -->
-        <button @click="moveToChat(21)"   :class="{ locked: isRoomLocked(21) }">
+        <button @click="moveToChat(21)"   :class="{ locked: grimoire.isNight ? false : isRoomLocked(21) }">
           <div class="room-label">Townsquare</div>
           <div class="chat-users">
             <template v-if="!hideNames">
@@ -70,7 +69,7 @@
         </button>
 
         <!-- STORYTELLER DEN -->
-        <button @click="moveToChat(22)"   :class="{ locked: isRoomLocked(22) }">
+        <button @click="moveToChat(22)"   :class="{ locked: grimoire.isNight ? false : isRoomLocked(22) }">
           <div class="room-label">Storyteller Den</div>
           <div class="chat-users">
             <template v-if="!hideNames">
@@ -118,7 +117,32 @@ export default {
   components: { Modal },
   data() {
     return {
-      lockTimers: {} // { roomNumber: timeoutId }
+      lockTimers: {}, // { roomNumber: timeoutId }
+      roomNames: [
+      { room: 1,  day: "Inn",              night: "Bedroom 1" },
+      { room: 2,  day: "Church",           night: "Bedroom 2" },
+      { room: 3,  day: "Market",           night: "Bedroom 3" },
+      { room: 4,  day: "Graveyard",         night: "Bedroom 4" },
+      { room: 5,  day: "Blacksmith",        night: "Bedroom 5" },
+      { room: 6,  day: "Town Hall",         night: "Bedroom 6" },
+      { room: 7,  day: "Watchtower",        night: "Bedroom 7" },
+      { room: 8,  day: "Mill",              night: "Bedroom 8" },
+      { room: 9,  day: "Schoolhouse",       night: "Bedroom 9" },
+      { room: 10, day: "Apothecary",        night: "Bedroom 10" },
+
+      { room: 11, day: "Library",           night: "Bedroom 11" },
+      { room: 12, day: "Docks",             night: "Bedroom 12" },
+      { room: 13, day: "Guard Post",        night: "Bedroom 13" },
+      { room: 14, day: "Chapel",            night: "Bedroom 14" },
+      { room: 15, day: "Tavern Backroom",   night: "Bedroom 15" },
+      { room: 16, day: "Warehouse",         night: "Bedroom 16" },
+      { room: 17, day: "Old Ruins",          night: "Bedroom 17" },
+      { room: 18, day: "Garden",            night: "Bedroom 18" },
+      { room: 19, day: "Hunter’s Lodge",    night: "Bedroom 19" },
+      { room: 20, day: "Town Square Annex", night: "Bedroom 20" },
+      { room: 21, day: "Town Square", night: "Town Square" },
+      { room: 22, day: "Storyteller Den", night: "Storyteller Den" },
+    ]
     };
   },
 
@@ -150,9 +174,10 @@ export default {
     },
     isRoomLocked() {
       return (roomNumber) => {
-        const count = this.playersInChats[roomNumber]?.length || 0;
+      const count = (this.playersInChats[roomNumber] || []).filter(
+        id => !this.session.discordST?.includes(id)
+      ).length;
         if (roomNumber === 21) return false;
-
         // Auto-unlock when < 2 players
         if (count < 2) return false;
 
@@ -232,7 +257,15 @@ export default {
       (this.session.discordST || []).forEach(discordID => moves.push([22, discordID]));
 
       this.$store.commit("session/MoveToChat", moves);
-    }
+    },
+    getRoomLabel(roomNumber) {
+      const entry = this.roomNames.find(r => r.room === roomNumber);
+      if (!entry) return String(roomNumber);
+
+      return this.grimoire.isNight
+        ? entry.night || entry.day
+        : entry.day;
+    },
 
   },
   watch: {

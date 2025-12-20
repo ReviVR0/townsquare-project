@@ -197,8 +197,6 @@ const mutations = {
         }
       });
     }
-    console.log(state.discordST)
-    console.log(state.discordChats)
 
   },
 
