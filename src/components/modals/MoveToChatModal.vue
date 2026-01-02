@@ -1,7 +1,7 @@
 <template>
   <Modal
     class="moveChat-menu"
-    v-if="modals.moveChat"
+    v-if="modals.moveChat && session.botId"
     @close="toggleModal('moveChat')"
   >
     <h3>Move to Chat</h3>
@@ -117,6 +117,7 @@ export default {
   components: { Modal },
   data() {
     return {
+      moveLock: false,
       lockTimers: {}, // { roomNumber: timeoutId }
       roomNames: [
       { room: 1,  day: "Inn",              night: "Bedroom 1" },
@@ -216,7 +217,17 @@ export default {
 
 
     moveToChat(to) {
-      if (this.hideNames) return;
+      if (this.hideNames || this.moveLock) return;
+
+      const player = this.players.find(p => p.id === this.session.playerId);
+      const playerDiscordID = player?.discordID;
+      const currentRoom = Object.entries(this.playersInChats).find(([, ids]) =>
+        ids.includes(playerDiscordID)
+      )?.[0];
+
+      if (currentRoom == to) return;
+
+
       const isLocked = this.isRoomLocked(to);
       const isST = !this.session.isSpectator;
 
@@ -237,9 +248,14 @@ export default {
       }
 
       this.$store.commit("session/MoveToChat", payload);
+      this.moveLock = true;
+      setTimeout(() => {
+        this.moveLock = false;
+      }, 500);
     },
 
     sendAllToTownSquare() {
+      if (this.moveLock) return;
       const moves = this.players
         .filter(p => p.discordID)
         .map(p => [21, p.discordID]);
@@ -247,16 +263,23 @@ export default {
       (this.session.discordST || []).forEach(discordID => moves.push([21, discordID]));
 
       this.$store.commit("session/MoveToChat", moves);
+      
+      this.moveLock = true;
+      setTimeout(() => { this.moveLock = false }, 1500);
     },
 
     sendAllToTheirRooms() {
+      if (this.moveLock) return;
       const moves = this.players
         .filter(p => p.discordID)
         .map((p, idx) => [idx + 1, p.discordID]);
 
       (this.session.discordST || []).forEach(discordID => moves.push([22, discordID]));
 
-      this.$store.commit("session/MoveToChat", moves);
+      this.$store.commit("session/MoveToChat", moves);      
+      this.moveLock = true;
+      setTimeout(() => { this.moveLock = false }, 1500);
+      
     },
     getRoomLabel(roomNumber) {
       const entry = this.roomNames.find(r => r.room === roomNumber);
@@ -276,14 +299,19 @@ export default {
 
           if (roomNumber === 21) return;
 
-          const count = newVal[roomNumber]?.length || 0;
+          const count = (newVal[roomNumber] || []).filter(
+            id => !this.session.discordST?.includes(id)
+          ).length;
 
           // 1. If < 2 players → unlock & clear timer
+          
           if (count < 2) {
+            if (this.session.lockedRooms?.[roomNumber]) {
+              this.$store.commit("session/setLockRoom", [roomNumber, false]);
+            }
+
             clearTimeout(this.lockTimers[roomNumber]);
             delete this.lockTimers[roomNumber];
-
-            this.$store.commit("session/setLockRoom", [roomNumber, false]);
             return;
           }
 

@@ -85,7 +85,7 @@ export default {
           availableRoles.push(roleCopy);
         }
       });
-
+      availableRoles.push({})
       return availableRoles;
     },
 
