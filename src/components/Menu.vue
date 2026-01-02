@@ -429,7 +429,10 @@ export default {
         this.$store.commit("session/setLilMonstaVote", !this.session.isLilMonstaVote);
     },
     RemoveBot(){
-      this.$store.commit("session/setBotId", { botId: null });
+      this.$store.commit("session/setBotId", {
+        botId: null,
+        members: []
+      });
     },
     handleMenuClick() {
       if (!this.menuOpenedOnce) {

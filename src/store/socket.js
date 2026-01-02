@@ -621,6 +621,7 @@ class LiveSession {
     if (!player) return;
     // special case where a player stops being a traveler
     if (property === "role") {
+      if(player.role.team !== "traveler")
         this._store.dispatch("players/clearRoles");
       if (!value && player.role.team === "traveler") {
         // reset to an unknown role
