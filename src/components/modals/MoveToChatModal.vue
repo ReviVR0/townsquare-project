@@ -3,34 +3,52 @@
     class="moveChat-menu"
     v-if="modals.moveChat && session.botId"
     @close="toggleModal('moveChat')"
+    @click.self="activePlayerMenu.clear()"
   >
     <h3>Move to Chat</h3>
 
     <div class="content">
       <div class="button-grid">
-
-        <!-- REGULAR ROOMS -->
         <button
-          v-for="n in numberOfPlayers"
-          :key="n"
-          @click="moveToChat(n)"
-          :class="{ locked: grimoire.isNight ? false : isRoomLocked(n) }"
+          v-for="room in allRooms"
+          :key="room.room"
+          @click="moveToChat(room.room)"
+          :class="{ locked: grimoire.isNight ? false : isRoomLocked(room.room) }"
         >
-        <div class="room-label">{{ getRoomLabel(n) }}</div>
+          <div class="room-label">{{ getRoomLabel(room.room) }}</div>
+
           <div class="chat-users">
             <template v-if="!hideNames">
-              <template v-if="playersInChats[n].length">
+              <template v-if="playersInChats[room.room] && playersInChats[room.room].length">
                 <div
-                  v-for="pid in playersInChats[n]"
+                  v-for="pid in playersInChats[room.room]"
                   :key="pid"
                   class="user-entry"
+                  :class="{ 
+                    'menu-open': activePlayerMenu.has(pid) && !isOwnMenu(pid) && !(grimoire.isNight && !session.isSpectator)
+                  }"
+                  @click.stop="openPlayerMenu(pid)"
                 >
+                  <span class="player-name">{{ resolveName(pid) }}</span>
+
+                  <div v-if="activePlayerMenu.has(pid) && !isOwnMenu(pid)" class="player-menu">
+                    <template v-if="hasInviteFrom(pid)">
+                      <span @click.stop="acceptInvite(convertDiscordToPlayerId(pid))">
+                        <font-awesome-icon icon="check-circle" /> Accept
+                      </span>
+                    </template>
+                    <template v-else>
+                      <span @click.stop="sendInviteTo(pid)" v-if="!(grimoire.isNight && !session.isSpectator)">
+                        <font-awesome-icon icon="plus-circle" /> Invite
+                      </span>
+                    </template>
+                  </div>
+
                   <img
                     v-if="playerRoleIcon(pid)"
                     :src="playerRoleIcon(pid)"
                     class="role-icon"
                   />
-                  {{ resolveName(pid) }}
                 </div>
               </template>
               <div v-else class="empty">empty</div>
@@ -40,61 +58,12 @@
             </template>
           </div>
         </button>
-
-        <!-- TOWN SQUARE -->
-        <button @click="moveToChat(21)"   :class="{ locked: grimoire.isNight ? false : isRoomLocked(21) }">
-          <div class="room-label">Townsquare</div>
-          <div class="chat-users">
-            <template v-if="!hideNames">
-              <template v-if="playersInChats[21].length">
-                <div
-                  v-for="pid in playersInChats[21]"
-                  :key="pid"
-                  class="user-entry"
-                >
-                  <img
-                    v-if="playerRoleIcon(pid)"
-                    :src="playerRoleIcon(pid)"
-                    class="role-icon"
-                  />
-                  {{ resolveName(pid) }}
-                </div>
-              </template>
-              <div v-else class="empty">empty</div>
-            </template>
-            <template v-else>
-              <div class="empty">hidden</div>
-            </template>
-          </div>
+      </div>
+      <!-- Invite ST button for non-ST at night -->
+      <div v-if="grimoire.isNight && session.isSpectator && !isSTPlayer" class="night-actions">
+        <button @click="inviteST">
+          Invite Storyteller
         </button>
-
-        <!-- STORYTELLER DEN -->
-        <button @click="moveToChat(22)"   :class="{ locked: grimoire.isNight ? false : isRoomLocked(22) }">
-          <div class="room-label">Storyteller Den</div>
-          <div class="chat-users">
-            <template v-if="!hideNames">
-              <template v-if="playersInChats[22].length">
-                <div
-                  v-for="pid in playersInChats[22]"
-                  :key="pid"
-                  class="user-entry"
-                >
-                  <img
-                    v-if="playerRoleIcon(pid)"
-                    :src="playerRoleIcon(pid)"
-                    class="role-icon"
-                  />
-                  {{ resolveName(pid) }}
-                </div>
-              </template>
-              <div v-else class="empty">empty</div>
-            </template>
-            <template v-else>
-              <div class="empty">hidden</div>
-            </template>
-          </div>
-        </button>
-
       </div>
 
       <!-- HOST-ONLY NIGHT BUTTONS -->
@@ -112,7 +81,10 @@
 <script>
 import Modal from "./Modal";
 import { mapMutations, mapState } from "vuex";
-
+const inviteSound = new Audio(
+  require("@/assets/sounds/invite.mp3")
+);
+inviteSound.volume = 0.6;
 export default {
   components: { Modal },
   data() {
@@ -143,7 +115,10 @@ export default {
       { room: 20, day: "Town Square Annex", night: "Bedroom 20" },
       { room: 21, day: "Town Square", night: "Town Square" },
       { room: 22, day: "Storyteller Den", night: "Storyteller Den" },
-    ]
+    ],
+    activePlayerMenu: new Set(),
+    localInvites: JSON.parse(localStorage.getItem("invites") || "[]"),
+    inviteInterval: null,
     };
   },
 
@@ -186,6 +161,49 @@ export default {
         return this.session.lockedRooms?.[roomNumber] || false;
       };
     },
+    allRooms() {
+      const num = this.numberOfPlayers;
+
+      // ALL regular rooms (1..N)
+      const allRegularRooms = this.roomNames.filter(r => r.room <= num);
+
+      // Day rooms (reduced)
+      const dayRoomCount = Math.ceil(num / 2);
+      const dayRegularRooms = allRegularRooms.slice(0, dayRoomCount);
+
+      const special = [
+        { room: 21, day: "Townsquare", night: "Townsquare" },
+        { room: 22, day: "Storyteller Den", night: "Storyteller Den" }
+      ];
+
+      // ---- NIGHT LOGIC ----
+      if (this.grimoire.isNight) {
+        // ST sees EVERYTHING
+        if (!this.session.isSpectator) {
+          return [...allRegularRooms, ...special];
+        }
+
+        // Player sees only their room + 21 + 22
+        const currentRoom = Object.entries(this.playersInChats).find(([, ids]) =>
+          ids.includes(
+            this.players.find(p => p.id === this.session.playerId)?.discordID
+          )
+        )?.[0];
+
+        return [
+          ...special,
+          ...allRegularRooms.filter(r => r.room == Number(currentRoom))
+        ];
+      }
+      return [...dayRegularRooms, ...special];
+    },
+
+
+    isSTPlayer() {
+      const me = this.players.find(p => p.id === this.session.playerId);
+      if (!me?.discordID) return false;
+      return this.session.discordST?.includes(me.discordID);
+    }
   },
 
   methods: {
@@ -282,14 +300,189 @@ export default {
       
     },
     getRoomLabel(roomNumber) {
-      const entry = this.roomNames.find(r => r.room === roomNumber);
-      if (!entry) return String(roomNumber);
+      const entry = this.roomNames.find(r => r.room === roomNumber) 
+                    || { day: roomNumber, night: roomNumber };
 
-      return this.grimoire.isNight
-        ? entry.night || entry.day
-        : entry.day;
+      return this.grimoire.isNight ? entry.night || entry.day : entry.day;
+    },
+    openPlayerMenu(discordID) {
+      if (this.activePlayerMenu.has(discordID)) {
+        this.activePlayerMenu.delete(discordID); // close menu
+      } else {
+        this.activePlayerMenu.add(discordID); // open menu
+      }
+      // force Vue reactivity
+      this.activePlayerMenu = new Set(this.activePlayerMenu);
     },
 
+
+    playerAction(discordID, buttonNumber) {
+      const name = this.resolveName(discordID);
+      console.log(`${name} + ${buttonNumber}`);
+      this.activePlayerMenu = null;
+    },
+
+    isOwnMenu(discordID) {
+      // Normal player: hide own menu
+      if (this.session.playerId) {
+        const me = this.players.find(p => p.id === this.session.playerId);
+        if (me?.discordID === discordID) return true;
+      }
+      // ST: hide menu for ST if not spectator
+      if (!this.session.isSpectator && this.session.discordST?.includes(discordID)) return true;
+
+      return false;
+    },
+
+    getChatNumber(playerId) {
+      if (playerId === "ST") {
+        const discordID = this.session.discordST[0];
+        const record = this.session.discordChats.find(c => c.discordID === discordID);
+        return record ? record.chatNumber : 21; // default to Townsquare
+      } else {
+        const player = this.players.find(p => p.id === playerId);
+        const discordID = player ? player.discordID : playerId;
+        const record = this.session.discordChats.find(c => c.discordID === discordID);
+        return record ? record.chatNumber : 21; // default to Townsquare
+      }
+    },
+    convertDiscordToPlayerId(discordID) {
+      if (this.session.discordST?.includes(discordID)) return "ST";
+      const player = this.players.find(p => p.discordID === discordID);
+      return player ? player.id : null;
+    },
+    playerIdToDiscordId(playerId) {
+      if (playerId === "ST") {
+        return this.session.discordST?.[0] || null;
+      }
+
+      const player = this.players.find(p => p.id === playerId);
+      return player ? player.discordID : null;
+    },
+    sendInviteTo(receiverDiscordID) {
+      const receiverId = this.convertDiscordToPlayerId(receiverDiscordID);
+      if (!receiverId) return; // safety check
+
+      // Determine sender (ST or normal player)
+      const sender = this.session.isSpectator
+        ? this.players.find(p => p.id === this.session.playerId)
+        : { id: "ST", name: "ST" };
+
+      const payload = {
+        senderId: sender.id,                   // website ID
+        senderName: sender.name,
+        senderChat: this.getChatNumber(sender.id),
+        receiverId: receiverId,                // website ID
+        receiverName: receiverId === "ST" ? "ST" : this.players.find(p => p.id === receiverId)?.name,
+        receiverChat: this.getChatNumber(receiverId),
+        timestamp: Date.now()
+      };
+      this.$store.commit("session/inviteChat", payload);
+    },
+
+
+
+    hasInviteFrom(senderDiscordID) {
+      const senderId = this.convertDiscordToPlayerId(senderDiscordID);
+      if (!senderId) return false;
+
+      return this.localInvites.some(inv => inv.senderId === senderId);
+    },
+
+    acceptInvite(senderId) {
+      const invite = this.localInvites.find(i => i.senderId === senderId);
+      if (!invite) return;
+
+      let destination = invite.senderChat;
+
+      // Special case: if sender is in 21, choose a free room
+      if (destination === 21) {
+        destination = this.findFreeChat();
+        this.$store.commit("session/MoveToChat", [[destination, this.playerIdToDiscordId(senderId)]]);
+      }
+
+      // Move receiver
+      const receiverDiscordID =
+        invite.receiverId === "ST"
+          ? this.session.discordST[0]
+          : this.players.find(p => p.id === invite.receiverId)?.discordID;
+
+      if (receiverDiscordID) {
+        this.$store.commit("session/MoveToChat", [[destination, receiverDiscordID]]);
+      }
+
+      // Remove invite
+      this.localInvites = this.localInvites.filter(i => i !== invite);
+      localStorage.setItem("invites", JSON.stringify(this.localInvites));
+    },
+    cleanupExpiredInvites() {
+      const now = Date.now();
+      const validInvites = this.localInvites.filter(
+        i => now - i.timestamp < 30000
+      );
+
+      if (validInvites.length !== this.localInvites.length) {
+        this.localInvites = validInvites;
+        localStorage.setItem("invites", JSON.stringify(validInvites));
+      }
+    },
+    playInviteSound() { /// TO DO not sure why it does not work
+      if (this.grimoire.isMuted) return;
+
+      inviteSound.currentTime = 0;
+      inviteSound.play().catch(err => {
+        console.warn("Invite sound failed to play:", err);
+      });
+    },
+    updateLocalInvites() {
+      const oldInvites = this.localInvites;
+      const newInvites = JSON.parse(localStorage.getItem("invites") || "[]");
+
+      const newInvite = newInvites.find(
+        ni => !oldInvites.some(oi => oi.senderId === ni.senderId)
+      );
+
+      this.localInvites = newInvites;
+
+      // Auto-open menu for the sender
+      if (newInvite) {
+        const senderDiscordID = this.playerIdToDiscordId(newInvite.senderId);
+        if (senderDiscordID) {
+          this.activePlayerMenu.add(senderDiscordID);
+          this.activePlayerMenu = new Set(this.activePlayerMenu); // reactivity
+        }
+      }
+      if (newInvite) {
+        this.playInviteSound();
+      }
+    },
+    findFreeChat() {
+      for (let i = 1; i <= this.numberOfPlayers; i++) {
+        const count = (this.playersInChats[i] || []).filter(
+          id => !this.session.discordST?.includes(id)
+        ).length;
+        if (!this.isRoomLocked(i) && count < 2) return i;
+      }
+      // fallback: just return Townsquare if no free room
+      return 21;
+    },
+    inviteST() {
+      const receiverDiscordID = this.session.discordST?.[0];
+      if (!receiverDiscordID) return;
+
+      this.sendInviteTo(receiverDiscordID); // re-use existing invite logic
+    }
+  },
+  mounted() {
+    window.addEventListener("storage", this.updateLocalInvites);
+
+    // periodic cleanup (timestamp-based)
+    this.inviteInterval = setInterval(this.cleanupExpiredInvites, 1000);
+  },
+
+  beforeDestroy() {
+    window.removeEventListener("storage", this.updateLocalInvites);
+    clearInterval(this.inviteInterval);
   },
   watch: {
     playersInChats: {
@@ -443,4 +636,62 @@ button.locked .room-label::after {
   width: 180px;
   min-height: 50px;
 }
+
+.user-entry {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  position: relative; /* for absolute menu positioning */
+}
+
+.user-entry {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  position: relative; /* for menu positioning */
+}
+
+.user-entry.menu-open > .player-name {
+  margin-right: 40px; /* just the selected name moves */
+}
+
+.player-name {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.player-menu {
+  position: absolute;
+  top: 50%;
+  left: 70%;
+  transform: translateY(-50%);
+  display: flex;
+  gap: 2px;
+  z-index: 10;
+}
+
+.player-menu span {
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 10px;
+  background: #444;
+  border: 1px solid #888;
+  color: #fff;
+  border-radius: 3px;
+  cursor: pointer;
+  padding: 0;
+}
+
+.player-menu span:hover {
+  background: #666;
+  color: #ffd700;
+  transform: scale(1.1);
+}
+
+
+
+
+
 </style>

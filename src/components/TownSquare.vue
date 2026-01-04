@@ -112,7 +112,7 @@
   />
 </div>
 
-<audio ref="countdownSound" src="../assets/sounds/hells_bell_hit.mp3"></audio>
+<audio ref="countdownSound" src="../assets/sounds/hells_bell_hit.mp3" preload="auto"></audio>
 
 
     <div class="fabled" :class="{ closed: !isFabledOpen }" v-if="fabled.length">

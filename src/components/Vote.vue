@@ -241,7 +241,7 @@ export default {
     },
     finish() {
       for(let i = 0; i<this.players.length; i++){
-          if(this.session.votes[i]===true && this.players[i].isDead){
+          if(this.nominee.role.team != "traveler" && this.session.votes[i]===true && this.players[i].isDead){
           this.$store.commit("players/update", { 
           player: this.players[i],
           property: "isVoteless",
