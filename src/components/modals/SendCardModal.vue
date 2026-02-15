@@ -345,6 +345,23 @@
 import Modal from "./Modal";
 import { mapState, mapMutations } from "vuex";
 
+const MESSAGE_TYPES = {
+  HOST: "Host",
+  WRAITH: "Wraith",
+  LILMONSTA: "LilMonsta"
+};
+
+const STORAGE_KEYS = {
+  HOST: "messages_host",
+  PLAYER: (id) => `messages_${id}`,
+  LILMONSTA_VOTES: "messages_LilMonstaVotes"
+};
+
+const TIMER_DURATION = {
+  LILMONSTA_DEFAULT: 27,
+  LILMONSTA_SPECTATOR: 25
+};
+
 export default {
   components: { Modal },
   props: ["playerIndex"],
@@ -368,7 +385,7 @@ export default {
         { label: "Evil" ,image: "evil.png"},
         { label: "Clockwise", image: "clockwise.png"},
         { label: "Anticlockwise", image: "anticlockwise.png"},
-        { label: "Zero" },
+        { label: "Zero", image: "zero.png"},
         { label: "One", image: "One.png"},
         { label: "Two", image: "Two.png"},
         { label: "Three", image: "Three.png"},
@@ -436,8 +453,8 @@ export default {
     storageKey() {
       // Key to use for storing messages in localStorage
       return !this.session.isSpectator
-        ? `messages_${this.player.id}`
-        : "messages_host";
+        ? STORAGE_KEYS.PLAYER(this.player.id)
+        : STORAGE_KEYS.HOST;
     },
     validPlayers() {
       return this.$store.state.players.players.filter(
@@ -474,7 +491,7 @@ export default {
           : playerId || this.player.id;
       }
 
-      const saved = localStorage.getItem(`messages_${key}`);
+      const saved = localStorage.getItem(STORAGE_KEYS.PLAYER(key));
       let messages = saved ? JSON.parse(saved) : [];
 
       if (this.wraithReceiver && this.session.isSpectator) {
@@ -504,7 +521,7 @@ export default {
       saveMessage(message, storageId = null) {
         if(this.session.isSpectator) storageId = "host";
         const key = storageId || this.player.id;
-        const saved = localStorage.getItem(`messages_${key}`);
+        const saved = localStorage.getItem(STORAGE_KEYS.PLAYER(key));
         const fullLog = saved ? JSON.parse(saved) : [];
 
         fullLog.push(message);
@@ -512,7 +529,7 @@ export default {
           fullLog.splice(0, fullLog.length - 10); // keep last 10
         }
 
-        localStorage.setItem(`messages_${key}`, JSON.stringify(fullLog));
+        localStorage.setItem(STORAGE_KEYS.PLAYER(key), JSON.stringify(fullLog));
     },
 
 
@@ -576,7 +593,7 @@ export default {
       if (this.isResponse) {
         if(this.isWraith && this.wraithReceiver.id != -1){
           this.saveMessage(`You to ${this.wraithReceiver.name}: ${fullMessage}`);
-          this.$store.commit("session/sendCard", ["host", [`Wraith#${this.wraithReceiver.name}#${this.wraithReceiver.id}#`+fullMessage, this.session.playerId]]);
+          this.$store.commit("session/sendCard", ["host", [`${MESSAGE_TYPES.WRAITH}#${this.wraithReceiver.name}#${this.wraithReceiver.id}#`+fullMessage, this.session.playerId]]);
         }
         else{
           this.saveMessage(`You: ${fullMessage}`);
@@ -584,7 +601,7 @@ export default {
         }
       } else {
         this.saveMessage(`You: ${fullMessage}`);
-        this.$store.commit("session/sendCard", [this.player.id, [fullMessage, "Host"]]);
+        this.$store.commit("session/sendCard", [this.player.id, [fullMessage, MESSAGE_TYPES.HOST]]);
         const wraiths = this.getWraithPlayers();
         if (wraiths.length > 0) {
           this.wraithPlayer = wraiths;
@@ -758,15 +775,16 @@ export default {
       const message = [player.name, this.session.playerId];
       this.$store.commit("session/sendCard", [
         "host",
-        [message, "LilMonsta"]
+        [message, MESSAGE_TYPES.LILMONSTA]
       ]);
 
       // Return to default mode
       this.closeModal();
     },
     startLilMonstaTimer() {
-      this.lilMonstaTimer = 27;
-      if(this.session.isSpectator) this.lilMonstaTimer -= 2;
+      this.lilMonstaTimer = this.session.isSpectator 
+        ? TIMER_DURATION.LILMONSTA_SPECTATOR 
+        : TIMER_DURATION.LILMONSTA_DEFAULT;
       this.mode = "lilMonstaVote"
       if (this.lilMonstaInterval) clearInterval(this.lilMonstaInterval);
       this.lilMonstaInterval = setInterval(() => {
@@ -789,7 +807,7 @@ export default {
       if(this.session.isSpectator) this.mode = "response";
       this.lilMonstaTimer = 0;
       if (!this.session.isSpectator) {
-        const key = "messages_LilMonstaVotes";
+        const key = STORAGE_KEYS.LILMONSTA_VOTES;
         const votes = JSON.parse(localStorage.getItem(key)) || [];
 
         // Count votes per votedName
@@ -855,10 +873,10 @@ watch: {
   if (!text || !text.length) return;
   let messageShow = true;
 
-  if (!this.session.isSpectator && playerId === "LilMonsta") {
+  if (!this.session.isSpectator && playerId === MESSAGE_TYPES.LILMONSTA) {
     const [voted, voterId] = text; // now text is an array of [votedId, voterId]
 
-    const key = "messages_LilMonstaVotes";
+    const key = STORAGE_KEYS.LILMONSTA_VOTES;
     const saved = JSON.parse(localStorage.getItem(key)) || [];
 
     const voter = this.players.find(p => p.id === voterId);
@@ -881,17 +899,17 @@ watch: {
     minionPlayers.forEach(minion => {
       this.$store.commit("session/sendCard", [
         minion.id,
-        [readable, "LilMonsta"]
+        [readable, MESSAGE_TYPES.LILMONSTA]
       ]);
     });
     this.loadMessages(playerId);
     return;
   }
   let senderName;
-  if (!this.session.isSpectator && text.startsWith("Wraith#")) {
+  if (!this.session.isSpectator && text.startsWith(`${MESSAGE_TYPES.WRAITH}#`)) {
     const sender = this.players.find(p => p.id === playerId);
     if(sender?.role?.id !== "wraith" || this.hasDisabledAbility(sender.id)) {
-      this.$store.commit("session/sendCard", [this.player.id, ["You have no ability", "Host"]])
+      this.$store.commit("session/sendCard", [this.player.id, ["You have no ability", MESSAGE_TYPES.HOST]])
       return
     }
     const parts = text.split("#"); // ["", "Wraith", "Julita", "qmr1r4oijq", "Yes "]
@@ -912,7 +930,7 @@ watch: {
     ]);
   }
   else{
-    if (playerId == "Host" || playerId == "Wraith" || playerId == "LilMonsta") {
+    if (playerId == MESSAGE_TYPES.HOST || playerId == MESSAGE_TYPES.WRAITH || playerId == MESSAGE_TYPES.LILMONSTA) {
       senderName = playerId;
       this.wraithReceiver = { id: -1, name: 'Storyteller' }
     } else {
@@ -924,8 +942,8 @@ watch: {
         }
       });
     }
-    if(playerId == "LilMonsta") //To change
-      localStorage.removeItem("messages_host");
+    if(playerId == MESSAGE_TYPES.LILMONSTA) //To change
+      localStorage.removeItem(STORAGE_KEYS.HOST);
 
   }
   // Save message using playerId as storage key
@@ -984,6 +1002,11 @@ watch: {
   },
   beforeUnmount() { // or beforeDestroy for Vue 2
     window.removeEventListener("keydown", this.handleBackspace);
+    // Fix: Clear LilMonsta timer interval to prevent memory leak
+    if (this.lilMonstaInterval) {
+      clearInterval(this.lilMonstaInterval);
+      this.lilMonstaInterval = null;
+    }
   },
 };
 </script>

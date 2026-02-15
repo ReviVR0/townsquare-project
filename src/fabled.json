@@ -177,7 +177,7 @@
   {
       "id": "tor",
       "firstNightReminder": "",
-      "otherNightReminder": "",
+      "otherNightReminder": "55",
       "reminders": [],
       "setup": false,
       "name": "Tor",
@@ -203,5 +203,36 @@
       "name": "Zenomancer",
       "team": "loric",
       "ability": "One or more players each have a goal. When achieved, that player learns a piece of true info."
+  },
+  {
+      "id": "ventriloquist",
+      "firstNightReminder": "",
+      "otherNightReminder": "",
+      "reminders": ["MAD"],
+      "setup": false,
+      "name": "Ventriloquist",
+      "team": "loric",
+      "ability": "If a player is mad as a fresh character during their nomination, they might not die if executed today."
+  },
+  {
+    "id": "pope",
+    "firstNightReminder": "",
+    "otherNightReminder": "",
+    "reminders": [],
+    "setup": false,
+    "name": "Pope",
+    "team": "loric",
+    "ability": "There are duplicate good characters in play. They might also be bluffs."
+  },
+    {
+    "id": "hindu",
+    "firstNightReminder": "",
+    "otherNightReminder": "",
+    "reminders": [],
+    "setup": false,
+    "name": "Hindu",
+    "team": "loric",
+    "ability": "The first 4 players to die are immediately reincarnated as Travellers of the same alignment."
   }
+
 ]
