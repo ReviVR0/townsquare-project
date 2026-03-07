@@ -9,7 +9,15 @@ import rolesEN from "../roles_EN.json";
 import rolesPL from "../roles_PL.json";
 import fabledJSON from "../fabled.json";
 import jinxesJSON from "../jinx.json";
-let rolesJSON = localStorage.getItem("language") === "PL" ? rolesPL : rolesEN;
+const roleSources = {
+  ENG: rolesEN,
+  PL: rolesPL,
+};
+
+const getRolesJSON = (lang) => roleSources[lang] || roleSources.ENG;
+
+const initialLanguage = localStorage.getItem("language") || "ENG";
+let rolesJSON = getRolesJSON(initialLanguage);
 
 Vue.use(Vuex);
 // helper functions
@@ -53,7 +61,7 @@ const clean = id => id.toLocaleLowerCase().replace(/[^a-z0-9]/g, "");
 const editionJSONbyId = new Map(
   editionJSON.map(edition => [edition.id, edition])
 );
-const rolesJSONbyId = new Map(rolesJSON.map(role => [role.id, role]));
+let rolesJSONbyId = new Map(rolesJSON.map(role => [role.id, role]));
 const fabled = new Map(fabledJSON.map(role => [role.id, role]));
 
 // jinxes
@@ -108,7 +116,7 @@ export default new Vuex.Store({
       isImageOptIn: false,
       zoom: 0,
       background: "",
-      language: localStorage.getItem("language") || "ENG",
+      language: initialLanguage,
     },
     modals: {
       edition: false,
@@ -183,7 +191,14 @@ export default new Vuex.Store({
     toggleGrimoire: toggle("isPublic"),
     toggleImageOptIn: toggle("isImageOptIn"),
     setLanguage(state, lang) {
-      state.grimoire.language = lang;
+      const normalized = lang || "ENG";
+      state.grimoire.language = normalized;
+      localStorage.setItem("language", normalized);
+
+      rolesJSON = getRolesJSON(normalized);
+      rolesJSONbyId = new Map(rolesJSON.map(role => [role.id, role]));
+      state.roles = getRolesByEdition(state.edition);
+      state.otherTravelers = getTravelersNotInEdition(state.edition);
     },
     toggleModal({ modals }, name) {
       if (name) {

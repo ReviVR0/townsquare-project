@@ -83,7 +83,7 @@
     },
     {
         "id": "angel",
-        "name": "Anioł",
+        "name": "Angel",
         "ability": "Coś złego może się stać temu, kto jest najbardziej odpowiedzialny za śmierć nowego gracza.",
         "firstNightReminder": "",
         "otherNightReminder": "",
@@ -319,7 +319,7 @@
     },
     {
         "id": "bootlegger",
-        "name": "Bimbrownik",
+        "name": "Bootlegger",
         "ability": "Ten skrypt ma postacie lub zasady homebrew.",
         "firstNightReminder": "Ogłoś, że Bimbrownik jest w grze i poinformuj grupę o wszystkich własnych postaciach i / lub zasadach obowiązujących w tej grze.",
         "otherNightReminder": "",
@@ -346,7 +346,7 @@
     },
     {
         "id": "buddhist",
-        "name": "Buddysta",
+        "name": "Buddhist",
         "ability": "Przez pierwsze 2 minuty każdego dnia, gracze-weterani nie mogą mówić.",
         "firstNightReminder": "",
         "otherNightReminder": "",

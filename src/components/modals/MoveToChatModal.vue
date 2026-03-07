@@ -418,7 +418,7 @@ export default {
     cleanupExpiredInvites() {
       const now = Date.now();
       const validInvites = this.localInvites.filter(
-        i => now - i.timestamp < 30000
+        i => now - i.timestamp < 15000
       );
 
       if (validInvites.length !== this.localInvites.length) {
@@ -516,7 +516,7 @@ export default {
             this.lockTimers[roomNumber] = setTimeout(() => {
               this.$store.commit("session/setLockRoom", [roomNumber, true]);
               delete this.lockTimers[roomNumber]; // cleanup
-            }, 10000);
+            }, 5000);
           }
         });
       },

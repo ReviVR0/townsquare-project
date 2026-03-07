@@ -44,6 +44,7 @@
         </li>
       </ul>
     </div>
+    <!--
       <div
         class="Invitation"
         @click="toggleModal('invitation')"
@@ -57,6 +58,7 @@
           </span>
         </h3>
       </div>
+      -->
       <div
         class="Messages"
         @click="toggleModal('sendCard')"
@@ -74,10 +76,12 @@
     class="moveChat"
     @click="toggleModal('moveChat')"
     v-if="session.botId"
+    :class="{ active: inviteCount > 0, disabled: !isSittingPlayer }"
       >
         <h3>
           <span>
             Move Chat
+            <span v-if="inviteCount > 0">({{ inviteCount }})</span>
           </span>
         </h3>      
         </div>

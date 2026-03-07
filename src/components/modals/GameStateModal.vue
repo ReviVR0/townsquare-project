@@ -15,7 +15,10 @@
       <div class="button townsfolk" @click="copy">
         <font-awesome-icon icon="copy" /> Copy JSON
       </div>
-            <div class="button" @click="sendGrimToPlayers" v-if="!session.isSpectator">
+      <div class="button townsfolk" @click="download">
+        <font-awesome-icon icon="copy" /> Download
+      </div>
+      <div class="button" @click="sendGrimToPlayers" v-if="!session.isSpectator">
         <font-awesome-icon icon="cog" /> Send Out
       </div>
       <div class="button demon" @click="load" v-if="!session.isSpectator">
@@ -109,6 +112,18 @@ export default {
       } catch (e) {
         alert("Unable to parse JSON: " + e);
       }
+    },
+    download() {
+      const data = this.input || this.gamestate;
+      const blob = new Blob([data], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "game-state.json";
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
     },
     sendGrimToPlayers() {
       this.$store.commit("session/sendGrim", [this.gamestate, "all"]);
