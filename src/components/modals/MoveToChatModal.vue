@@ -3,12 +3,56 @@
     class="moveChat-menu"
     v-if="modals.moveChat && session.botId"
     @close="toggleModal('moveChat')"
-    @click.self="activePlayerMenu.clear()"
+    @click.self="inviteMode = false"
   >
     <h3>Move to Chat</h3>
 
     <div class="content">
-      <div class="button-grid">
+      <div v-if="!hideNames && !grimoire.isNight" class="invite-toolbar">
+        <button class="invite-mode-btn" :class="{ active: inviteMode }" @click="toggleInviteMode">
+          <font-awesome-icon :icon="inviteMode ? 'times-circle' : 'plus-circle'" />
+          {{ inviteMode ? "Exit Invite Mode" : "Invite Mode" }}
+        </button>
+        
+        <button v-if="!session.isSpectator" class="st-mode-btn" :class="{ active: MovePlayerMode }" @click="toggleMovePlayerMode">
+          <font-awesome-icon :icon="MovePlayerMode ? 'times-circle' : 'arrow-right'" />
+          {{ MovePlayerMode ? "Exit Move Player" : "Move Player" }}
+        </button>
+      </div>
+
+      <!-- Move Player Mode: Player Selection Step -->
+      <div v-if="MovePlayerMode && !selectedPlayerForMove" class="st-player-select">
+        <h4>Select a player to move:</h4>
+        <div class="player-list">
+          <button
+            v-for="player in players"
+            :key="player.id"
+            class="player-btn"
+            @click="selectPlayerForMove(player)"
+          >
+            {{ player.name }}
+          </button>
+        </div>
+      </div>
+
+      <!-- Move Player Mode: Channel Selection Step -->
+      <div v-if="MovePlayerMode && selectedPlayerForMove" class="st-channel-select">
+        <h4>Move {{ selectedPlayerForMove.name }} to:</h4>
+        <button class="back-btn" @click="selectedPlayerForMove = null">← Back</button>
+        <div class="channel-grid">
+          <button
+            v-for="room in allRooms"
+            :key="room.room"
+            class="channel-btn"
+            @click="movePlayerToChannel(selectedPlayerForMove, room.room)"
+          >
+            {{ getRoomLabel(room.room) }}
+          </button>
+        </div>
+      </div>
+
+      <!-- Normal mode: Room buttons -->
+      <div v-if="!MovePlayerMode" class="button-grid">
         <button
           v-for="room in allRooms"
           :key="room.room"
@@ -24,25 +68,16 @@
                   v-for="pid in playersInChats[room.room]"
                   :key="pid"
                   class="user-entry"
-                  :class="{ 
-                    'menu-open': activePlayerMenu.has(pid) && !isOwnMenu(pid) && !(grimoire.isNight && !session.isSpectator)
-                  }"
-                  @click.stop="openPlayerMenu(pid)"
                 >
                   <span class="player-name">{{ resolveName(pid) }}</span>
 
-                  <div v-if="activePlayerMenu.has(pid) && !isOwnMenu(pid)" class="player-menu">
-                    <template v-if="hasInviteFrom(pid)">
-                      <span @click.stop="acceptInvite(convertDiscordToPlayerId(pid))">
-                        <font-awesome-icon icon="check-circle" /> Accept
-                      </span>
-                    </template>
-                    <template v-else>
-                      <span @click.stop="sendInviteTo(pid)" v-if="!(grimoire.isNight && !session.isSpectator)">
-                        <font-awesome-icon icon="plus-circle" /> Invite
-                      </span>
-                    </template>
-                  </div>
+                  <button
+                    v-if="inviteMode && canInvite(pid)"
+                    class="inline-invite-btn"
+                    @click.stop="sendInviteTo(pid)"
+                  >
+                    Invite
+                  </button>
 
                   <img
                     v-if="playerRoleIcon(pid)"
@@ -59,6 +94,18 @@
           </div>
         </button>
       </div>
+
+      <div class="invite-list" v-if="incomingInvites.length">
+        <h4>Invitations For You</h4>
+        <div class="invite-row" v-for="invite in incomingInvites" :key="`${invite.senderId}-${invite.timestamp}`">
+          <span>{{ invite.senderName }} invites you from {{ getRoomLabel(invite.senderChat) }}</span>
+          <div class="invite-actions">
+            <button @click="acceptInvite(invite.senderId)">Accept</button>
+            <button class="decline" @click="declineInvite(invite.senderId)">Decline</button>
+          </div>
+        </div>
+      </div>
+
       <!-- Invite ST button for non-ST at night -->
       <div v-if="grimoire.isNight && session.isSpectator && !isSTPlayer" class="night-actions">
         <button @click="inviteST">
@@ -66,13 +113,19 @@
         </button>
       </div>
 
-      <!-- HOST-ONLY NIGHT BUTTONS -->
+      <!-- HOST-ONLY BUTTONS -->
       <div
         v-if="grimoire.isNight && !session.isSpectator"
         class="night-actions"
       >
         <button @click="sendAllToTownSquare">Start Day</button>
         <button @click="sendAllToTheirRooms">Start Night</button>
+      </div>
+      <div
+        v-if="!grimoire.isNight && !session.isSpectator"
+        class="night-actions"
+      >
+        <button @click="sendAllToTownSquare">Gather Town</button>
       </div>
     </div>
   </Modal>
@@ -91,6 +144,7 @@ export default {
     return {
       moveLock: false,
       lockTimers: {}, // { roomNumber: timeoutId }
+      inviteMode: false,
       roomNames: [
       { room: 1,  day: "Inn",              night: "Bedroom 1" },
       { room: 2,  day: "Church",           night: "Bedroom 2" },
@@ -116,9 +170,10 @@ export default {
       { room: 21, day: "Town Square", night: "Town Square" },
       { room: 22, day: "Storyteller Den", night: "Storyteller Den" },
     ],
-    activePlayerMenu: new Set(),
     localInvites: JSON.parse(localStorage.getItem("invites") || "[]"),
     inviteInterval: null,
+    MovePlayerMode: false,
+    selectedPlayerForMove: null,
     };
   },
 
@@ -203,6 +258,12 @@ export default {
       const me = this.players.find(p => p.id === this.session.playerId);
       if (!me?.discordID) return false;
       return this.session.discordST?.includes(me.discordID);
+    },
+    myInviteReceiverId() {
+      return this.session.isSpectator ? this.session.playerId : "ST";
+    },
+    incomingInvites() {
+      return this.localInvites.filter(inv => inv.receiverId === this.myInviteReceiverId);
     }
   },
 
@@ -305,21 +366,38 @@ export default {
 
       return this.grimoire.isNight ? entry.night || entry.day : entry.day;
     },
-    openPlayerMenu(discordID) {
-      if (this.activePlayerMenu.has(discordID)) {
-        this.activePlayerMenu.delete(discordID); // close menu
-      } else {
-        this.activePlayerMenu.add(discordID); // open menu
-      }
-      // force Vue reactivity
-      this.activePlayerMenu = new Set(this.activePlayerMenu);
+    toggleInviteMode() {
+      this.inviteMode = !this.inviteMode;
     },
 
+    toggleMovePlayerMode() {
+      this.MovePlayerMode = !this.MovePlayerMode;
+      this.selectedPlayerForMove = null;
+    },
 
-    playerAction(discordID, buttonNumber) {
-      const name = this.resolveName(discordID);
-      console.log(`${name} + ${buttonNumber}`);
-      this.activePlayerMenu = null;
+    selectPlayerForMove(player) {
+      this.selectedPlayerForMove = player;
+    },
+
+    movePlayerToChannel(player, channelNumber) {
+      if (this.session.isSpectator || !player.discordID) return;
+      
+      const payload = [[channelNumber, player.discordID]];
+      this.$store.commit("session/MoveToChat", payload);
+      
+      this.selectedPlayerForMove = null;
+      this.MovePlayerMode = false;
+      
+      this.moveLock = true;
+      setTimeout(() => {
+        this.moveLock = false;
+      }, 500);
+    },
+    canInvite(discordID) {
+      if (this.hideNames) return false;
+      if (this.grimoire.isNight && !this.session.isSpectator) return false;
+      if (this.isOwnMenu(discordID)) return false;
+      return true;
     },
 
     isOwnMenu(discordID) {
@@ -415,6 +493,10 @@ export default {
       this.localInvites = this.localInvites.filter(i => i !== invite);
       localStorage.setItem("invites", JSON.stringify(this.localInvites));
     },
+    declineInvite(senderId) {
+      this.localInvites = this.localInvites.filter(i => i.senderId !== senderId);
+      localStorage.setItem("invites", JSON.stringify(this.localInvites));
+    },
     cleanupExpiredInvites() {
       const now = Date.now();
       const validInvites = this.localInvites.filter(
@@ -444,14 +526,6 @@ export default {
 
       this.localInvites = newInvites;
 
-      // Auto-open menu for the sender
-      if (newInvite) {
-        const senderDiscordID = this.playerIdToDiscordId(newInvite.senderId);
-        if (senderDiscordID) {
-          this.activePlayerMenu.add(senderDiscordID);
-          this.activePlayerMenu = new Set(this.activePlayerMenu); // reactivity
-        }
-      }
       if (newInvite) {
         this.playInviteSound();
       }
@@ -535,7 +609,7 @@ export default {
   left: 0;
   width: 100%;
   height: 100%;
-  padding: 40px;
+  padding: 24px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -548,8 +622,8 @@ export default {
 }
 
 h3 {
-  font-size: 24px;
-  margin-bottom: 20px;
+  font-size: 20px;
+  margin-bottom: 12px;
   text-transform: uppercase;
   letter-spacing: 1px;
 }
@@ -557,10 +631,42 @@ h3 {
 .button-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
-  gap: 12px;
+  gap: 4px;
   width: 100%;
   max-width: 600px;
   justify-items: center;
+}
+
+.content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: min(600px, 90vw);
+  max-height: 85vh;
+  overflow-y: auto;
+}
+
+.invite-toolbar {
+  width: 100%;
+  max-width: 600px;
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 10px;
+}
+
+.invite-mode-btn {
+  min-height: 40px;
+  width: auto;
+  padding: 2px 6px;
+  display: inline-flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 6px;
+}
+
+.invite-mode-btn.active {
+  border-color: #ffd700;
+  color: #ffd700;
 }
 
 button {
@@ -614,6 +720,19 @@ button.locked .room-label::after {
   color: #bbb;
 }
 
+.inline-invite-btn {
+  min-height: 24px;
+  width: auto;
+  padding: 2px 8px;
+  font-size: 11px;
+  border-radius: 6px;
+  margin-left: 6px;
+  display: inline-flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+}
+
 .role-icon {
   width: 16px;
   height: 16px;
@@ -637,22 +756,54 @@ button.locked .room-label::after {
   min-height: 50px;
 }
 
-.user-entry {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  position: relative; /* for absolute menu positioning */
+.invite-list {
+  width: 100%;
+  max-width: 600px;
+  margin-top: 16px;
+  padding: 12px;
+  border: 1px solid #555;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.04);
 }
 
-.user-entry {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  position: relative; /* for menu positioning */
+.invite-list h4 {
+  margin: 0 0 10px;
+  font-size: 15px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
-.user-entry.menu-open > .player-name {
-  margin-right: 40px; /* just the selected name moves */
+.invite-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 8px;
+  font-size: 10px;
+}
+
+.invite-row:last-child {
+  margin-bottom: 0;
+}
+
+.invite-actions {
+  display: inline-flex;
+  gap: 4px;
+}
+
+.invite-actions button {
+  min-height: 20px;
+  width: auto;
+  padding: 4px;
+  display: inline-flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+}
+
+.invite-actions .decline {
+  border-color: #ff7777;
 }
 
 .player-name {
@@ -661,35 +812,124 @@ button.locked .room-label::after {
   text-overflow: ellipsis;
 }
 
-.player-menu {
-  position: absolute;
-  top: 50%;
-  left: 70%;
-  transform: translateY(-50%);
-  display: flex;
-  gap: 2px;
-  z-index: 10;
-}
-
-.player-menu span {
+.st-mode-btn {
+  min-height: 40px;
+  width: auto;
+  padding: 2px 6px;
   display: inline-flex;
-  justify-content: center;
+  flex-direction: row;
   align-items: center;
-  font-size: 10px;
-  background: #444;
-  border: 1px solid #888;
+  gap: 6px;
+  margin-left: 8px;
+}
+
+.st-mode-btn.active {
+  border-color: #ff69b4;
+  color: #ff69b4;
+}
+
+.st-player-select,
+.st-channel-select {
+  background: rgba(0, 0, 0, 0.6);
+  border: 2px solid #555;
+  border-radius: 12px;
+  padding: 20px;
+  max-width: 600px;
+  width: 100%;
+}
+
+.st-player-select h4,
+.st-channel-select h4 {
+  margin: 0 0 16px;
+  font-size: 16px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
   color: #fff;
-  border-radius: 3px;
+}
+
+.player-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 8px;
+}
+
+.player-btn {
+  min-height: 40px;
+  padding: 8px 12px;
+  font-size: 14px;
+  border: 2px solid #fff;
+  background-color: #222;
+  color: #fff;
+  border-radius: 8px;
   cursor: pointer;
-  padding: 0;
+  transition: 0.2s;
 }
 
-.player-menu span:hover {
-  background: #666;
-  color: #ffd700;
-  transform: scale(1.1);
+.player-btn:hover {
+  background-color: #fff;
+  color: #222;
+  border-color: #ffd700;
 }
 
+.back-btn {
+  margin-bottom: 12px;
+  width: 100px;
+  min-height: 32px;
+  padding: 4px 12px;
+  font-size: 12px;
+}
+
+.channel-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+  gap: 4px;
+}
+
+.channel-btn {
+  min-height: 80px;
+  padding: 8px;
+  font-size: 14px;
+  border: 2px solid #fff;
+  background-color: #222;
+  color: #fff;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.channel-btn:hover {
+  background-color: #fff;
+  color: #222;
+  border-color: #ffd700;
+}
+
+@media (max-width: 768px) {
+  .invite-toolbar {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .st-mode-btn {
+    margin-left: 0;
+    width: 100%;
+  }
+
+  .st-player-select,
+  .st-channel-select {
+    padding: 16px;
+  }
+
+  .player-list {
+    grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+  }
+
+  .channel-grid {
+    grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+  }
+}
 
 
 

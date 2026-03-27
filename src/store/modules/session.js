@@ -121,6 +121,10 @@ const mutations = {
     if (!state.isVoteHistoryAllowed && state.isSpectator) return;
     if (!state.nomination || state.lockedVote <= players.length) return;
     const isExile = players[state.nomination[1]].role.team === "traveler";
+    const yesVoters = players
+      .map((player, index) => ({ player, index }))
+      .filter(({ index }) => state.votes[index]);
+
     state.voteHistory.push({
       timestamp: new Date(),
       nominator: players[state.nomination[0]].name,
@@ -129,9 +133,13 @@ const mutations = {
       majority: Math.ceil(
         players.filter(player => !player.isDead || isExile).length / 2
       ),
-      votes: players
-        .filter((player, index) => state.votes[index])
-        .map(({ name }) => name)
+      votes: yesVoters.map(({ player }) => player.name),
+      weightedVotes: yesVoters.reduce((sum, { player }) => {
+        const hasUgHat =
+          (player.visibleHat || "").trim().toLowerCase() === "ug hat";
+        const hasBansheeAbility = player.hasBansheeAbility || false;
+        return sum + (hasUgHat || hasBansheeAbility ? 2 : 1);
+      }, 0)
     });
   },
   clearVoteHistory(state) {

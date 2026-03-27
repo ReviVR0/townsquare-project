@@ -15,7 +15,7 @@
           ??? votes
         </template>
         <template v-else>
-          {{ voters.length }} vote{{ voters.length !== 1 ? "s" : "" }}
+          {{ weightedVoteCount }} vote{{ weightedVoteCount !== 1 ? "s" : "" }}
         </template>
       </em>
       in favor
@@ -192,6 +192,25 @@ export default {
         ? reorder.slice(0, this.session.lockedVote - 1)
         : reorder
       ).filter(n => !!n);
+    },
+    weightedVoteCount: function() {
+      const nomineeIndex = this.session.nomination[1];
+      const totalPlayers = this.players.length;
+
+      // Mirror the lock-window logic used by visible voters.
+      return this.players.reduce((sum, player, index) => {
+        if (!this.session.votes[index]) return sum;
+        const indexAdjusted =
+          (index - 1 + totalPlayers - nomineeIndex) % totalPlayers;
+        if (this.session.lockedVote && indexAdjusted >= this.session.lockedVote - 1) {
+          return sum;
+        }
+
+        const hasUgHat =
+          (player.visibleHat || "").trim().toLowerCase() === "ug hat";
+        const hasBansheeAbility = player.hasBansheeAbility || false;
+        return sum + (hasUgHat || hasBansheeAbility ? 2 : 1);
+      }, 0);
     }
   },
   data() {
@@ -241,7 +260,12 @@ export default {
     },
     finish() {
       for(let i = 0; i<this.players.length; i++){
-          if(this.nominee.role.team != "traveler" && this.session.votes[i]===true && this.players[i].isDead){
+          if(
+            this.nominee.role.team != "traveler" &&
+            this.session.votes[i] === true &&
+            this.players[i].isDead &&
+            !this.players[i].hasBansheeAbility
+          ){
           this.$store.commit("players/update", { 
           player: this.players[i],
           property: "isVoteless",

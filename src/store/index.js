@@ -190,15 +190,16 @@ export default new Vuex.Store({
     toggleNight: toggle("isNight"),
     toggleGrimoire: toggle("isPublic"),
     toggleImageOptIn: toggle("isImageOptIn"),
-    setLanguage(state, lang) {
-      const normalized = lang || "ENG";
-      state.grimoire.language = normalized;
-      localStorage.setItem("language", normalized);
-
-      rolesJSON = getRolesJSON(normalized);
-      rolesJSONbyId = new Map(rolesJSON.map(role => [role.id, role]));
-      state.roles = getRolesByEdition(state.edition);
-      state.otherTravelers = getTravelersNotInEdition(state.edition);
+    setLanguage() {
+      // Temporarily disabled language switching.
+      // Re-enable after language-specific role loading is fixed.
+      // const normalized = lang || "ENG";
+      // state.grimoire.language = normalized;
+      // localStorage.setItem("language", normalized);
+      // rolesJSON = getRolesJSON(normalized);
+      // rolesJSONbyId = new Map(rolesJSON.map(role => [role.id, role]));
+      // state.roles = getRolesByEdition(state.edition);
+      // state.otherTravelers = getTravelersNotInEdition(state.edition);
     },
     toggleModal({ modals }, name) {
       if (name) {

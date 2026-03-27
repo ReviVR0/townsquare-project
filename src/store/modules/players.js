@@ -3,6 +3,8 @@ const NEWPLAYER = {
   id: "",
   role: {},
   reminders: [],
+  visibleHat: "",
+  hasBansheeAbility: false,
   isVoteless: false,
   isDead: false,
   pronouns: "",

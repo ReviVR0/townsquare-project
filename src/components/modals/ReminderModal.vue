@@ -162,6 +162,27 @@ export default {
         property: "reminders",
         value
       });
+      
+      // Only ST can sync hats and abilities to everyone.
+      // Spectator/player reminder changes should stay local and not set visibleHat.
+      const hatNames = ["big wig", "ug hat"];
+      const reminderName = (reminder.name || "").trim().toLowerCase();
+      if (!this.$store.state.session.isSpectator && hatNames.includes(reminderName)) {
+        this.$store.commit("players/update", {
+          player,
+          property: "visibleHat",
+          value: reminder.name
+        });
+      }
+      // Set hasBansheeAbility when banshee reminder is added
+      if (!this.$store.state.session.isSpectator && reminder.role === "banshee") {
+        this.$store.commit("players/update", {
+          player,
+          property: "hasBansheeAbility",
+          value: true
+        });
+      }
+      
       this.$store.commit("toggleModal", "reminder");
     },
     ...mapMutations(["toggleModal"])

@@ -65,7 +65,7 @@
           <td>{{ vote.nominee }}</td>
           <td>{{ vote.type }}</td>
           <td>
-            {{ vote.votes.length }}
+            {{ getVoteCount(vote) }}
             <font-awesome-icon icon="hand-paper" />
           </td>
           <td>
@@ -73,7 +73,7 @@
             <font-awesome-icon
               :icon="[
                 'fas',
-                vote.votes.length >= vote.majority ? 'check-square' : 'square'
+                getVoteCount(vote) >= vote.majority ? 'check-square' : 'square'
               ]"
             />
           </td>
@@ -98,6 +98,11 @@ export default {
     ...mapState(["session", "modals"])
   },
   methods: {
+    getVoteCount(vote) {
+      return typeof vote.weightedVotes === "number"
+        ? vote.weightedVotes
+        : vote.votes.length;
+    },
     clearVoteHistory() {
       this.$store.commit("session/clearVoteHistory");
     },

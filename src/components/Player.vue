@@ -8,6 +8,7 @@
           dead: player.isDead,
           marked: session.markedPlayer === index,
           'no-vote': player.isVoteless,
+          'poisoned-glow': hasPoisonedReminder,
           you: session.sessionId && player.id && player.id === session.playerId,
           'vote-yes': session.votes[index] && (
             !session.hiddenVote || player.id === session.playerId || !session.isSpectator
@@ -53,6 +54,8 @@
         :alignment-index="player.alignmentIndex"
         @set-role="$emit('trigger', ['openRoleModal'])"
       />
+
+      <img v-if="hatIcon" :src="hatIcon" class="hat-top" alt="hat" />
 
 
       <!-- Claim seat overlay -->
@@ -385,6 +388,40 @@ export default {
       if (!this.session.isSpectator) return true;
       const myId = this.session.playerId;
       return this.players.some(p => p.id && p.id === myId);
+    },
+    hatIcon() {
+      const reminderToIcon = {
+        "big wig": require("../assets/icons/bigwig.png"),
+        "ug hat": require("../assets/icons/godofug.png")
+      };
+
+      // ST-set hat takes priority
+      if (this.player.visibleHat) {
+        const key = this.player.visibleHat.trim().toLowerCase();
+        if (reminderToIcon[key]) {
+          return reminderToIcon[key];
+        }
+      }
+
+      // Fall back to local reminders
+      const reminders = this.player.reminders || [];
+      for (const reminder of reminders) {
+        const key = (reminder?.name || "").trim().toLowerCase();
+        if (reminderToIcon[key]) {
+          return reminderToIcon[key];
+        }
+      }
+
+      return null;
+    },
+    hasPoisonedReminder() {
+      const reminders = this.player.reminders || [];
+      return reminders.some(
+        reminder => {
+          const name = (reminder?.name || "").trim().toLowerCase();
+          return name === "poisoned" || name === "drunk";
+        }
+      );
     }
 
 },
@@ -465,6 +502,17 @@ export default {
       const reminders = [...this.player.reminders];
       reminders.splice(this.player.reminders.indexOf(reminder), 1);
       this.updatePlayer("reminders", reminders, true);
+      
+      // Clear visibleHat if removing a hat reminder
+      const hatNames = ["big wig", "ug hat"];
+      const reminderName = (reminder.name || "").trim().toLowerCase();
+      if (hatNames.includes(reminderName)) {
+        this.updatePlayer("visibleHat", "");
+      }
+      // Clear hasBansheeAbility if removing banshee reminder
+      if (reminder.role === "banshee") {
+        this.updatePlayer("hasBansheeAbility", false);
+      }
     },
     updatePlayer(property, value, closeMenu = false) {
       if (
@@ -859,6 +907,18 @@ export default {
   backface-visibility: hidden;
 }
 
+.player .hat-top {
+  position: absolute;
+  top: -40%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100%;
+  height: auto;
+  z-index: 6;
+  pointer-events: none;
+  filter: drop-shadow(0 0 4px rgba(0, 0, 0, 0.9));
+}
+
 #townsquare.public .circle .token {
   transform: perspective(400px) rotateY(-180deg);
 }
@@ -1005,6 +1065,11 @@ li.move:not(.from) .player .overlay svg.move {
 
 .player.you .token {
   animation: townsfolk-glow 5s ease-in-out infinite;
+}
+
+.player.poisoned-glow .token {
+  border-color: #57ff57;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.5), 0 0 16px 6px rgba(87, 255, 87, 0.75);
 }
 
 /****** Marked icon  Maybe change?******/

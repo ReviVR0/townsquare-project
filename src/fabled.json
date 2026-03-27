@@ -188,7 +188,9 @@
       "id": "bigwig",
       "firstNightReminder": "",
       "otherNightReminder": "",
-      "reminders": [],
+      "reminders": [
+        "Big Wig"
+      ],
       "setup": false,
       "name": "Big Wig",
       "team": "loric",
