@@ -387,6 +387,7 @@ class LiveSession {
       pronouns: player.pronouns,
       discordID: player.discordID,
       visibleHat: player.visibleHat || "",
+      hasBansheeAbility: !!player.hasBansheeAbility,
       ...(player.role && player.role.team === "traveler"
         ? { roleId: player.role.id }
         : {})
