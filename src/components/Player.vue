@@ -9,6 +9,7 @@
           marked: session.markedPlayer === index,
           'no-vote': player.isVoteless,
           'poisoned-glow': hasPoisonedReminder,
+          'dead-reminder-shroud': hasDeadReminder,
           you: session.sessionId && player.id && player.id === session.playerId,
           'vote-yes': session.votes[index] && (
             !session.hiddenVote || player.id === session.playerId || !session.isSpectator
@@ -422,6 +423,14 @@ export default {
           return name === "poisoned" || name === "drunk";
         }
       );
+    },
+    hasDeadReminder() {
+      if (this.session.isSpectator || this.player.isDead) return false;
+      const reminders = this.player.reminders || [];
+      return reminders.some(reminder => {
+        const name = (reminder?.name || "").trim().toLowerCase();
+        return name === "dead";
+      });
     }
 
 },
@@ -820,6 +829,12 @@ export default {
 
   #townsquare:not(.spectator) &.dead .shroud:hover:before {
     opacity: 1;
+  }
+
+  #townsquare:not(.spectator) &.dead-reminder-shroud:not(.dead) .shroud:before {
+    opacity: 0.25;
+    top: 0;
+    transform: perspective(400px) scale(1);
   }
 }
 

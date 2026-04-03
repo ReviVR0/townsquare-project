@@ -158,6 +158,18 @@
             <li @click="toggleModal('timer')" v-if="!session.isSpectator">
               Timer<em>[T]</em>
             </li>
+            <li v-if="!session.isSpectator" @click="autoTimerEnabled = !autoTimerEnabled">
+              Auto-timer/player
+              <em><font-awesome-icon :icon="['fas', autoTimerEnabled ? 'check-square' : 'square']" /></em>
+            </li>
+            <li v-if="!session.isSpectator && autoTimerEnabled">
+              Seconds/alive
+              <em>
+                <font-awesome-icon @click.stop="adjustAutoTimer(-5)" icon="search-minus" />
+                {{ autoTimerSecondsPerPlayer }}s
+                <font-awesome-icon @click.stop="adjustAutoTimer(5)" icon="search-plus" />
+              </em>
+            </li>
             <li @click="StorytellerCode" v-if="!isSeated">
               Co-Storyteller
               <em v-if="!session.isSpectator">{{ session.StorytellerCode }}</em>
@@ -269,6 +281,8 @@ export default {
       tab: "grimoire",
       banNames: ["wraith", "st", "host", "you", "storyteller", "player"],
       menuOpenedOnce: localStorage.getItem("menuOpenedOnce") === 'true',
+      autoTimerEnabled: false,
+      autoTimerSecondsPerPlayer: 30,
     };
   },
   methods: {
@@ -441,9 +455,22 @@ export default {
       }
       this.toggleMenu();
     },
+    adjustAutoTimer(delta) {
+      const next = this.autoTimerSecondsPerPlayer + delta;
+      if (next >= 5) this.autoTimerSecondsPerPlayer = next;
+    },
 
   },
-  
+  watch: {
+    'grimoire.isNight'(newVal, oldVal) {
+      if (!newVal && oldVal && this.autoTimerEnabled && !this.session.isSpectator) {
+        const alivePlayers = this.players.filter(p => !p.isDead).length;
+        const total = this.autoTimerSecondsPerPlayer * alivePlayers;
+        this.$store.commit("session/timer", total);
+        this.$store.commit("session/timerPause", false);
+      }
+    }
+  },
   mounted() {
     window.addEventListener("resize", this.handleResize);
     this.handleResize();
@@ -522,6 +549,11 @@ export default {
 
   &.open {
     transform: rotate(0deg);
+
+    ul {
+      visibility: visible;
+      pointer-events: auto;
+    }
   }
 
   > svg {
@@ -550,6 +582,8 @@ export default {
     padding: 0;
     margin: 0;
     flex-direction: column;
+    visibility: hidden;
+    pointer-events: none;
     overflow: hidden;
     box-shadow: 0 0 10px black;
     border: 3px solid black;
