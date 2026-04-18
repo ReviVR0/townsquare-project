@@ -1,3 +1,5 @@
+import { getPlayerVoteWeight } from "../../services/vote-weight";
+
 /**
  * Handle a vote request.
  * If the vote is from a seat that is already locked, ignore it.
@@ -34,12 +36,19 @@ const state = () => ({
   recivedMessage: null,
   winningTeam: null,
   StorytellerCode: null,
+  isStoryteller: false,
+  coStorytellers: [],
   hiddenVote: false,
   wraithPeek: [],
   isLilMonstaVote: false,
   botId: null,
+  hostDiscordId: "",
+  hostDiscordName: "",
   discordChats: [],
   discordST: null,
+  availableDiscordSTs: [],
+  coStDiscordLinks: {},
+  coStInviteCodes: {},
   lockedRooms: {
   1: false,
   2: false,
@@ -75,6 +84,39 @@ const set = key => (state, val) => {
   state[key] = val;
 };
 
+const autoLinkCoStorytellers = state => {
+  const available = (state.availableDiscordSTs || []).map(st => st.discordId);
+  if (!available.length) return;
+
+  const links = { ...(state.coStDiscordLinks || {}) };
+  const used = new Set(Object.values(links));
+
+  state.coStorytellers.forEach(webId => {
+    if (links[webId]) return;
+    const nextDiscordId = available.find(id => !used.has(id));
+    if (nextDiscordId) {
+      links[webId] = nextDiscordId;
+      used.add(nextDiscordId);
+    }
+  });
+
+  state.coStDiscordLinks = links;
+};
+
+const ensureInviteCodes = state => {
+  const next = {};
+  const old = state.coStInviteCodes || {};
+  (state.availableDiscordSTs || []).forEach(st => {
+    if (!st?.discordId) return;
+    next[st.discordId] =
+      old[st.discordId] || String(Math.floor(100000 + Math.random() * 900000));
+  });
+  state.coStInviteCodes = next;
+};
+
+const generateLegacyCoStCode = () =>
+  String(Math.floor(1000 + Math.random() * 9000));
+
 const mutations = {
   setPlayerId: set("playerId"),
   setSpectator: set("isSpectator"),
@@ -89,9 +131,70 @@ const mutations = {
   claimSeat: set("claimedSeat"),
   distributeRoles: set("isRolesDistributed"),
   timer: set("timer"),
+  timerSync: set("timer"),
   timerPause: set("timerPause"),
+  timerPauseSync: set("timerPause"),
   winningTeam: set("winningTeam"),
   setHiddenVote: set("hiddenVote"),
+  setStoryteller: set("isStoryteller"),
+  setCoStorytellers(state, ids = []) {
+    state.coStorytellers = Array.isArray(ids) ? [...new Set(ids)] : [];
+    const alive = new Set(state.coStorytellers);
+    const nextLinks = {};
+    Object.entries(state.coStDiscordLinks || {}).forEach(([webId, discordId]) => {
+      if (alive.has(webId)) nextLinks[webId] = discordId;
+    });
+    state.coStDiscordLinks = nextLinks;
+    autoLinkCoStorytellers(state);
+  },
+  addCoStoryteller(state, id) {
+    if (!id || state.coStorytellers.includes(id)) return;
+    state.coStorytellers.push(id);
+    autoLinkCoStorytellers(state);
+  },
+  removeCoStoryteller(state, id) {
+    const linkedDiscordId = state.coStDiscordLinks?.[id] || "";
+    state.coStorytellers = state.coStorytellers.filter(x => x !== id);
+    if (state.coStDiscordLinks && state.coStDiscordLinks[id]) {
+      const links = { ...state.coStDiscordLinks };
+      delete links[id];
+      state.coStDiscordLinks = links;
+    }
+
+    if (linkedDiscordId) {
+      const exists = (state.availableDiscordSTs || []).some(
+        st => st.discordId === linkedDiscordId
+      );
+      if (exists) {
+        state.coStInviteCodes = {
+          ...(state.coStInviteCodes || {}),
+          [linkedDiscordId]: String(Math.floor(100000 + Math.random() * 900000))
+        };
+      }
+    } else {
+      state.StorytellerCode = generateLegacyCoStCode();
+    }
+  },
+  linkCoStorytellerDiscord(state, { webPlayerId, discordId }) {
+    if (!webPlayerId || !discordId) return;
+    const links = { ...(state.coStDiscordLinks || {}) };
+
+    // Keep one-to-one mapping between web co-ST and Discord ST identities.
+    Object.keys(links).forEach(key => {
+      if (links[key] === discordId && key !== webPlayerId) {
+        delete links[key];
+      }
+    });
+
+    links[webPlayerId] = discordId;
+    state.coStDiscordLinks = links;
+  },
+  unlinkCoStorytellerDiscord(state, webPlayerId) {
+    if (!webPlayerId || !state.coStDiscordLinks?.[webPlayerId]) return;
+    const links = { ...state.coStDiscordLinks };
+    delete links[webPlayerId];
+    state.coStDiscordLinks = links;
+  },
   setLilMonstaVote: set("isLilMonstaVote"),
   setDiscordChats: set("discordChats"),
   setLockRooms: set("lockedRooms"),
@@ -100,6 +203,15 @@ const mutations = {
       .toLocaleLowerCase()
       .replace(/[^0-9a-z]/g, "")
       .substr(0, 10);
+    if (!state.sessionId) {
+      state.isStoryteller = false;
+      state.coStorytellers = [];
+      state.hostDiscordId = "";
+      state.hostDiscordName = "";
+      state.availableDiscordSTs = [];
+      state.coStDiscordLinks = {};
+      state.coStInviteCodes = {};
+    }
   },
   nomination(
     state,
@@ -118,7 +230,8 @@ const mutations = {
    * @param players
    */
   addHistory(state, players) {
-    if (!state.isVoteHistoryAllowed && state.isSpectator) return;
+    if (!state.isVoteHistoryAllowed && state.isSpectator && !state.isStoryteller)
+      return;
     if (!state.nomination || state.lockedVote <= players.length) return;
     const isExile = players[state.nomination[1]].role.team === "traveler";
     const yesVoters = players
@@ -134,12 +247,10 @@ const mutations = {
         players.filter(player => !player.isDead || isExile).length / 2
       ),
       votes: yesVoters.map(({ player }) => player.name),
-      weightedVotes: yesVoters.reduce((sum, { player }) => {
-        const hasUgHat =
-          (player.visibleHat || "").trim().toLowerCase() === "ug hat";
-        const hasBansheeAbility = player.hasBansheeAbility || false;
-        return sum + (hasUgHat || hasBansheeAbility ? 2 : 1);
-      }, 0)
+      weightedVotes: yesVoters.reduce(
+        (sum, { player }) => sum + getPlayerVoteWeight(player),
+        0
+      )
     });
   },
   clearVoteHistory(state) {
@@ -173,6 +284,9 @@ const mutations = {
   StorytellerCodeGrim(){},
   SetSpectator(state, param){
     state.isSpectator = param[1];
+    if (!state.isSpectator) {
+      state.isStoryteller = false;
+    }
   },
   setHandRaised(){},
   wraithPeek(state, person){
@@ -183,12 +297,31 @@ const mutations = {
   wraithLook(){},
   setBotId(state, payload) {
     state.botId = payload.botId;
+    if (!state.botId) {
+      state.hostDiscordId = "";
+      state.hostDiscordName = "";
+      state.availableDiscordSTs = [];
+      state.coStDiscordLinks = {};
+      state.coStInviteCodes = {};
+    } else {
+      state.hostDiscordId = payload.hostDiscordId || state.hostDiscordId || "";
+      state.hostDiscordName = payload.hostDiscordName || state.hostDiscordName || "";
+    }
 
     // Determine ST Discord IDs
     const stDiscordIds = Array.isArray(payload.members)
       ? payload.members.filter(m => m[2]).map(m => m[1])
       : [];
     state.discordST = stDiscordIds || [];
+    state.availableDiscordSTs = (Array.isArray(payload.members)
+      ? payload.members
+          .filter(m => m[2] && m[1] !== state.hostDiscordId)
+          .map(m => ({ displayName: m[0], discordId: m[1] }))
+      : []);
+    if (!state.isSpectator) {
+      ensureInviteCodes(state);
+    }
+    autoLinkCoStorytellers(state);
     console.log(payload)
     // Put all members into chat number 21
     if (Array.isArray(payload.members)) {
@@ -209,6 +342,34 @@ const mutations = {
   },
 
   MoveToChat(){},
+  setCoStDiscordLinks(state, links = {}) {
+    state.coStDiscordLinks = { ...(links || {}) };
+    autoLinkCoStorytellers(state);
+  },
+  setAvailableDiscordSTs(state, list = []) {
+    state.availableDiscordSTs = Array.isArray(list) ? list : [];
+    if (!state.isSpectator) {
+      ensureInviteCodes(state);
+    }
+    autoLinkCoStorytellers(state);
+  },
+  regenerateCoStInviteCode(state, discordId) {
+    if (!discordId) return;
+    const exists = (state.availableDiscordSTs || []).some(
+      st => st.discordId === discordId
+    );
+    if (!exists) return;
+    state.coStInviteCodes = {
+      ...(state.coStInviteCodes || {}),
+      [discordId]: String(Math.floor(100000 + Math.random() * 900000))
+    };
+  },
+  setHostDiscordId(state, discordId = "") {
+    state.hostDiscordId = discordId || "";
+  },
+  setHostDiscordName(state, name = "") {
+    state.hostDiscordName = name || "";
+  },
   ConfirmMoveChat(state, [chatNumber, discordID]) {
     const existing = state.discordChats.find(c => c.discordID === discordID);
     if (existing) {

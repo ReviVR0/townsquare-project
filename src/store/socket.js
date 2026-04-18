@@ -4,6 +4,7 @@ class LiveSession {
     //this._wss = "ws://localhost:8081/"; // uncomment if using local server with NODE_ENV=development
     this._socket = null;
     this._isSpectator = true;
+    this._fromSocket = false;
     this._gamestate = [];
     this._store = store;
     this._pingInterval = 30 * 1000; // 30 seconds between pings
@@ -123,6 +124,8 @@ class LiveSession {
     } catch (err) {
       console.log("unsupported socket message", data);
     }
+    this._fromSocket = true;
+    try {
     switch (command) {
       case "getGamestate":
         this.sendGamestate(params);
@@ -146,7 +149,6 @@ class LiveSession {
         this._handlePing(params);
         break;
       case "nomination":
-        if (!this._isSpectator) return;
         if (!params) {
           // create vote history record
           this._store.commit(
@@ -169,7 +171,6 @@ class LiveSession {
         this._store.commit("players/remove", params);
         break;
       case "marked":
-        if (!this._isSpectator) return;
         this._store.commit("session/setMarkedPlayer", params);
         break;
       case "isNight":
@@ -179,10 +180,15 @@ class LiveSession {
       case "isVoteHistoryAllowed":
         if (!this._isSpectator) return;
         this._store.commit("session/setVoteHistoryAllowed", params);
-        this._store.commit("session/clearVoteHistory");
+        if (!this._store.state.session.isStoryteller) {
+          this._store.commit("session/clearVoteHistory");
+        }
+        break;
+      case "storytellerSetVoteHistoryAllowed":
+        if (this._isSpectator) return;
+        this._handleStorytellerSetVoteHistoryAllowed(params);
         break;
       case "votingSpeed":
-        if (!this._isSpectator) return;
         this._store.commit("session/setVotingSpeed", params);
         break;
       case "clearVoteHistory":
@@ -190,7 +196,6 @@ class LiveSession {
         this._store.commit("session/clearVoteHistory");
         break;
       case "isVoteInProgress":
-        if (!this._isSpectator) return;
         this._store.commit("session/setVoteInProgress", params);
         break;
       case "vote":
@@ -207,11 +212,11 @@ class LiveSession {
         break;
       case "timer":
         if (!this._isSpectator) return;
-        this._store.commit("session/timer", params);
+        this._store.commit("session/timerSync", params);
         break;
       case "timerPause":
         if (!this._isSpectator) return;
-        this._store.commit("session/timerPause", params);
+        this._store.commit("session/timerPauseSync", params);
         break;
       case "inviteChat":
         if (this._isSpectator) return;
@@ -237,11 +242,44 @@ class LiveSession {
       case "StorytellerCodeGrim":
         this._store.commit("session/StorytellerCodeGrim", params);
         break;
+      case "StorytellerCodeInvalid":
+        if (!this._isSpectator) return;
+        alert(params || "Wrong code!");
+        break;
+      case "setStoryteller":
+        if (!this._isSpectator) return;
+        this._store.commit("session/setStoryteller", !!params);
+        break;
+      case "setCoStorytellers":
+        if (!this._isSpectator) return;
+        this._store.commit("session/setCoStorytellers", params || []);
+        break;
+      case "storytellerPlayerUpdate":
+        this._handleStorytellerPlayerUpdate(params);
+        break;
+      case "storytellerBluffUpdate":
+        this._handleStorytellerBluffUpdate(params);
+        break;
+      case "storytellerTimer":
+        if (this._isSpectator) return;
+        this._store.commit("session/timer", params);
+        break;
+      case "storytellerTimerPause":
+        if (this._isSpectator) return;
+        this._store.commit("session/timerPause", params);
+        break;
+      case "storytellerSetIsNight":
+        if (this._isSpectator) return;
+        this._handleStorytellerSetIsNight(params);
+        break;
+      case "storytellerDistributeRoles":
+        if (this._isSpectator) return;
+        this._handleStorytellerDistributeRoles(params);
+        break;
       case "SetSpectator":
         this._store.commit("session/SetSpectator", params);
         break;
       case "setHiddenVote":
-        if (!this._isSpectator) return;
         this._store.commit("session/setHiddenVote", params);
         break;
       case "setHandRaised": {
@@ -272,7 +310,7 @@ class LiveSession {
         break;
       case "BotConnected": {
         const { session } = this._store.state;
-        const { botId, members } = params;
+        const { botId, members, hostDiscordId, hostDiscordName } = params;
 
         // Only accept if no bot yet or same bot
         if (session.botId && session.botId !== botId) return;
@@ -311,6 +349,8 @@ class LiveSession {
         // Store botId + ST IDs in session
         this._store.commit("session/setBotId", {
           botId,
+          hostDiscordId,
+          hostDiscordName,
           members
         });
 
@@ -329,7 +369,9 @@ class LiveSession {
         this._store.commit("session/setLockRooms", params);
         break;
     }
-
+    } finally {
+      this._fromSocket = false;
+    }
   }
 
   /**
@@ -388,6 +430,7 @@ class LiveSession {
       discordID: player.discordID,
       visibleHat: player.visibleHat || "",
       hasBansheeAbility: !!player.hasBansheeAbility,
+      voteMultiplier: Number(player.voteMultiplier) || 1,
       ...(player.role && player.role.team === "traveler"
         ? { roleId: player.role.id }
         : {})
@@ -412,7 +455,12 @@ class LiveSession {
         isVoteInProgress: session.isVoteInProgress,
         markedPlayer: session.markedPlayer,
         botId: session.botId,
+        hostDiscordId: session.hostDiscordId,
+        hostDiscordName: session.hostDiscordName,
         discordST: session.discordST,
+        coStorytellers: session.coStorytellers,
+        coStDiscordLinks: session.coStDiscordLinks,
+        availableDiscordSTs: session.availableDiscordSTs,
         discordChats: session.discordChats,
         lockedRooms: session.lockedRooms,
         fabled: fabled.map(f => (f.isCustom ? f : { id: f.id })),
@@ -440,7 +488,12 @@ class LiveSession {
       isVoteInProgress,
       markedPlayer,
       botId,
+      hostDiscordId,
+      hostDiscordName,
       discordST,
+      coStorytellers,
+      coStDiscordLinks,
+      availableDiscordSTs,
       fabled,
       discordChats,
       lockedRooms
@@ -461,7 +514,7 @@ class LiveSession {
       const player = players[x];
       const { roleId } = state;
       // update relevant properties
-      ["name", "id", "isDead", "isVoteless", "pronouns", "discordID", "visibleHat", "hasBansheeAbility"].forEach(property => {
+      ["name", "id", "isDead", "isVoteless", "pronouns", "discordID", "visibleHat", "hasBansheeAbility", "voteMultiplier"].forEach(property => {
         const value = state[property];
         if (player[property] !== value) {
           this._store.commit("players/update", { player, property, value });
@@ -498,10 +551,33 @@ class LiveSession {
         isVoteInProgress
       });
       this._store.commit("session/setMarkedPlayer", markedPlayer);
+      this._store.commit("session/setHostDiscordId", hostDiscordId || "");
+      this._store.commit("session/setHostDiscordName", hostDiscordName || "");
+      this._store.commit("session/setCoStorytellers", coStorytellers || []);
+      this._store.commit("session/setAvailableDiscordSTs", availableDiscordSTs || []);
+      this._store.commit("session/setCoStDiscordLinks", coStDiscordLinks || {});
       if(botId){
+        const stMembers = [];
+        const seenDiscordIds = new Set();
+        if (hostDiscordId) {
+          stMembers.push([hostDiscordName || "Host ST", hostDiscordId, true]);
+          seenDiscordIds.add(hostDiscordId);
+        }
+        (availableDiscordSTs || []).forEach(st => {
+          if (!st?.discordId || seenDiscordIds.has(st.discordId)) return;
+          stMembers.push([st.displayName || "ST", st.discordId, true]);
+          seenDiscordIds.add(st.discordId);
+        });
+        (discordST || []).forEach(discordId => {
+          if (!discordId || seenDiscordIds.has(discordId)) return;
+          stMembers.push(["ST", discordId, true]);
+          seenDiscordIds.add(discordId);
+        });
         this._store.commit("session/setBotId", {
           botId,
-          members: [["ST", discordST[0], true]]
+          hostDiscordId,
+          hostDiscordName,
+          members: stMembers
         });
         this._store.commit("session/setLockRooms", lockedRooms);
         this._store.commit("session/setDiscordChats", discordChats);
@@ -582,16 +658,187 @@ class LiveSession {
     });
   }
 
+  _serializeStorytellerPlayerValue(property, value) {
+    if (property === "role") {
+      return value && value.id ? value.id : "";
+    }
+    return value;
+  }
+
+  _deserializeStorytellerPlayerValue(property, value) {
+    if (property === "role") {
+      if (!value) return {};
+      return (
+        this._store.state.roles.get(value) ||
+        this._store.getters.rolesJSONbyId.get(value) ||
+        {}
+      );
+    }
+    return value;
+  }
+
+  _broadcastCoStorytellerList() {
+    if (this._isSpectator) return;
+    const ids = this._store.state.session.coStorytellers || [];
+    ids.forEach(id => this._sendDirect(id, "setCoStorytellers", ids));
+  }
+
+  _broadcastStorytellerPlayerUpdate(update, excludedId = "") {
+    if (this._isSpectator) return;
+    const ids = this._store.state.session.coStorytellers || [];
+    ids.forEach(id => {
+      if (excludedId && id === excludedId) return;
+      this._sendDirect(id, "storytellerPlayerUpdate", update);
+    });
+  }
+
+  _broadcastStorytellerBluffUpdate(update, excludedId = "") {
+    if (this._isSpectator) return;
+    const ids = this._store.state.session.coStorytellers || [];
+    ids.forEach(id => {
+      if (excludedId && id === excludedId) return;
+      this._sendDirect(id, "storytellerBluffUpdate", update);
+    });
+  }
+
+  _handleStorytellerSetIsNight({ isNight } = {}) {
+    if (typeof isNight !== "boolean") return;
+    if (this._store.state.grimoire.isNight !== isNight) {
+      this._store.commit("toggleNight", isNight);
+      if (isNight) {
+        this._store.commit("session/setMarkedPlayer", -1);
+      }
+    }
+  }
+
+  _handleStorytellerSetVoteHistoryAllowed({ isVoteHistoryAllowed } = {}) {
+    if (typeof isVoteHistoryAllowed !== "boolean") return;
+    this._store.commit("session/setVoteHistoryAllowed", isVoteHistoryAllowed);
+    // This handler runs during socket message processing (_fromSocket=true),
+    // so the usual Vuex subscription rebroadcast is skipped.
+    this._send("isVoteHistoryAllowed", isVoteHistoryAllowed);
+  }
+
+  _handleStorytellerDistributeRoles() {
+    this.distributeRoles();
+  }
+
+  _handleStorytellerPlayerUpdate({ index, property, value, from } = {}) {
+    const allowed = [
+      "role",
+      "reminders",
+      "alignmentIndex",
+      "visibleHat",
+      "hasBansheeAbility",
+      "voteMultiplier",
+      "isDead",
+      "isVoteless",
+      "isMarked"
+    ];
+    if (!allowed.includes(property)) return;
+    const player = this._store.state.players.players[index];
+    if (!player) return;
+
+    if (this._isSpectator && !this._store.state.session.isStoryteller) return;
+    const resolvedValue = this._deserializeStorytellerPlayerValue(property, value);
+    this._store.commit("players/update", {
+      player,
+      property,
+      value: resolvedValue,
+      isFromStorytellerSync: true
+    });
+
+    // Host forwards co-ST changes to the other co-ST clients.
+    if (!this._isSpectator) {
+      this._broadcastStorytellerPlayerUpdate({ index, property, value }, from || "");
+    }
+  }
+
+  _handleStorytellerBluffUpdate({ index, roleId, from } = {}) {
+    if (!Number.isInteger(index)) return;
+    if (this._isSpectator && !this._store.state.session.isStoryteller) return;
+
+    const role = roleId
+      ? this._store.state.roles.get(roleId) ||
+        this._store.getters.rolesJSONbyId.get(roleId) ||
+        {}
+      : {};
+
+    this._store.commit("players/setBluff", {
+      index,
+      role,
+      isFromStorytellerSync: true
+    });
+
+    if (!this._isSpectator) {
+      this._broadcastStorytellerBluffUpdate({ index, roleId }, from || "");
+    }
+  }
+
+  sendBluff({ index, role, isFromStorytellerSync } = {}) {
+    if (isFromStorytellerSync || !Number.isInteger(index)) return;
+    const roleId = role && role.id ? role.id : "";
+
+    if (this._isSpectator) {
+      if (!this._store.state.session.isStoryteller) return;
+      this._sendDirect("host", "storytellerBluffUpdate", {
+        from: this._store.state.session.playerId,
+        index,
+        roleId
+      });
+      return;
+    }
+
+    this._broadcastStorytellerBluffUpdate({ index, roleId });
+  }
+
   /**
    * Publish a player update.
    * @param player
    * @param property
    * @param value
    */
-  sendPlayer({ player, property, value }) {
-    if (this._isSpectator || property === "reminders" ||
-        property === "alignmentIndex") return;
+  sendPlayer({ player, property, value, isFromStorytellerSync, isFromSocketPlayerSync }) {
+    // Prevent spectator echo loops for inbound storyteller-sync updates.
+    // Host still needs to forward these updates to players.
+    if (isFromStorytellerSync && this._isSpectator) return;
+    // Prevent spectator echo loops for host-originated "player" socket updates.
+    if (isFromSocketPlayerSync && this._isSpectator) return;
+    const storytellerSyncProps = [
+      "role",
+      "reminders",
+      "alignmentIndex",
+      "visibleHat",
+      "hasBansheeAbility",
+      "voteMultiplier",
+      "isDead",
+      "isVoteless",
+      "isMarked"
+    ];
     const index = this._store.state.players.players.indexOf(player);
+    if (index < 0) return;
+
+    if (this._isSpectator) {
+      if (!this._store.state.session.isStoryteller) return;
+      if (!storytellerSyncProps.includes(property)) return;
+      this._sendDirect("host", "storytellerPlayerUpdate", {
+        from: this._store.state.session.playerId,
+        index,
+        property,
+        value: this._serializeStorytellerPlayerValue(property, value)
+      });
+      return;
+    }
+
+    if (storytellerSyncProps.includes(property) && !isFromStorytellerSync) {
+      this._broadcastStorytellerPlayerUpdate({
+        index,
+        property,
+        value: this._serializeStorytellerPlayerValue(property, value)
+      });
+    }
+
+    if (property === "reminders" || property === "alignmentIndex") return;
     if (property === "role") {
       if (value.team && value.team === "traveler") {
         // update local gamestate to remember this player as a traveler
@@ -609,6 +856,7 @@ class LiveSession {
     } else {
       this._send("player", { index, property, value });
     }
+
   }
 
   /**
@@ -631,7 +879,8 @@ class LiveSession {
         this._store.commit("players/update", {
           player,
           property: "role",
-          value: {}
+          value: {},
+          isFromSocketPlayerSync: true
         });
       } else {
         // load role, first from session, the global, then fail gracefully
@@ -642,12 +891,18 @@ class LiveSession {
         this._store.commit("players/update", {
           player,
           property: "role",
-          value: role
+          value: role,
+          isFromSocketPlayerSync: true
         });
       }
     } else {
       // just update the player otherwise
-      this._store.commit("players/update", { player, property, value });
+      this._store.commit("players/update", {
+        player,
+        property,
+        value,
+        isFromSocketPlayerSync: true
+      });
     }
   }
 
@@ -747,6 +1002,10 @@ class LiveSession {
   _handleBye(playerId) {
     if (this._isSpectator) return;
     delete this._players[playerId];
+    if (this._store.state.session.coStorytellers.includes(playerId)) {
+      this._store.commit("session/removeCoStoryteller", playerId);
+      this._broadcastCoStorytellerList();
+    }
     this._store.commit(
       "session/setPlayerCount",
       Object.keys(this._players).length
@@ -760,6 +1019,7 @@ class LiveSession {
    */
   claimSeat(seat) {
     if (!this._isSpectator) return;
+    if (this._store.state.session.isStoryteller) return;
     localStorage.removeItem("invites");
     const players = this._store.state.players.players;
     if (players.length > seat && (seat < 0 || !players[seat].id)) {
@@ -802,6 +1062,10 @@ class LiveSession {
    */
   distributeRoles() {
     if (this._isSpectator) {
+      if (!this._store.state.session.isStoryteller) return;
+      this._sendDirect("host", "storytellerDistributeRoles", {
+        from: this._store.state.session.playerId
+      });
       return;
     }
     const message = {};
@@ -825,7 +1089,8 @@ class LiveSession {
    * @param payload [nominator, nominee]|{nomination}
    */
   nomination(payload) {
-    if (this._isSpectator) return;
+    if (this._fromSocket) return;
+    if (this._isSpectator && !this._store.state.session.isStoryteller) return;
     const nomination = payload ? payload.nomination || payload : payload;
     const players = this._store.state.players.players;
     if (
@@ -842,7 +1107,8 @@ class LiveSession {
    * Set the isVoteInProgress status. ST only
    */
   setVoteInProgress() {
-    if (this._isSpectator) return;
+    if (this._fromSocket) return;
+    if (this._isSpectator && !this._store.state.session.isStoryteller) return;
     this._send("isVoteInProgress", this._store.state.session.isVoteInProgress);
   }
 
@@ -850,6 +1116,7 @@ class LiveSession {
    * Send the isNight status. ST only
    */
   setIsNight() {
+    if (this._fromSocket) return;
     for (let i = 0; i < localStorage.length; i++) {
       const key = localStorage.key(i);
       if (key.startsWith("messages_") && this._store.state.grimoire.isNight) {
@@ -857,7 +1124,14 @@ class LiveSession {
         i--;
       }
     }
-    if (this._isSpectator) return;
+    if (this._isSpectator) {
+      if (!this._store.state.session.isStoryteller) return;
+      this._sendDirect("host", "storytellerSetIsNight", {
+        from: this._store.state.session.playerId,
+        isNight: !!this._store.state.grimoire.isNight
+      });
+      return;
+    }
     this._send("isNight", this._store.state.grimoire.isNight);
   }
 
@@ -865,7 +1139,15 @@ class LiveSession {
    * Send the isVoteHistoryAllowed state. ST only
    */
   setVoteHistoryAllowed() {
-    if (this._isSpectator) return;
+    if (this._fromSocket) return;
+    if (this._isSpectator) {
+      if (!this._store.state.session.isStoryteller) return;
+      this._sendDirect("host", "storytellerSetVoteHistoryAllowed", {
+        from: this._store.state.session.playerId,
+        isVoteHistoryAllowed: !!this._store.state.session.isVoteHistoryAllowed
+      });
+      return;
+    }
     this._send(
       "isVoteHistoryAllowed",
       this._store.state.session.isVoteHistoryAllowed
@@ -877,7 +1159,8 @@ class LiveSession {
    * @param votingSpeed voting speed in seconds, minimum 1
    */
   setVotingSpeed(votingSpeed) {
-    if (this._isSpectator) return;
+    if (this._fromSocket) return;
+    if (this._isSpectator && !this._store.state.session.isStoryteller) return;
     if (votingSpeed) {
       this._send("votingSpeed", votingSpeed);
     }
@@ -888,7 +1171,8 @@ class LiveSession {
    * @param playerIndex, player id or -1 for empty
    */
   setMarked(playerIndex) {
-    if (this._isSpectator) return;
+    if (this._fromSocket) return;
+    if (this._isSpectator && !this._store.state.session.isStoryteller) return;
     this._send("marked", playerIndex);
   }
 
@@ -907,15 +1191,17 @@ class LiveSession {
    */
   vote([index]) {
     const player = this._store.state.players.players[index];
+    const isCoST = this._isSpectator && this._store.state.session.isStoryteller;
     if (
       this._store.state.session.playerId === player.id ||
-      !this._isSpectator
+      !this._isSpectator ||
+      isCoST
     ) {
-      // send vote only if it is your own vote or you are the storyteller
+      // send vote only if it is your own vote or you are the storyteller (or co-ST)
       this._send("vote", [
         index,
         this._store.state.session.votes[index],
-        !this._isSpectator
+        !this._isSpectator || isCoST
       ]);
     }
   }
@@ -940,7 +1226,8 @@ class LiveSession {
    * Lock a vote. ST only
    */
   lockVote() {
-    if (this._isSpectator) return;
+    if (this._fromSocket) return;
+    if (this._isSpectator && !this._store.state.session.isStoryteller) return;
     const { lockedVote, votes, nomination } = this._store.state.session;
     const { players } = this._store.state.players;
     const index = (nomination[1] + lockedVote - 1) % players.length;
@@ -954,7 +1241,6 @@ class LiveSession {
    * @private
    */
   _handleLock([lock, vote]) {
-    if (!this._isSpectator) return;
     this._store.commit("session/lockVote", lock);
     if (lock > 1) {
       const { lockedVote, nomination } = this._store.state.session;
@@ -993,9 +1279,19 @@ class LiveSession {
     this._send("remove", payload);
   }
   timer(payload){
+    if (this._isSpectator) {
+      if (!this._store.state.session.isStoryteller) return;
+      this._sendDirect("host", "storytellerTimer", payload);
+      return;
+    }
     this._send("timer", payload);
   }
   timerPause(payload){
+    if (this._isSpectator) {
+      if (!this._store.state.session.isStoryteller) return;
+      this._sendDirect("host", "storytellerTimerPause", payload);
+      return;
+    }
     this._send("timerPause", payload);
   }
   inviteChat(payload) {
@@ -1120,18 +1416,72 @@ ConfirmChat(params) {
 
   StorytellerCodeGrim(params){
     if (this._isSpectator){
-      this._sendDirect("host", "StorytellerCodeGrim", this._store.state.session.playerId)
+      this._sendDirect("host", "StorytellerCodeGrim", {
+        playerId: this._store.state.session.playerId,
+        code: params
+      })
     } 
     else{
-      this._sendDirect(params, "SendGrim", JSON.stringify(this.buildGamestateJson()));
-      this._send("StorytellerCode", null);
+      if (!params) return;
+
+      const session = this._store.state.session;
+      const isObjectPayload = typeof params === "object" && params !== null;
+      const targetPlayerId = isObjectPayload ? params.playerId : params;
+      const inputCode = isObjectPayload ? (params.code || "") : "";
+      if (!targetPlayerId) return;
+
+      if (session.botId && (session.availableDiscordSTs || []).length) {
+        const codeMap = session.coStInviteCodes || {};
+        const matched = Object.keys(codeMap).find(
+          discordId => codeMap[discordId] === String(inputCode || "")
+        );
+        if (!matched) {
+          this._sendDirect(targetPlayerId, "StorytellerCodeInvalid", "Wrong Co-ST code!");
+          return;
+        }
+        this._store.commit("session/linkCoStorytellerDiscord", {
+          webPlayerId: targetPlayerId,
+          discordId: matched
+        });
+      } else {
+        if (String(inputCode || "") !== String(session.StorytellerCode || "")) {
+          this._sendDirect(targetPlayerId, "StorytellerCodeInvalid", "Wrong code!");
+          return;
+        }
+      }
+
+      // Co-ST should never occupy a seat.
+      this._store.state.players.players.forEach(player => {
+        if (player.id === targetPlayerId) {
+          this._store.commit("players/update", {
+            player,
+            property: "id",
+            value: ""
+          });
+        }
+      });
+
+      this._store.commit("session/addCoStoryteller", targetPlayerId);
+      this._sendDirect(targetPlayerId, "setStoryteller", true);
+      this._sendDirect(targetPlayerId, "SendGrim", JSON.stringify(this.buildGamestateJson()));
+      this.sendGamestate(targetPlayerId);
+      this._broadcastCoStorytellerList();
     }
 
   }
+
+  removeCoStoryteller(playerId) {
+    if (this._isSpectator || !playerId) return;
+    this._sendDirect(playerId, "setStoryteller", false);
+    this._sendDirect(playerId, "setCoStorytellers", []);
+    this._broadcastCoStorytellerList();
+  }
+
   SetSpectator(params){
     this._sendDirect(params[0], "SetSpectator", params[1])
   }
   setHiddenVote(params){
+    if (this._fromSocket) return;
     this._send("setHiddenVote", params);
   }
   setHandRaised(params){
@@ -1153,11 +1503,35 @@ ConfirmChat(params) {
 MoveToChat(params) {
   const { session } = this._store.state;
   if (!session.botId) return;
-  if (Array.isArray(params[0])) {
-    this._sendDirect(session.botId, "MoveToChat", params);
-  } else {
-    this._sendDirect(session.botId, "MoveToChat", [params[0], params[1], params[2]]);
+
+  const incomingMoves = Array.isArray(params?.[0])
+    ? params
+    : Array.isArray(params)
+      ? [params]
+      : [];
+  if (!incomingMoves.length) return;
+
+  const isHost = !session.isSpectator;
+  const isCoST = session.isSpectator && session.isStoryteller;
+  let moves = [...incomingMoves];
+  let requesterDiscordId = "";
+  let requesterWebId = isHost ? "host" : session.playerId;
+
+  if (isHost) {
+    requesterDiscordId = session.hostDiscordId || (session.discordST || [])[0] || "";
+  } else if (isCoST) {
+    requesterDiscordId = (session.coStDiscordLinks || {})[session.playerId] || "";
+    if (!requesterDiscordId) {
+      alert("No Discord ST identity linked for this Co-ST yet. Ask HostST to reconnect bot/ST list or relink.");
+      return;
+    }
   }
+
+  this._sendDirect(session.botId, "MoveToChat", {
+    moves,
+    requesterWebId,
+    requesterDiscordId
+  });
 }
   ConfirmMoveChat(params){
     const { session } = this._store.state;
@@ -1249,6 +1623,9 @@ export default store => {
       case "players/add":
         session.sendGamestate("", true);
         break;
+      case "players/setBluff":
+        session.sendBluff(payload);
+        break;
       case "players/update":
         if (payload.property === "pronouns") {
           session.sendPlayerPronouns(payload);
@@ -1257,11 +1634,9 @@ export default store => {
         }
         break;
       case "session/timer":
-        if (session._isSpectator) return;
         session.timer(payload);
         break;
       case "session/timerPause":
-        if (session._isSpectator) return;
         session.timerPause(payload);
         break;
       case "session/inviteChat":
@@ -1284,13 +1659,16 @@ export default store => {
         break;    
       case "session/StorytellerCodeGrim":
         session.StorytellerCodeGrim(payload);
-        store.commit("session/StorytellerCode", null);
+        break;
+      case "session/removeCoStoryteller":
+        if (session._isSpectator) return;
+        session.removeCoStoryteller(payload);
         break;    
       case "session/SetSpectator":
         session.SetSpectator(payload);
         break; 
       case "session/setHiddenVote":
-        if (session._isSpectator) return;
+        if (session._isSpectator && !state.session.isStoryteller) return;
         session.setHiddenVote(payload);
         break;     
       case "session/setHandRaised":

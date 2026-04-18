@@ -12,7 +12,10 @@
           'dead-reminder-shroud': hasDeadReminder,
           you: session.sessionId && player.id && player.id === session.playerId,
           'vote-yes': session.votes[index] && (
-            !session.hiddenVote || player.id === session.playerId || !session.isSpectator
+            !session.hiddenVote ||
+            player.id === session.playerId ||
+            !session.isSpectator ||
+            session.isStoryteller
           ),
           'vote-lock': voteLocked
         },
@@ -61,7 +64,7 @@
 
       <!-- Claim seat overlay -->
       <div
-        v-if="session.isSpectator && !player.id && !isSittingPlayer"
+        v-if="session.isSpectator && !session.isStoryteller && !player.id && !isSittingPlayer"
         class="claim-seat-overlay"
         @click="claimSeat"
         title="Claim this seat"
@@ -117,7 +120,7 @@
           title="Nominate this player"
         />
         <font-awesome-icon
-          v-if="showHandUp && (!session.hiddenVote || player.id === session.playerId || !session.isSpectator)"
+          v-if="showHandUp && (!session.hiddenVote || player.id === session.playerId || !session.isSpectator || session.isStoryteller)"
           icon="hand-paper"
           class="vote hand-up"
           title="Hand UP (auto)"
@@ -221,9 +224,15 @@
                 Send Card
             </li>
           </template>
+          <template v-if="session.isStoryteller && !session.nomination">
+            <li @click="nominatePlayer()">
+              <font-awesome-icon icon="hand-point-right" />
+              Nomination
+            </li>
+          </template>
           <li
             @click="claimSeat"
-            v-if="session.isSpectator"
+            v-if="session.isSpectator && !session.isStoryteller"
             :class="{ disabled: player.id && player.id !== session.playerId }"
           >
             <font-awesome-icon icon="chair" />
@@ -304,6 +313,7 @@ import Token from "./Token";
 
 import { mapGetters, mapState } from "vuex";
 import { EventBus } from "../event-bus.js";
+import { getVoteMultiplierFromReminders } from "../services/vote-weight";
 
 export default {
   components: {
@@ -522,10 +532,12 @@ export default {
       if (reminder.role === "banshee") {
         this.updatePlayer("hasBansheeAbility", false);
       }
+      this.updatePlayer("voteMultiplier", getVoteMultiplierFromReminders(reminders));
     },
     updatePlayer(property, value, closeMenu = false) {
+      const canStorytell = !this.session.isSpectator || this.session.isStoryteller;
       if (
-        this.session.isSpectator &&
+        !canStorytell &&
         property !== "reminders" &&
         property !== "pronouns" &&
         property !== "handRaised"
@@ -636,11 +648,11 @@ export default {
     canShowGhost(player) {
       const r = this.revealed[player.id] || {};
       if (r.ghost) return true;
-      return (!this.session.hiddenVote || this.grimoire.isNight) && player.isDead && !player.isVoteless;
+      return (!this.session.hiddenVote || this.grimoire.isNight || this.session.isStoryteller) && player.isDead && !player.isVoteless;
     },
     getShroudImage(player) {
     const isSelf = this.session.playerId && player.id === this.session.playerId;
-    const isHost = !this.session.isSpectator;
+    const isHost = !this.session.isSpectator || this.session.isStoryteller;
 
     const maskOthersDuringDay =
       this.session.hiddenVote &&
@@ -810,11 +822,12 @@ export default {
       transition: all 200ms;
       pointer-events: none;
     }
-    #townsquare.spectator & {
+    #townsquare.spectator:not(.storyteller) & {
       pointer-events: none;
     }
 
-    #townsquare:not(.spectator) &:hover:before {
+    #townsquare:not(.spectator) &:hover:before,
+    #townsquare.storyteller &:hover:before {
       opacity: 0.5;
       top: -10px;
       transform: scale(1);
@@ -827,11 +840,13 @@ export default {
     transform: perspective(400px) scale(1);
   }
 
-  #townsquare:not(.spectator) &.dead .shroud:hover:before {
+  #townsquare:not(.spectator) &.dead .shroud:hover:before,
+  #townsquare.storyteller &.dead .shroud:hover:before {
     opacity: 1;
   }
 
-  #townsquare:not(.spectator) &.dead-reminder-shroud:not(.dead) .shroud:before {
+  #townsquare:not(.spectator) &.dead-reminder-shroud:not(.dead) .shroud:before,
+  #townsquare.storyteller &.dead-reminder-shroud:not(.dead) .shroud:before {
     opacity: 0.25;
     top: 0;
     transform: perspective(400px) scale(1);

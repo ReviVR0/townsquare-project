@@ -40,7 +40,7 @@
     <GameStateModal />
     <Gradients />
     <WinningTeamModal />
-    <MoveToChatModal />
+    <MoveToChatModal ref="moveChatModal" />
     <span id="version">v{{ version }}</span>
   </div>
 </template>
@@ -135,7 +135,11 @@ export default {
           this.$store.commit("toggleModal", "roles");
           break;
         case "v":
-          if (this.session.voteHistory.length || !this.session.isSpectator) {
+          if (
+            this.session.voteHistory.length ||
+            !this.session.isSpectator ||
+            this.session.isStoryteller
+          ) {
             this.$store.commit("toggleModal", "voteHistory");
           }
           break;
@@ -146,7 +150,7 @@ export default {
           this.$store.commit("toggleModal", "drawingModal");
           break;
         case "s":
-          if (this.session.isSpectator) return;
+          if (this.session.isSpectator && !this.session.isStoryteller) return;
           this.$refs.menu.toggleNight();
           break;
         case "escape":
@@ -161,9 +165,11 @@ export default {
           this.$store.commit("toggleModal", "winningTeam");
           break;
         case "m":
-          if (this.session.isSpectator || !this.grimoire.isNight) return;
-          if (!confirm("Start Lil’Monsta vote?")) return;
-          this.$store.commit("session/setLilMonstaVote", !this.session.isLilMonstaVote);
+          this.$store.commit("toggleModal", "moveChat");
+          break;
+        case "i":
+          if (!this.$store.state.modals.moveChat) return;
+          this.$refs.moveChatModal?.toggleInviteMode();
           break;
       }
     }

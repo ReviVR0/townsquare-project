@@ -1,7 +1,7 @@
 <template>
   <Modal
     class="timer-menu"
-    v-if="modals.timer && !session.isSpectator"
+    v-if="modals.timer && (!session.isSpectator || session.isStoryteller)"
     @close="toggleModal('timer')"
   >
     <h3>Timer Menu</h3>

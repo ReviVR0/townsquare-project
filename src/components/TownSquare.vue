@@ -5,6 +5,7 @@
     :class="{
       public: grimoire.isPublic,
       spectator: session.isSpectator,
+      storyteller: session.isStoryteller,
       vote: session.nomination
     }"
   >
@@ -94,7 +95,7 @@
 >
   <!-- Cancel icon -->
   <font-awesome-icon
-    v-if="!session.isSpectator"
+    v-if="!session.isSpectator || session.isStoryteller"
     icon="times-circle"
     class="timer-icon cancel-icon"
     @click.stop="cancelTimer"
@@ -109,7 +110,7 @@
   
   <!-- Pause/Start icon -->
   <font-awesome-icon
-    v-if="!session.isSpectator"
+    v-if="!session.isSpectator || session.isStoryteller"
     :icon="isTimerPaused ? 'play-circle' : 'pause-circle'"
     class="timer-icon pause-icon"
     @click.stop="stopTimer"
@@ -230,6 +231,7 @@ export default {
     },
     claimSeat(playerIndex) {
       if (!this.session.isSpectator) return;
+      if (this.session.isStoryteller) return;
       if (this.session.playerId === this.players[playerIndex].id) {
         this.$store.commit("session/claimSeat", -1);
       } else {
@@ -331,7 +333,7 @@ export default {
       }
     },
     nominatePlayer(from, to) {
-      if (this.session.isSpectator || this.session.lockedVote) return;
+      if ((this.session.isSpectator && !this.session.isStoryteller) || this.session.lockedVote) return;
       if (to === undefined) {
         this.cancel();
         if (from !== this.nominate) {

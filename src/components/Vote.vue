@@ -11,7 +11,7 @@
       >!
       <br />
       <em class="blue">
-        <template v-if="session.hiddenVote && session.isSpectator">
+        <template v-if="session.hiddenVote && session.isSpectator && !session.isStoryteller">
           ??? votes
         </template>
         <template v-else>
@@ -24,7 +24,7 @@
       </em>
       <em v-else>(majority is {{ Math.ceil(players.length / 2) }})</em>
 
-      <template v-if="!session.isSpectator">
+      <template v-if="!session.isSpectator || session.isStoryteller">
         <div v-if="!session.isVoteInProgress && session.lockedVote < 1">
           Time per player:
           <font-awesome-icon
@@ -129,6 +129,7 @@
 <script>
 import { mapGetters, mapState } from "vuex";
 import { EventBus } from "../event-bus.js";
+import { getPlayerVoteWeight, hasBansheeVoteAbility } from "../services/vote-weight";
 
 export default {
   computed: {
@@ -177,40 +178,31 @@ export default {
         (index - 1 + players - session.nomination[1]) % players;
       return indexAdjusted >= session.lockedVote - 1;
     },
-    voters: function() {
+    countedVoters: function() {
       const nomination = this.session.nomination[1];
-      const voters = Array(this.players.length)
-        .fill("")
-        .map((x, index) =>
-          this.session.votes[index] ? this.players[index].name : ""
-        );
-      const reorder = [
-        ...voters.slice(nomination + 1),
-        ...voters.slice(0, nomination + 1)
+      const orderedPlayers = [
+        ...this.players.slice(nomination + 1),
+        ...this.players.slice(0, nomination + 1)
       ];
-      return (this.session.lockedVote
-        ? reorder.slice(0, this.session.lockedVote - 1)
-        : reorder
-      ).filter(n => !!n);
+      const countedSeatCount = this.session.lockedVote
+        ? Math.max(0, Math.min(this.session.lockedVote - 1, orderedPlayers.length))
+        : 0;
+
+      return orderedPlayers
+        .slice(0, countedSeatCount)
+        .filter(player => {
+          const index = this.players.indexOf(player);
+          return index >= 0 && this.session.votes[index];
+        });
+    },
+    voters: function() {
+      return this.countedVoters.map(player => player.name);
     },
     weightedVoteCount: function() {
-      const nomineeIndex = this.session.nomination[1];
-      const totalPlayers = this.players.length;
-
-      // Mirror the lock-window logic used by visible voters.
-      return this.players.reduce((sum, player, index) => {
-        if (!this.session.votes[index]) return sum;
-        const indexAdjusted =
-          (index - 1 + totalPlayers - nomineeIndex) % totalPlayers;
-        if (this.session.lockedVote && indexAdjusted >= this.session.lockedVote - 1) {
-          return sum;
-        }
-
-        const hasUgHat =
-          (player.visibleHat || "").trim().toLowerCase() === "ug hat";
-        const hasBansheeAbility = player.hasBansheeAbility || false;
-        return sum + (hasUgHat || hasBansheeAbility ? 2 : 1);
-      }, 0);
+      return this.countedVoters.reduce(
+        (sum, player) => sum + getPlayerVoteWeight(player),
+        0
+      );
     }
   },
   data() {
@@ -264,7 +256,7 @@ export default {
             this.nominee.role.team != "traveler" &&
             this.session.votes[i] === true &&
             this.players[i].isDead &&
-            !this.players[i].hasBansheeAbility
+            !hasBansheeVoteAbility(this.players[i])
           ){
           this.$store.commit("players/update", { 
           player: this.players[i],

@@ -8,19 +8,29 @@
     <h3>Move to Chat</h3>
 
     <div class="content">
-      <div v-if="!hideNames && !grimoire.isNight" class="invite-toolbar">
-        <button class="invite-mode-btn" :class="{ active: inviteMode }" @click="toggleInviteMode">
+      <div v-if="!hideNames && (!grimoire.isNight || canControlChat)" class="invite-toolbar">
+        <button
+          v-if="!grimoire.isNight"
+          class="invite-mode-btn"
+          :class="{ active: inviteMode }"
+          @click="toggleInviteMode"
+        >
           <font-awesome-icon :icon="inviteMode ? 'times-circle' : 'plus-circle'" />
           {{ inviteMode ? "Exit Invite Mode" : "Invite Mode" }}
+          <span class="shortcut">[i]</span>
         </button>
-        
-        <button v-if="!session.isSpectator" class="st-mode-btn" :class="{ active: MovePlayerMode }" @click="toggleMovePlayerMode">
+
+        <button
+          v-if="canControlChat"
+          class="st-mode-btn"
+          :class="{ active: MovePlayerMode }"
+          @click="toggleMovePlayerMode"
+        >
           <font-awesome-icon :icon="MovePlayerMode ? 'times-circle' : 'arrow-right'" />
           {{ MovePlayerMode ? "Exit Move Player" : "Move Player" }}
         </button>
       </div>
 
-      <!-- Move Player Mode: Player Selection Step -->
       <div v-if="MovePlayerMode && !selectedPlayerForMove" class="st-player-select">
         <h4>Select a player to move:</h4>
         <div class="player-list">
@@ -35,7 +45,6 @@
         </div>
       </div>
 
-      <!-- Move Player Mode: Channel Selection Step -->
       <div v-if="MovePlayerMode && selectedPlayerForMove" class="st-channel-select">
         <h4>Move {{ selectedPlayerForMove.name }} to:</h4>
         <button class="back-btn" @click="selectedPlayerForMove = null">← Back</button>
@@ -51,7 +60,6 @@
         </div>
       </div>
 
-      <!-- Normal mode: Room buttons -->
       <div v-if="!MovePlayerMode" class="button-grid">
         <button
           v-for="room in allRooms"
@@ -106,23 +114,21 @@
         </div>
       </div>
 
-      <!-- Invite ST button for non-ST at night -->
       <div v-if="grimoire.isNight && session.isSpectator && !isSTPlayer" class="night-actions">
         <button @click="inviteST">
           Invite Storyteller
         </button>
       </div>
 
-      <!-- HOST-ONLY BUTTONS -->
       <div
-        v-if="grimoire.isNight && !session.isSpectator"
+        v-if="grimoire.isNight && canControlChat"
         class="night-actions"
       >
         <button @click="sendAllToTownSquare">Start Day</button>
         <button @click="sendAllToTheirRooms">Start Night</button>
       </div>
       <div
-        v-if="!grimoire.isNight && !session.isSpectator"
+        v-if="!grimoire.isNight && canControlChat"
         class="night-actions"
       >
         <button @click="sendAllToTownSquare">Gather Town</button>
@@ -186,7 +192,11 @@ export default {
     },
 
     hideNames() {
-      return this.grimoire.isNight && this.session.isSpectator;
+      return (
+        this.grimoire.isNight &&
+        this.session.isSpectator &&
+        !this.session.isStoryteller
+      );
     },
 
     playersInChats() {
@@ -234,7 +244,7 @@ export default {
       // ---- NIGHT LOGIC ----
       if (this.grimoire.isNight) {
         // ST sees EVERYTHING
-        if (!this.session.isSpectator) {
+        if (!this.session.isSpectator || this.session.isStoryteller) {
           return [...allRegularRooms, ...special];
         }
 
@@ -255,15 +265,22 @@ export default {
 
 
     isSTPlayer() {
+      if (this.session.isStoryteller) return true;
       const me = this.players.find(p => p.id === this.session.playerId);
       if (!me?.discordID) return false;
       return this.session.discordST?.includes(me.discordID);
+    },
+    linkedCoStDiscordId() {
+      return (this.session.coStDiscordLinks || {})[this.session.playerId] || "";
     },
     myInviteReceiverId() {
       return this.session.isSpectator ? this.session.playerId : "ST";
     },
     incomingInvites() {
       return this.localInvites.filter(inv => inv.receiverId === this.myInviteReceiverId);
+    },
+    canControlChat() {
+      return !this.session.isSpectator || this.session.isStoryteller;
     }
   },
 
@@ -272,6 +289,13 @@ export default {
 
     resolveName(discordID) {
       if (!discordID) return "?";
+      if (discordID === this.session.hostDiscordId) {
+        return this.session.hostDiscordName || "Host ST";
+      }
+      const coSt = (this.session.availableDiscordSTs || []).find(
+        st => st.discordId === discordID
+      );
+      if (coSt) return coSt.displayName || "Co-ST";
       if (this.session.discordST?.includes(discordID)) return "ST";
       const player = this.players.find(p => p.discordID === discordID);
       return player ? player.name : "?";
@@ -308,7 +332,7 @@ export default {
 
 
       const isLocked = this.isRoomLocked(to);
-      const isST = !this.session.isSpectator;
+  const isST = !this.session.isSpectator || this.session.isStoryteller;
 
       if (isLocked && !isST) {
         return; // silently block (recommended)
@@ -316,10 +340,15 @@ export default {
       let payload = [];
 
       if (!this.session.isSpectator) {
-        // ST: send all DiscordIDs of ST
-        (this.session.discordST || []).forEach(discordID => {
-          payload.push([to, discordID]);
-        });
+        // HostST: normal room moves should move only HostST's Discord account.
+        const hostDiscordId = this.session.hostDiscordId || this.session.discordST?.[0];
+        if (hostDiscordId) payload.push([to, hostDiscordId]);
+      } else if (this.session.isStoryteller) {
+        if (!this.linkedCoStDiscordId) {
+          alert("No Discord ST account linked for this Co-ST yet.");
+          return;
+        }
+        payload.push([to, this.linkedCoStDiscordId]);
       } else {
         // normal player: send only their DiscordID
         const player = this.players.find(p => p.id === this.session.playerId);
@@ -334,7 +363,7 @@ export default {
     },
 
     sendAllToTownSquare() {
-      if (this.moveLock) return;
+      if (!this.canControlChat || this.moveLock) return;
       const moves = this.players
         .filter(p => p.discordID)
         .map(p => [21, p.discordID]);
@@ -348,7 +377,7 @@ export default {
     },
 
     sendAllToTheirRooms() {
-      if (this.moveLock) return;
+      if (!this.canControlChat || this.moveLock) return;
       const moves = this.players
         .filter(p => p.discordID)
         .map((p, idx) => [idx + 1, p.discordID]);
@@ -371,6 +400,7 @@ export default {
     },
 
     toggleMovePlayerMode() {
+      if (!this.canControlChat) return;
       this.MovePlayerMode = !this.MovePlayerMode;
       this.selectedPlayerForMove = null;
     },
@@ -380,7 +410,7 @@ export default {
     },
 
     movePlayerToChannel(player, channelNumber) {
-      if (this.session.isSpectator || !player.discordID) return;
+      if (!this.canControlChat || !player.discordID) return;
       
       const payload = [[channelNumber, player.discordID]];
       this.$store.commit("session/MoveToChat", payload);
@@ -414,7 +444,7 @@ export default {
 
     getChatNumber(playerId) {
       if (playerId === "ST") {
-        const discordID = this.session.discordST[0];
+        const discordID = this.session.hostDiscordId || this.session.discordST[0];
         const record = this.session.discordChats.find(c => c.discordID === discordID);
         return record ? record.chatNumber : 21; // default to Townsquare
       } else {
@@ -431,7 +461,7 @@ export default {
     },
     playerIdToDiscordId(playerId) {
       if (playerId === "ST") {
-        return this.session.discordST?.[0] || null;
+        return this.session.hostDiscordId || this.session.discordST?.[0] || null;
       }
 
       const player = this.players.find(p => p.id === playerId);
@@ -456,6 +486,7 @@ export default {
         timestamp: Date.now()
       };
       this.$store.commit("session/inviteChat", payload);
+      this.inviteMode = false;
     },
 
 
@@ -541,7 +572,7 @@ export default {
       return 21;
     },
     inviteST() {
-      const receiverDiscordID = this.session.discordST?.[0];
+      const receiverDiscordID = this.session.hostDiscordId || this.session.discordST?.[0];
       if (!receiverDiscordID) return;
 
       this.sendInviteTo(receiverDiscordID); // re-use existing invite logic
@@ -662,6 +693,12 @@ h3 {
   flex-direction: row;
   align-items: center;
   gap: 6px;
+}
+
+.shortcut {
+  margin-left: 4px;
+  font-size: 0.85em;
+  opacity: 0.8;
 }
 
 .invite-mode-btn.active {

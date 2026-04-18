@@ -5,6 +5,7 @@ const NEWPLAYER = {
   reminders: [],
   visibleHat: "",
   hasBansheeAbility: false,
+  voteMultiplier: 1,
   isVoteless: false,
   isDead: false,
   pronouns: "",

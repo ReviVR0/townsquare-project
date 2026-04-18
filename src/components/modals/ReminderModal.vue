@@ -61,6 +61,7 @@ methods: {
 <script>
 import Modal from "./Modal";
 import { mapMutations, mapState } from "vuex";
+import { getVoteMultiplierFromReminders } from "../../services/vote-weight";
 
 /**
  * Helper function that maps a reminder name with a role-based object that provides necessary visual data.
@@ -163,23 +164,33 @@ export default {
         value
       });
       
-      // Only ST can sync hats and abilities to everyone.
-      // Spectator/player reminder changes should stay local and not set visibleHat.
+      // Storytellers (host or co-ST) sync hats and abilities to everyone.
+      // Non-storyteller spectators keep reminder changes local.
       const hatNames = ["big wig", "ug hat"];
       const reminderName = (reminder.name || "").trim().toLowerCase();
-      if (!this.$store.state.session.isSpectator && hatNames.includes(reminderName)) {
+      const canStorytell =
+        !this.$store.state.session.isSpectator ||
+        this.$store.state.session.isStoryteller;
+      if (canStorytell && hatNames.includes(reminderName)) {
         this.$store.commit("players/update", {
           player,
           property: "visibleHat",
           value: reminder.name
         });
       }
-      // Set hasBansheeAbility when banshee reminder is added
-      if (!this.$store.state.session.isSpectator && reminder.role === "banshee") {
+      // Set hasBansheeAbility when a Banshee ability reminder is added
+      if (canStorytell && reminder.role === "banshee") {
         this.$store.commit("players/update", {
           player,
           property: "hasBansheeAbility",
           value: true
+        });
+      }
+      if (canStorytell) {
+        this.$store.commit("players/update", {
+          player,
+          property: "voteMultiplier",
+          value: getVoteMultiplierFromReminders(value)
         });
       }
       

@@ -53,7 +53,7 @@
             <template v-if="grimoire.isPublic">Show</template>
             <em>[G]</em>
           </li>
-          <li @click="toggleNight" v-if="!session.isSpectator">
+          <li @click="toggleNight" v-if="!session.isSpectator || session.isStoryteller">
             <template v-if="!grimoire.isNight">Switch to Night</template>
             <template v-if="grimoire.isNight">Switch to Day</template>
             <em>[S]</em>
@@ -144,18 +144,18 @@
               Copy player link
               <em><font-awesome-icon icon="copy" /></em>
             </li>
-            <li v-if="!session.isSpectator" @click="distributeRoles">
+            <li v-if="!session.isSpectator || session.isStoryteller" @click="distributeRoles">
               Send Characters
               <em><font-awesome-icon icon="theater-masks" /></em>
             </li>
             <li
-              v-if="session.voteHistory.length || !session.isSpectator"
+              v-if="session.voteHistory.length || !session.isSpectator || session.isStoryteller"
               @click="toggleModal('voteHistory')"
             >
               Vote history<em>[V]</em>
             </li>
 
-            <li @click="toggleModal('timer')" v-if="!session.isSpectator">
+            <li @click="toggleModal('timer')" v-if="!session.isSpectator || session.isStoryteller">
               Timer<em>[T]</em>
             </li>
             <li v-if="!session.isSpectator" @click="autoTimerEnabled = !autoTimerEnabled">
@@ -163,19 +163,53 @@
               <em><font-awesome-icon :icon="['fas', autoTimerEnabled ? 'check-square' : 'square']" /></em>
             </li>
             <li v-if="!session.isSpectator && autoTimerEnabled">
-              Seconds/alive
+              Secs/alive player
               <em>
                 <font-awesome-icon @click.stop="adjustAutoTimer(-5)" icon="search-minus" />
                 {{ autoTimerSecondsPerPlayer }}s
                 <font-awesome-icon @click.stop="adjustAutoTimer(5)" icon="search-plus" />
               </em>
             </li>
-            <li @click="StorytellerCode" v-if="!isSeated">
+            <li
+              @click="StorytellerCode"
+              v-if="!isSeated && (session.isSpectator || !session.botId || !session.availableDiscordSTs.length)"
+            >
               Co-Storyteller
-              <em v-if="!session.isSpectator">{{ session.StorytellerCode }}</em>
+              <em
+                v-if="!session.isSpectator"
+                @click.stop="copyCoStCode(session.StorytellerCode)"
+                title="Click to copy code"
+              >{{ session.StorytellerCode }}</em>
             </li>
+            <template v-if="!session.isSpectator && session.botId && session.availableDiscordSTs.length">
+              <li class="headline">Co-ST Codes</li>
+              <li
+                v-for="candidate in session.availableDiscordSTs"
+                :key="`code-${candidate.discordId}`"
+              >
+                {{ candidate.displayName }}
+                <em
+                  @click.stop="copyCoStCode(getCoStCode(candidate.discordId), candidate.displayName)"
+                  title="Click to copy Name: Code"
+                >{{ getCoStCode(candidate.discordId) }}</em>
+              </li>
+            </template>
+            <li v-if="!session.isSpectator && session.coStorytellers.length">
+              Co-ST connected
+              <em>{{ session.coStorytellers.length }}</em>
+            </li>
+            <template v-if="!session.isSpectator">
+              <li
+                v-for="coStorytellerId in session.coStorytellers"
+                :key="`cost-${coStorytellerId}`"
+                @click="removeCoStoryteller(coStorytellerId)"
+              >
+                Remove Co-ST
+                <em>{{ coStorytellerId.substr(0, 6) }}</em>
+              </li>
+            </template>
             <li @click="LilMonsta" v-if="!session.isSpectator && grimoire.isNight">
-              Start Lil'Monsta Vote<em>[M]</em>
+              Start Lil'Monsta Vote
             </li>
             <li @click="RemoveBot" v-if="!session.isSpectator && session.botId">
               Remove Bot
@@ -311,7 +345,8 @@ export default {
       navigator.clipboard.writeText(link);
     },
     distributeRoles() {
-      if (this.session.isSpectator) return;
+      const canStorytell = !this.session.isSpectator || this.session.isStoryteller;
+      if (!canStorytell) return;
       const popup =
         "Do you want to distribute assigned characters to all SEATED players?";
       if (confirm(popup)) {
@@ -403,6 +438,8 @@ export default {
       }
     },
     toggleNight() {
+      const canStorytell = !this.session.isSpectator || this.session.isStoryteller;
+      if (!canStorytell) return;
       this.$store.commit("toggleNight");
       if (this.grimoire.isNight) {
         this.$store.commit("session/setMarkedPlayer", -1);
@@ -426,17 +463,34 @@ export default {
     StorytellerCode() {
       if (this.session.isSpectator){
         const code = prompt("Enter your Co-Storyteller command (JS code):");
-        if (this.session.StorytellerCode==code){
-          this.$store.commit("session/StorytellerCodeGrim", code);
-          //this.$store.commit("session/SetSpectator", [this.session.playerId, false]);
-        } else {
-            alert("Wrong code!");
-        }
+        if (!code) return;
+        this.$store.commit("session/StorytellerCodeGrim", code);
       }
       else{
+        if (this.session.botId && this.session.availableDiscordSTs.length) {
+          alert("Use per-person Co-ST code list below.");
+          return;
+        }
         const randomCode = Math.floor(1000 + Math.random() * 9000);
         this.$store.commit("session/StorytellerCode", randomCode.toString());
         }
+    },
+    getCoStCode(discordId) {
+      return (this.session.coStInviteCodes || {})[discordId] || "------";
+    },
+    async copyCoStCode(code, name = "") {
+      const trimmed = String(code || "").trim();
+      if (!trimmed || trimmed === "------") return;
+      const text = name ? `${name}: ${trimmed}` : trimmed;
+      try {
+        await navigator.clipboard.writeText(text);
+      } catch (e) {
+        alert(`Copy failed. Code: ${text}`);
+      }
+    },
+    regenerateCoStCode(discordId) {
+      if (this.session.isSpectator || !discordId) return;
+      this.$store.commit("session/regenerateCoStInviteCode", discordId);
     },
     LilMonsta(){
       if (!confirm("Start Lil’Monsta vote?")) return;
@@ -454,6 +508,11 @@ export default {
         localStorage.setItem("menuOpenedOnce", "true");
       }
       this.toggleMenu();
+    },
+    removeCoStoryteller(playerId) {
+      if (this.session.isSpectator || !playerId) return;
+      if (!confirm(`Remove co-storyteller ${playerId.substr(0, 6)}?`)) return;
+      this.$store.commit("session/removeCoStoryteller", playerId);
     },
     adjustAutoTimer(delta) {
       const next = this.autoTimerSecondsPerPlayer + delta;
