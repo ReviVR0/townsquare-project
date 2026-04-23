@@ -169,30 +169,53 @@ export default {
       }
     },
     parseRoles(roles) {
-      if (!roles || !roles.length) return;
-      roles = roles.map(role => typeof role === "string" ? { id: role } : role);
-      const metaIndex = roles.findIndex(({ id }) => id === "_meta");
-      let meta = {};
-      if (metaIndex > -1) {
-        meta = roles.splice(metaIndex, 1).pop();
-      }
-      this.$store.commit("setCustomRoles", roles);
-      this.$store.commit(
-        "setEdition",
-        Object.assign({}, meta, { id: "custom" })
-      );
-      // check for fabled and set those too, if present
-      if (roles.some((role) => this.$store.state.fabled.has(role.id || role))) {
-        const fabled = [];
-        roles.forEach((role) => {
-          if (this.$store.state.fabled.has(role.id || role)) {
-            fabled.push(this.$store.state.fabled.get(role.id || role));
-          }
+  if (!roles || !roles.length) return;
+
+  roles = roles.map(role =>
+    typeof role === "string" ? { id: role } : role
+  );
+
+  const metaIndex = roles.findIndex(({ id }) => id === "_meta");
+  let meta = {};
+
+  if (metaIndex > -1) {
+    meta = roles.splice(metaIndex, 1).pop();
+  }
+
+  this.$store.commit("setCustomRoles", roles);
+  this.$store.commit(
+    "setEdition",
+    Object.assign({}, meta, { id: "custom" })
+  );
+
+  if (
+    roles.some((role) =>
+      this.$store.state.fabled.has(role.id || role)
+    ) ||
+    (meta.bootlegger && Array.isArray(meta.bootlegger))
+  ) {
+    const fabled = [];
+    if (meta.bootlegger && Array.isArray(meta.bootlegger)) {
+      const base = this.$store.state.fabled.get("bootlegger");
+      meta.bootlegger.forEach((ability) => {
+        fabled.push({
+          ...base,
+          ability: ability
         });
-        this.$store.commit("players/setFabled", { fabled });
+      });
+    }
+    roles.forEach((role) => {
+      if (this.$store.state.fabled.has(role.id || role)) {
+        fabled.push(
+          this.$store.state.fabled.get(role.id || role)
+        );
       }
-      this.isCustom = false;
-    },
+    });
+    this.$store.commit("players/setFabled", { fabled });
+  }
+
+  this.isCustom = false;
+},
     ...mapMutations(["toggleModal", "setEdition"])
   }
 };

@@ -179,6 +179,15 @@
               Send Grimoire
           </li>
           <li
+            @click="ChangeAlligment"
+            v-if="
+              !session.isSpectator ||
+                (session.isSpectator && player.id === session.playerId)
+            "
+          >
+            <font-awesome-icon icon="theater-masks" />Change Alligment
+          </li>
+          <li
             @click="changePronouns"
             v-if="
               !session.isSpectator ||
@@ -468,6 +477,19 @@ export default {
       //Only update pronouns if not null (prompt was not cancelled)
       if (pronouns !== null) {
         this.updatePlayer("pronouns", pronouns, true);
+      }
+    },
+    ChangeAlligment(){
+      console.log(this.player.alignmentIndex)
+      let aligment = this.player.alignmentIndex
+      if(aligment == 1 || (aligment == 0 && (this.player.role.team == "townsfolk" || this.player.role.team == "outsider"))){
+        this.updatePlayer("alignmentIndex", 2);
+        this.isMenuOpen = false
+
+      }
+      else{
+        this.updatePlayer("alignmentIndex", 1);
+        this.isMenuOpen = false
       }
     },
     toggleStatus() {

@@ -2,6 +2,7 @@
   <div
     id="app"
     @keyup="keyup"
+    @touchend.self="handleTouch"
     tabindex="-1"
     :class="{
       night: grimoire.isNight,
@@ -97,7 +98,8 @@ export default {
   },
   data() {
     return {
-      version
+      version,
+      lastTap: 0
     };
   },
   methods: {
@@ -172,6 +174,22 @@ export default {
           this.$refs.moveChatModal?.toggleInviteMode();
           break;
       }
+    },
+    handleTouch() {
+      if (!("ontouchstart" in window)) return;
+
+      const now = Date.now();
+      const DOUBLE_TAP_DELAY = 300; // ms
+
+      if (now - this.lastTap < DOUBLE_TAP_DELAY) {
+
+        // Same conditions as spacebar
+        if (!this.session.isSpectator) return;
+
+        EventBus.$emit("spacebar-vote");
+      }
+
+      this.lastTap = now;
     }
   }
 };

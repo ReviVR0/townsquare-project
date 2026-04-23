@@ -240,7 +240,7 @@
     "id": "knaves",
     "firstNightReminder": "",
     "otherNightReminder": "",
-    "reminders": [],
+    "reminders": ["True Storyteller", "Lying Storyteller"],
     "setup": false,
     "name": "Knaves",
     "team": "loric",

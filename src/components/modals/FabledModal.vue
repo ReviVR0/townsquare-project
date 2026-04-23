@@ -44,11 +44,19 @@ export default {
     fabled() {
       const fabled = [];
       this.$store.state.fabled.forEach(role => {
-        if (
-          !this.$store.state.players.fabled.some(fable => fable.id === role.id) &&
-          role.team === this.tab
-        ) {
-          fabled.push(role);
+        // Allow bootleggers to be added multiple times (each with different ability)
+        // For other roles, filter them out if already in the game
+        if (role.id !== "bootlegger") {
+          if (!this.$store.state.players.fabled.some(fable => fable.id === role.id)) {
+            if (role.team === this.tab) {
+              fabled.push(role);
+            }
+          }
+        } else {
+          // Always show bootlegger option (can be added multiple times)
+          if (role.team === this.tab) {
+            fabled.push(role);
+          }
         }
       });
       return fabled;
@@ -61,7 +69,20 @@ export default {
   },
   methods: {
     setFabled(role) {
-      this.$store.commit("players/setFabled", { fabled: role });
+      // Special handling for bootlegger - prompt for ability
+      if (role.id === "bootlegger") {
+        const ability = prompt("What does this bootlegger do?");
+        if (ability === null) return; // User cancelled
+        
+        // Create a bootlegger with custom ability
+        const bootleggerWithAbility = {
+          ...role,
+          ability: ability.trim() || "No ability specified"
+        };
+        this.$store.commit("players/setFabled", { fabled: bootleggerWithAbility });
+      } else {
+        this.$store.commit("players/setFabled", { fabled: role });
+      }
       this.toggleModal("fabled");
     },
     ...mapMutations(["toggleModal"])
