@@ -174,7 +174,11 @@ ul.tokens li {
     z-index: 10;
   }
 }
-
+@media screen and (max-width: 767.98px) {
+  ul.tokens li {
+    width: 10vw;
+  }
+}
 #townsquare.spectator ul.tokens li.traveler {
   display: none;
 }

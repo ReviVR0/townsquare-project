@@ -200,15 +200,20 @@ export default {
       meta.bootlegger.forEach((ability) => {
         fabled.push({
           ...base,
-          ability: ability
+          ability,
+          isCustom: true
         });
       });
     }
     roles.forEach((role) => {
-      if (this.$store.state.fabled.has(role.id || role)) {
-        fabled.push(
-          this.$store.state.fabled.get(role.id || role)
-        );
+      const roleId = role.id || role;
+      if (this.$store.state.fabled.has(roleId)) {
+        const base = this.$store.state.fabled.get(roleId);
+        if (typeof role === "object" && (role.isCustom || Object.keys(role).length > 1)) {
+          fabled.push({ ...base, ...role, isCustom: true });
+        } else {
+          fabled.push(base);
+        }
       }
     });
     this.$store.commit("players/setFabled", { fabled });

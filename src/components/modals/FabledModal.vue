@@ -77,7 +77,8 @@ export default {
         // Create a bootlegger with custom ability
         const bootleggerWithAbility = {
           ...role,
-          ability: ability.trim() || "No ability specified"
+          ability: ability.trim() || "No ability specified",
+          isCustom: true
         };
         this.$store.commit("players/setFabled", { fabled: bootleggerWithAbility });
       } else {

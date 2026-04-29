@@ -291,7 +291,11 @@ ul.tokens {
     }
   }
 }
-
+@media screen and (max-width: 767.98px) {
+  ul.tokens li {
+    width: 8vw;
+  }
+}
 .roles .modal {
   .multiple {
     display: block;

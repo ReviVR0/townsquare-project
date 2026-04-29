@@ -9,7 +9,7 @@
       vote: session.nomination
     }"
   >
-    <ul class="circle" :class="['size-' + players.length]">
+    <ul class="circle" :class="['size-' + players.length]" :style="{ '--player-distance': grimoire.distance + '%' }">
       <Player
         v-for="(player, index) in players"
         :key="index"
@@ -544,7 +544,8 @@ onDrag(event) {
   > li {
     position: absolute;
     left: 50%;
-    height: 50%;
+    top: calc(50% - var(--player-distance));
+    height: var(--player-distance);
     transform-origin: 0 100%;
     pointer-events: none;
 

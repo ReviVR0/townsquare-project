@@ -661,7 +661,6 @@ h3 {
 
 .button-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
   gap: 4px;
   width: 100%;
   max-width: 600px;
@@ -672,7 +671,10 @@ h3 {
   display: flex;
   flex-direction: column;
   align-items: center;
-  width: min(600px, 90vw);
+  width: 100%;
+  max-width: 600px;
+  max-height: 85vh;
+  overflow-y: auto;
   max-height: 85vh;
   overflow-y: auto;
 }
@@ -918,7 +920,6 @@ button.locked .room-label::after {
 
 .channel-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
   gap: 4px;
 }
 
@@ -962,12 +963,14 @@ button.locked .room-label::after {
   .player-list {
     grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
   }
-
-  .channel-grid {
-    grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
-  }
 }
-
+.button-grid,
+.channel-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
+  gap: 8px;
+  width: 100%;
+}
 
 
 

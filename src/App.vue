@@ -2,7 +2,7 @@
   <div
     id="app"
     @keyup="keyup"
-    @touchend.self="handleTouch"
+    @touchend="handleTouch"
     tabindex="-1"
     :class="{
       night: grimoire.isNight,
@@ -175,15 +175,21 @@ export default {
           break;
       }
     },
-    handleTouch() {
+    handleTouch(e) {
       if (!("ontouchstart" in window)) return;
+      const target = e.target;
+
+      const isInteractive =
+        target.closest(
+          "button, a, input, textarea, select, [role='button'], .button, li"
+        ) !== null;
+
+      if (isInteractive) return;
 
       const now = Date.now();
-      const DOUBLE_TAP_DELAY = 300; // ms
+      const DOUBLE_TAP_DELAY = 300;
 
       if (now - this.lastTap < DOUBLE_TAP_DELAY) {
-
-        // Same conditions as spacebar
         if (!this.session.isSpectator) return;
 
         EventBus.$emit("spacebar-vote");

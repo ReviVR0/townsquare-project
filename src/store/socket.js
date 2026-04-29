@@ -583,7 +583,12 @@ class LiveSession {
         this._store.commit("session/setDiscordChats", discordChats);
       }
       this._store.commit("players/setFabled", {
-        fabled: fabled.map(f => this._store.state.fabled.get(f.id) || f)
+        fabled: fabled.map(f => {
+          const base = this._store.state.fabled.get(f.id) || {};
+          return f.isCustom || (f.ability && f.ability !== base.ability)
+            ? { ...base, ...f }
+            : base || f;
+        })
       });
     }
   }
@@ -654,7 +659,12 @@ class LiveSession {
   _updateFabled(fabled) {
     if (!this._isSpectator) return;
     this._store.commit("players/setFabled", {
-      fabled: fabled.map(f => this._store.state.fabled.get(f.id) || f)
+      fabled: fabled.map(f => {
+        const base = this._store.state.fabled.get(f.id) || {};
+        return f.isCustom || (f.ability && f.ability !== base.ability)
+          ? { ...base, ...f }
+          : base || f;
+      })
     });
   }
 

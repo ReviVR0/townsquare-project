@@ -45,6 +45,7 @@ const getTravelersNotInEdition = (edition = editionJSON[0]) => {
 
 const set = key => ({ grimoire }, val) => {
   grimoire[key] = val;
+  localStorage.setItem(key, val);
 };
 
 const toggle = key => ({ grimoire }, val) => {
@@ -115,6 +116,7 @@ export default new Vuex.Store({
       isMuted: false,
       isImageOptIn: false,
       zoom: 0,
+      distance: 50,
       background: "",
       language: initialLanguage,
     },
@@ -182,6 +184,7 @@ export default new Vuex.Store({
   },
   mutations: {
     setZoom: set("zoom"),
+    setDistance: set("distance"),
     setBackground: set("background"),
     toggleMuted: toggle("isMuted"),
     toggleMenu: toggle("isMenuOpen"),

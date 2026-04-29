@@ -83,6 +83,20 @@
               />
             </em>
           </li>
+          <li v-if="players.length">
+            Distance
+            <em>
+              <font-awesome-icon
+                @click="setDistance(grimoire.distance - 5)"
+                icon="search-minus"
+              />
+              {{ grimoire.distance }}%
+              <font-awesome-icon
+                @click="setDistance(grimoire.distance + 5)"
+                icon="search-plus"
+              />
+            </em>
+          </li>
           <li @click="setBackground">
             Background image
             <em><font-awesome-icon icon="image" /></em>
@@ -453,6 +467,7 @@ export default {
       "toggleNightOrder",
       "toggleStatic",
       "setZoom",
+      "setDistance",
       "toggleModal",
       "setLanguage",
     ]),

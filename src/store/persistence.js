@@ -20,6 +20,9 @@ module.exports = store => {
   if (localStorage.getItem("zoom")) {
     store.commit("setZoom", parseFloat(localStorage.getItem("zoom")));
   }
+  if (localStorage.getItem("distance")) {
+    store.commit("setDistance", parseFloat(localStorage.getItem("distance")));
+  }
   if (localStorage.getItem("isGrimoire")) {
     store.commit("toggleGrimoire", false);
     updatePagetitle(false);
@@ -42,9 +45,12 @@ module.exports = store => {
   }
   if (localStorage.fabled !== undefined) {
     store.commit("players/setFabled", {
-      fabled: JSON.parse(localStorage.fabled).map(
-        fabled => store.state.fabled.get(fabled.id) || fabled
-      )
+      fabled: JSON.parse(localStorage.fabled).map(fabled => {
+        const base = store.state.fabled.get(fabled.id) || {};
+        return fabled.isCustom || (fabled.ability && fabled.ability !== base.ability)
+          ? { ...base, ...fabled }
+          : base || fabled;
+      })
     });
   }
   if (localStorage.players) {
